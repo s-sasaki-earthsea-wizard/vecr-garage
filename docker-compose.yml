@@ -1,0 +1,58 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME}-backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_USER=testuser
+      - DB_PASSWORD=password
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  database:
+    image: postgres:16
+    container_name: ${CONTAINER_NAME}-database
+    environment:
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - ./database/db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "testuser", "-d", "${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  network:
+    name: ${NETWORK_NAME}
+    driver: bridge
+
+volumes:
+  data:
+    name: ${VOLUME_NAME}
+    driver: local
+
+      
+      
