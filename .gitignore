@@ -4,3 +4,14 @@
 # .vscode
 .vscode
 
+# environment variables
+.env
+
+# Docker
+.dockerignore
+
+# Node
+node_modules
+
+
+
