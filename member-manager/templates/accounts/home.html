@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}ホーム - VECR Member Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>ようこそ、{{ user.username }}さん</h1>
+        <p class="lead">VECR Member Managerへようこそ。ここではメンバー情報の管理ができます。</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">人間メンバー</h5>
+                <p class="card-text">人間メンバーの情報を管理します。</p>
+                <a href="#" class="btn btn-primary">管理画面へ</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">仮想メンバー</h5>
+                <p class="card-text">仮想メンバーの情報を管理します。</p>
+                <a href="#" class="btn btn-primary">管理画面へ</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
