@@ -191,8 +191,8 @@ pyrightconfig.json
 node_modules
 
 # Actual data in storage container
-storage/data
+storage/data/*
 !storage/data/.gitkeep
-
-
+!storage/data/rules/
+!storage/data/rules/*.md
 
