@@ -1,0 +1,4 @@
+minio==7.2.15
+dotenv-python==0.0.1
+psycopg2-binary==2.9.10
+SQLAlchemy==2.0.40
