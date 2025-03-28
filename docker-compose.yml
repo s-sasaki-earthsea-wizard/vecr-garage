@@ -39,7 +39,7 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=${DB_NAME}
     volumes:
-      - ./member-database/db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
+      - ./member-database/member_db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
     ports:
       - "5432:5432"
     networks:
@@ -70,6 +70,39 @@ services:
         interval: 30s
         timeout: 10s
         retries: 5
+
+  member-manager:
+    build:
+      context: ./member-manager
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME}-member-manager
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./member-manager:/app
+    environment:
+      - DB_HOST=member-database
+      - DB_PORT=5432
+      - DB_USER=testuser
+      - DB_PASSWORD=password
+      - DB_NAME=${DB_NAME}
+      - STORAGE_HOST=storage
+      - STORAGE_PORT=9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+    depends_on:
+      member-database:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 networks:
   network:

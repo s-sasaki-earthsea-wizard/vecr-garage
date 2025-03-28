@@ -3,7 +3,7 @@ include .env
 export
 
 # Define the Phony targets
-.PHONY: docker-build docker-up docker-down docker-build-up docker-restart docker-logs docker-ps docker-clean backend-shell backend-start backend-stop backend-restart
+.PHONY: docker-build docker-up docker-down docker-build-up docker-restart docker-logs docker-ps docker-clean member-manager-shell member-manager-start member-manager-stop member-manager-restart member-database-shell member-database-start member-database-stop member-database-restart storage-shell storage-start storage-stop storage-restart member-manager-shell
 
 # Define the default target
 default: help
@@ -43,10 +43,10 @@ docker-clean: ## Stop and remove all containers, volumes, and images
 	$(COMPOSE) -p $(PROJECT_NAME) down --volumes --rmi all --remove-orphans
 
 # ------------------------------------------------------------
-# Backend container commands
+# Member manager service commands
 # ------------------------------------------------------------
 
-backend-shell: ## Open a shell into the backend container
+member-manager-shell: ## Open a shell into the member manager container
 	$(COMPOSE) -p $(PROJECT_NAME) exec backend /bin/bash
 
 backend-start: ## Start the backend container
@@ -59,7 +59,7 @@ backend-restart: ## Restart the backend container
 	$(COMPOSE) -p $(PROJECT_NAME) restart backend
 
 # ------------------------------------------------------------
-# Member database container commands
+# Member database service commands
 # ------------------------------------------------------------
 
 member-db-shell: ## Open a shell into the member database container
@@ -75,12 +75,19 @@ member-db-restart: ## Restart the member database container
 	$(COMPOSE) -p $(PROJECT_NAME) restart member-database
 
 # ------------------------------------------------------------
-# Storage container commands
+# Storage service commands
 # ------------------------------------------------------------
 
 storage-shell: ## Open a shell into the storage container
 	$(COMPOSE) -p $(PROJECT_NAME) exec storage /bin/bash
 
+
+# ------------------------------------------------------------
+# Member manager service commands
+# ------------------------------------------------------------
+
+member-manager-shell: ## Open a shell into the member manager container
+	$(COMPOSE) -p $(PROJECT_NAME) exec member-manager /bin/bash
 
 # ------------------------------------------------------------
 # Help

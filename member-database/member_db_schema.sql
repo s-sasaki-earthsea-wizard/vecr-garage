@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS human_members (
 CREATE TABLE IF NOT EXISTS human_member_profiles (
     profile_id SERIAL PRIMARY KEY,
     profile_uuid UUID UNIQUE NOT NULL,
+    member_id INTEGER NOT NULL,
+    member_uuid UUID NOT NULL,
     bio TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -31,6 +33,8 @@ CREATE TABLE IF NOT EXISTS virtual_members (
 CREATE TABLE IF NOT EXISTS virtual_member_profiles (
     profile_id SERIAL PRIMARY KEY,
     profile_uuid UUID UNIQUE NOT NULL,
+    member_id INTEGER NOT NULL,
+    member_uuid UUID NOT NULL,
     custom_prompt TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
