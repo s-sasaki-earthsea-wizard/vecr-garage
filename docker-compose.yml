@@ -15,7 +15,7 @@ services:
       - DB_PASSWORD=password
       - DB_NAME=${DB_NAME}
     depends_on:
-      database:
+      member-database:
         condition: service_healthy
     networks:
       - network
@@ -25,15 +25,15 @@ services:
       timeout: 10s
       retries: 5
 
-  database:
+  member-database:
     image: postgres:16
-    container_name: ${CONTAINER_NAME}-database
+    container_name: ${CONTAINER_NAME}-member-database
     environment:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=${DB_NAME}
     volumes:
-      - ./database/db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
+      - ./member-database/db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
     ports:
       - "5432:5432"
     networks:
