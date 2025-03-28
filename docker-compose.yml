@@ -9,10 +9,10 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      - DB_HOST=database
+      - DB_HOST=member-database
       - DB_PORT=5432
-      - DB_USER=testuser
-      - DB_PASSWORD=password
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - STORAGE_HOST=storage
       - STORAGE_PORT=9000
@@ -20,8 +20,12 @@ services:
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
       - USE_S3=false
+      - DYNAMODB_HOST=chat-log-database
+      - DYNAMODB_PORT=4566
     depends_on:
       member-database:
+        condition: service_healthy
+      chat-log-database:
         condition: service_healthy
     networks:
       - network
@@ -35,8 +39,8 @@ services:
     image: postgres:16
     container_name: ${CONTAINER_NAME}-member-database
     environment:
-      - POSTGRES_USER=testuser
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     volumes:
       - ./member-database/member_db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
@@ -100,6 +104,26 @@ services:
       - network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  chat-log-database:
+    image: localstack/localstack:latest
+    container_name: ${CONTAINER_NAME}-chat-log-database
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=dynamodb
+      - DEFAULT_REGION=ap-northeast-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEBUG=1
+    volumes:
+      - ./chat-log-database:/var/lib/localstack/data
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
       interval: 30s
       timeout: 10s
       retries: 5
