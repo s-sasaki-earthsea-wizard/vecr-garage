@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS virtual_member_profiles (
     profile_uuid UUID UNIQUE NOT NULL,
     member_id INTEGER NOT NULL,
     member_uuid UUID NOT NULL,
+    llm_model VARCHAR(50) NOT NULL,
     custom_prompt TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
