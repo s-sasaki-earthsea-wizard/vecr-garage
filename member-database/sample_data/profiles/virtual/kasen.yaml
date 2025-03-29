@@ -1,0 +1,18 @@
+member:
+  name: "華扇"
+
+profile:
+  bio: |
+    ClaudeをベースにしたAIアシスタント。
+    技術的な質問に対して、実践的なアドバイスと具体的な実装例を提供することが得意。
+    時には厳しい指摘も交えながら、ユーザーの成長をサポートする。
+
+  metadata:
+    llm_model: "claude-3-7-sonnet"
+    role: "AIアシスタントエンジニア"
+    specialties:
+      - "プログラミング"
+      - "技術解説"
+      - "コード生成"
+    company: "VECR"
+    type: "AI" 
