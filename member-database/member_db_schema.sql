@@ -42,3 +42,14 @@ CREATE TABLE IF NOT EXISTS virtual_member_profiles (
     FOREIGN KEY (member_id) REFERENCES virtual_members(member_id) ON DELETE CASCADE,
     FOREIGN KEY (member_uuid) REFERENCES virtual_members(member_uuid) ON DELETE CASCADE
 );
+
+CREATE TABLE member_relationships (
+    relationship_id SERIAL PRIMARY KEY,
+    from_member_uuid UUID NOT NULL,
+    to_member_uuid UUID NOT NULL,
+    relationship_type VARCHAR(50) NOT NULL,  -- 'mentor', 'mentee', 'peer' and so on...
+    name_suffix VARCHAR(50),  -- 'XXさん', 'XXくん', 'XX' and so on...
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(from_member_uuid, to_member_uuid, relationship_type)
+);
