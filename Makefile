@@ -43,10 +43,10 @@ docker-clean: ## Stop and remove all containers, volumes, and images
 	$(COMPOSE) -p $(PROJECT_NAME) down --volumes --rmi all --remove-orphans
 
 # ------------------------------------------------------------
-# Member manager service commands
+# Backend service commands
 # ------------------------------------------------------------
 
-member-manager-shell: ## Open a shell into the member manager container
+backend-shell: ## Open a shell into the backend container
 	$(COMPOSE) -p $(PROJECT_NAME) exec backend /bin/bash
 
 backend-start: ## Start the backend container
