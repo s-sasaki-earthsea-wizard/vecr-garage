@@ -81,6 +81,7 @@ services:
       environment:
         - MINIO_ROOT_USER=minioadmin
         - MINIO_ROOT_PASSWORD=minioadmin
+        - MINIO_BUCKET_NAME=sample-data
       networks:
         - network
       healthcheck:
@@ -88,6 +89,23 @@ services:
         interval: 30s
         timeout: 10s
         retries: 5
+  
+  minio-setup:
+    image: minio/mc
+    depends_on:
+      storage:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      mc alias set myminio http://storage:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      mc mb --ignore-existing myminio/${MINIO_BUCKET_NAME};
+      mc cp --recursive /sample_data/* myminio/${MINIO_BUCKET_NAME}/;
+      "
+    volumes:
+      - ./storage/sample_data:/sample_data
+    networks:
+      - network
 
   member-manager:
     build:
@@ -152,5 +170,3 @@ volumes:
     name: ${VOLUME_NAME}
     driver: local
 
-      
-      
