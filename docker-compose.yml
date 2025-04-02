@@ -10,11 +10,11 @@ services:
       - ./backend-db-registration/src:/app/src
       - ./db-member/seed_data:/app/seed_data
     environment:
-      - DB_HOST=db-member
-      - DB_PORT=5432
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - MEMBER_DB_HOST=db-member
+      - MEMBER_DB_PORT=5432
+      - MEMBER_DB_USER=${MEMBER_DB_USER}
+      - MEMBER_DB_PASSWORD=${MEMBER_DB_PASSWORD}
+      - MEMBER_DB_NAME=${MEMBER_DB_NAME}
       - STORAGE_HOST=storage
       - STORAGE_PORT=9000
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
@@ -53,9 +53,9 @@ services:
     image: postgres:16
     container_name: ${CONTAINER_NAME}-db-member
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${MEMBER_DB_USER}
+      - POSTGRES_PASSWORD=${MEMBER_DB_PASSWORD}
+      - POSTGRES_DB=${MEMBER_DB_NAME}
     volumes:
       - ./db-member/member_db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
     ports:
