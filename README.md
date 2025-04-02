@@ -47,7 +47,8 @@ make docker-build-up
 
 ### 各サービスへのアクセス
 
-- バックエンドサービス: `make backend-shell`
+- バックエンドサービス(DB操作): `make backend-db-operation-shell`
+- バックエンドサービス(DB操作): `make backend-llm-response-shell`
 - データベースサービス: `make member-db-shell`
 - ストレージサービス: `make storage-shell`
 

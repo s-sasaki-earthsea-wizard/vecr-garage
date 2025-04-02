@@ -1,16 +1,16 @@
 services:
-  backend:
+  backend-db-registration:
     build:
-      context: ./backend
+      context: ./backend-db-registration
       dockerfile: Dockerfile
-    container_name: ${CONTAINER_NAME}-backend
+    container_name: ${CONTAINER_NAME}-backend-db-registration
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/app
-      - ./member-database/seed_data:/app/seed_data
+      - ./backend-db-registration/src:/app/src
+      - ./db-member/seed_data:/app/seed_data
     environment:
-      - DB_HOST=member-database
+      - DB_HOST=db-member
       - DB_PORT=5432
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -21,12 +21,12 @@ services:
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
       - USE_S3=false
-      - DYNAMODB_HOST=chat-log-database
+      - DYNAMODB_HOST=db-chat-log
       - DYNAMODB_PORT=4566
     depends_on:
-      member-database:
+      db-member:
         condition: service_healthy
-      chat-log-database:
+      db-chat-log:
         condition: service_healthy
     networks:
       - network
@@ -36,15 +36,28 @@ services:
       timeout: 10s
       retries: 5
 
-  member-database:
+  backend-llm-response:
+    build:
+      context: ./backend-llm-response
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME}-backend-llm-response
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend-llm-response/src:/app/src
+    environment:
+      - DB_HOST=db-member
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+  db-member:
     image: postgres:16
-    container_name: ${CONTAINER_NAME}-member-database
+    container_name: ${CONTAINER_NAME}-db-member
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     volumes:
-      - ./member-database/member_db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
+      - ./db-member/member_db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
     ports:
       - "5432:5432"
     networks:
@@ -97,7 +110,7 @@ services:
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
     depends_on:
-      member-database:
+      db-member:
         condition: service_healthy
       storage:
         condition: service_healthy
@@ -109,9 +122,9 @@ services:
       timeout: 10s
       retries: 5
 
-  chat-log-database:
+  db-chat-log:
     image: localstack/localstack:latest
-    container_name: ${CONTAINER_NAME}-chat-log-database
+    container_name: ${CONTAINER_NAME}-db-chat-log
     ports:
       - "4566:4566"
     environment:
@@ -120,7 +133,7 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - DEBUG=1
     volumes:
-      - ./chat-log-database:/var/lib/localstack/data
+      - ./db-chat-log:/var/lib/localstack/data
     networks:
       - network
     healthcheck:

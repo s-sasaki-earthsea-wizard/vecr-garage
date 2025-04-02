@@ -43,36 +43,58 @@ docker-clean: ## Stop and remove all containers, volumes, and images
 	$(COMPOSE) -p $(PROJECT_NAME) down --volumes --rmi all --remove-orphans
 
 # ------------------------------------------------------------
-# Backend service commands
+# Backend-db-operation service commands
 # ------------------------------------------------------------
 
-backend-shell: ## Open a shell into the backend container
-	$(COMPOSE) -p $(PROJECT_NAME) exec backend /bin/bash
+backend-db-registration-shell: ## Open a shell into the backend-db-registration container
+	$(COMPOSE) -p $(PROJECT_NAME) exec backend-db-registration /bin/bash
 
-backend-start: ## Start the backend container
-	$(COMPOSE) -p $(PROJECT_NAME) start backend
+backend-db-registration-start: ## Start the backend-db-registration container
+	$(COMPOSE) -p $(PROJECT_NAME) start backend-db-registration
 
-backend-stop: ## Stop the backend container
-	$(COMPOSE) -p $(PROJECT_NAME) stop backend
+backend-db-registration-stop: ## Stop the backend-db-registration container
+	$(COMPOSE) -p $(PROJECT_NAME) stop backend-db-registration
 
-backend-restart: ## Restart the backend container
-	$(COMPOSE) -p $(PROJECT_NAME) restart backend
+backend-db-registration-restart: ## Restart the backend-db-registration container
+	$(COMPOSE) -p $(PROJECT_NAME) restart backend-db-registration
+
+backend-db-registration-clean: ## Clean the backend-db-registration container
+	$(COMPOSE) -p $(PROJECT_NAME) down --volumes --rmi all --remove-orphans
+
+# ------------------------------------------------------------
+# Backend-llm-response service commands
+# ------------------------------------------------------------
+
+backend-llm-response-shell: ## Open a shell into the backend-llm-response container
+	$(COMPOSE) -p $(PROJECT_NAME) exec backend-llm-response /bin/bash
+
+backend-llm-response-start: ## Start the backend-llm-response container
+	$(COMPOSE) -p $(PROJECT_NAME) start backend-llm-response
+
+backend-llm-response-stop: ## Stop the backend-llm-response container
+	$(COMPOSE) -p $(PROJECT_NAME) stop backend-llm-response
+
+backend-llm-response-restart: ## Restart the backend-llm-response container
+	$(COMPOSE) -p $(PROJECT_NAME) restart backend-llm-response
+
+backend-llm-response-clean: ## Clean the backend-llm-response container
+	$(COMPOSE) -p $(PROJECT_NAME) down --volumes --rmi all --remove-orphans
 
 # ------------------------------------------------------------
 # Member database service commands
 # ------------------------------------------------------------
 
-member-db-shell: ## Open a shell into the member database container
-	$(COMPOSE) -p $(PROJECT_NAME) exec member-database /bin/bash
+db-member-shell: ## Open a shell into the member database container
+	$(COMPOSE) -p $(PROJECT_NAME) exec db-member /bin/bash
 
-member-db-start: ## Start the member database container
-	$(COMPOSE) -p $(PROJECT_NAME) start member-database
+db-member-start: ## Start the member database container
+	$(COMPOSE) -p $(PROJECT_NAME) start db-member
 
-member-db-stop: ## Stop the member database container
-	$(COMPOSE) -p $(PROJECT_NAME) stop member-database
+db-member-stop: ## Stop the member database container
+	$(COMPOSE) -p $(PROJECT_NAME) stop db-member
 
-member-db-restart: ## Restart the member database container
-	$(COMPOSE) -p $(PROJECT_NAME) restart member-database
+db-member-restart: ## Restart the member database container
+	$(COMPOSE) -p $(PROJECT_NAME) restart db-member
 
 # ------------------------------------------------------------
 # Storage service commands
