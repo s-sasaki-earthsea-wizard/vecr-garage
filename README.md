@@ -48,9 +48,10 @@ make docker-build-up
 ### 各サービスへのアクセス
 
 - バックエンドサービス(DB操作): `make backend-db-operation-shell`
-- バックエンドサービス(DB操作): `make backend-llm-response-shell`
-- データベースサービス: `make member-db-shell`
-- ストレージサービス: `make storage-shell`
+  - 接続チェック: `make backend-db-registration-conn-info`
+- バックエンドサービス(LLM応答): `make backend-llm-response-shell`
+- データベースサービス: `make member-db-psql`
+- ストレージサービス: `http:localhost:9001`にブラウザでアクセス
 
 ## ネットワーク構成
 

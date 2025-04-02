@@ -11,7 +11,10 @@ default: help
 # Define docker compose command
 COMPOSE := $(shell if command -v docker-compose >/dev/null 2>&1; then echo "docker-compose"; else echo "docker compose"; fi)
 
-PROJECT_NAME := vecr-office
+# Define environment variables
+PROJECT_NAME := $(PROJECT_NAME)
+MEMBER_DB_USER := $(MEMBER_DB_USER)
+MEMBER_DB_NAME := $(MEMBER_DB_NAME)
 
 # ------------------------------------------------------------
 # Docker commands
@@ -61,6 +64,9 @@ backend-db-registration-restart: ## Restart the backend-db-registration containe
 backend-db-registration-clean: ## Clean the backend-db-registration container
 	$(COMPOSE) -p $(PROJECT_NAME) down --volumes --rmi all --remove-orphans
 
+backend-db-registration-conn-info: ## Show connection information for the member database
+	$(COMPOSE) -p $(PROJECT_NAME) exec backend-db-registration bash -c 'PGPASSWORD=$$MEMBER_DB_PASSWORD psql -h $$MEMBER_DB_HOST -p $$MEMBER_DB_PORT -U $$MEMBER_DB_USER -d $$MEMBER_DB_NAME -c "\conninfo"'
+
 # ------------------------------------------------------------
 # Backend-llm-response service commands
 # ------------------------------------------------------------
@@ -86,6 +92,9 @@ backend-llm-response-clean: ## Clean the backend-llm-response container
 
 db-member-shell: ## Open a shell into the member database container
 	$(COMPOSE) -p $(PROJECT_NAME) exec db-member /bin/bash
+
+db-member-psql: ## Connect to the member database using psql
+	$(COMPOSE) -p $(PROJECT_NAME) exec db-member psql -U $(MEMBER_DB_USER) -d $(MEMBER_DB_NAME)
 
 db-member-start: ## Start the member database container
 	$(COMPOSE) -p $(PROJECT_NAME) start db-member
