@@ -120,11 +120,11 @@ services:
     volumes:
       - ./member-manager:/app
     environment:
-      - DB_HOST=member-database
-      - DB_PORT=5432
-      - DB_USER=testuser
-      - DB_PASSWORD=password
-      - DB_NAME=${DB_NAME}
+      - MEMBER_DB_HOST=db-member
+      - MEMBER_DB_PORT=5432
+      - MEMBER_DB_USER=${MEMBER_DB_USER}
+      - MEMBER_DB_PASSWORD=${MEMBER_DB_PASSWORD}
+      - MEMBER_DB_NAME=${MEMBER_DB_NAME}
       - STORAGE_HOST=storage
       - STORAGE_PORT=9000
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
