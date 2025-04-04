@@ -96,7 +96,6 @@ services:
   minio-setup:
     image: minio/mc
     environment:
-      - STORAGE_HOST=storage
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
@@ -105,50 +104,11 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c '
-      set -ex
-
-      echo "Waiting for storage service..."
-      sleep 10
-
-      echo "Setting up MinIO client..."
-      mc alias set myminio http://storage:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
-
-      echo "Testing connection to MinIO server..."
-      max_retries=12
-      retry_count=0
-      until mc ls myminio || [ $retry_count -eq $max_retries ]; do
-        echo "Waiting for MinIO server to be ready... (attempt $((retry_count + 1))/$max_retries)"
-        sleep 5
-        retry_count=$((retry_count + 1))
-      done
-
-      if [ $retry_count -eq $max_retries ]; then
-        echo "Failed to connect to MinIO server after $max_retries attempts"
-        exit 1
-      fi
-
-      echo "Creating bucket: $MINIO_BUCKET_NAME"
-      if ! mc ls "myminio/$MINIO_BUCKET_NAME" 2>/dev/null; then
-        mc mb "myminio/$MINIO_BUCKET_NAME"
-      else
-        echo "Bucket already exists"
-      fi
-
-      echo "Listing sample data directory..."
-      ls -la /sample_data
-
-      echo "Copying sample data..."
-      if [ -d /sample_data/data ]; then
-        mc cp --recursive /sample_data/data/* "myminio/$MINIO_BUCKET_NAME/" || echo "No data files to copy"
-      fi
-      if [ -d /sample_data/images ]; then
-        mc cp --recursive /sample_data/images/* "myminio/$MINIO_BUCKET_NAME/" || echo "No image files to copy"
-      fi
-
-      echo "Verifying bucket contents..."
-      mc ls "myminio/$MINIO_BUCKET_NAME"
-
-      echo "Setup completed successfully"
+      sleep 5 &&
+      mc alias set myminio http://storage:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
+      mc mb -p myminio/${MINIO_BUCKET_NAME} &&
+      mc cp --recursive /sample_data/ myminio/${MINIO_BUCKET_NAME}/ &&
+      exit 0
       '
     volumes:
       - ./storage/sample_data:/sample_data
