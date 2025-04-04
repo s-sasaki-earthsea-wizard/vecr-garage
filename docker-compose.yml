@@ -1,0 +1,175 @@
+services:
+  backend-db-registration:
+    build:
+      context: ./backend-db-registration
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME}-backend-db-registration
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend-db-registration/src:/app/src
+      - ./db-member/seed_data:/app/seed_data
+    environment:
+      - MEMBER_DB_HOST=db-member
+      - MEMBER_DB_PORT=5432
+      - MEMBER_DB_USER=${MEMBER_DB_USER}
+      - MEMBER_DB_PASSWORD=${MEMBER_DB_PASSWORD}
+      - MEMBER_DB_NAME=${MEMBER_DB_NAME}
+      - STORAGE_HOST=storage
+      - STORAGE_PORT=9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - USE_S3=false
+      - DYNAMODB_HOST=db-chat-log
+      - DYNAMODB_PORT=4566
+    depends_on:
+      db-member:
+        condition: service_healthy
+      db-chat-log:
+        condition: service_healthy
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  backend-llm-response:
+    build:
+      context: ./backend-llm-response
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME}-backend-llm-response
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend-llm-response/src:/app/src
+    environment:
+      - MEMBER_DB_HOST=db-member
+      - MEMBER_DB_PORT=5432
+      - MEMBER_DB_USER=${MEMBER_DB_USER}
+      - MEMBER_DB_PASSWORD=${MEMBER_DB_PASSWORD}
+      - MEMBER_DB_NAME=${MEMBER_DB_NAME}
+
+  db-member:
+    image: postgres:16
+    container_name: ${CONTAINER_NAME}-db-member
+    environment:
+      - POSTGRES_USER=${MEMBER_DB_USER}
+      - POSTGRES_PASSWORD=${MEMBER_DB_PASSWORD}
+      - POSTGRES_DB=${MEMBER_DB_NAME}
+    volumes:
+      - ./db-member/member_db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${MEMBER_DB_USER}", "-d", "${MEMBER_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  storage:
+      build:
+        context: ./storage
+        dockerfile: Dockerfile
+      container_name: ${CONTAINER_NAME}-storage
+      ports:
+        - "9000:9000"  # API port
+        - "9001:9001"  # Console port
+      volumes:
+        - ./storage/data:/data
+      environment:
+        - MINIO_ROOT_USER=minioadmin
+        - MINIO_ROOT_PASSWORD=minioadmin
+        - MINIO_BUCKET_NAME=sample-data
+      networks:
+        - network
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+  
+  minio-setup:
+    image: minio/mc
+    depends_on:
+      storage:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      mc alias set myminio http://storage:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      mc mb --ignore-existing myminio/${MINIO_BUCKET_NAME};
+      mc cp --recursive /sample_data/* myminio/${MINIO_BUCKET_NAME}/;
+      "
+    volumes:
+      - ./storage/sample_data:/sample_data
+    networks:
+      - network
+
+  member-manager:
+    build:
+      context: ./member-manager
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME}-member-manager
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./member-manager:/app
+    environment:
+      - MEMBER_DB_HOST=db-member
+      - MEMBER_DB_PORT=5432
+      - MEMBER_DB_USER=${MEMBER_DB_USER}
+      - MEMBER_DB_PASSWORD=${MEMBER_DB_PASSWORD}
+      - MEMBER_DB_NAME=${MEMBER_DB_NAME}
+      - STORAGE_HOST=storage
+      - STORAGE_PORT=9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+    depends_on:
+      db-member:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  db-chat-log:
+    image: localstack/localstack:latest
+    container_name: ${CONTAINER_NAME}-db-chat-log
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=dynamodb
+      - DEFAULT_REGION=ap-northeast-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEBUG=1
+    volumes:
+      - ./db-chat-log:/var/lib/localstack/data
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  network:
+    name: ${NETWORK_NAME}
+    driver: bridge
+
+volumes:
+  data:
+    name: ${VOLUME_NAME}
+    driver: local
+
