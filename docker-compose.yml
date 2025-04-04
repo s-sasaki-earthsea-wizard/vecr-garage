@@ -30,11 +30,12 @@ services:
         condition: service_healthy
     networks:
       - network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    # TODO: Health check is not implemented yet...
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3000"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
 
   backend-llm-response:
     build:
@@ -72,39 +73,83 @@ services:
       retries: 5
 
   storage:
-      build:
-        context: ./storage
-        dockerfile: Dockerfile
-      container_name: ${CONTAINER_NAME}-storage
-      ports:
-        - "9000:9000"  # API port
-        - "9001:9001"  # Console port
-      volumes:
-        - ./storage/data:/data
-      environment:
-        - MINIO_ROOT_USER=minioadmin
-        - MINIO_ROOT_PASSWORD=minioadmin
-        - MINIO_BUCKET_NAME=sample-data
-      networks:
-        - network
-      healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-        interval: 30s
-        timeout: 10s
-        retries: 5
+    image: minio/minio:latest
+    container_name: ${CONTAINER_NAME}-storage
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"  # API port
+      - "9001:9001"  # Console port
+    volumes:
+      - ./storage/data:/data
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
   
   minio-setup:
     image: minio/mc
+    environment:
+      - STORAGE_HOST=storage
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
     depends_on:
       storage:
         condition: service_healthy
     entrypoint: >
-      /bin/sh -c "
-      sleep 10;
-      mc alias set myminio http://storage:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
-      mc mb --ignore-existing myminio/${MINIO_BUCKET_NAME};
-      mc cp --recursive /sample_data/* myminio/${MINIO_BUCKET_NAME}/;
-      "
+      /bin/sh -c '
+      set -ex
+
+      echo "Waiting for storage service..."
+      sleep 10
+
+      echo "Setting up MinIO client..."
+      mc alias set myminio http://storage:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+
+      echo "Testing connection to MinIO server..."
+      max_retries=12
+      retry_count=0
+      until mc ls myminio || [ $retry_count -eq $max_retries ]; do
+        echo "Waiting for MinIO server to be ready... (attempt $((retry_count + 1))/$max_retries)"
+        sleep 5
+        retry_count=$((retry_count + 1))
+      done
+
+      if [ $retry_count -eq $max_retries ]; then
+        echo "Failed to connect to MinIO server after $max_retries attempts"
+        exit 1
+      fi
+
+      echo "Creating bucket: $MINIO_BUCKET_NAME"
+      if ! mc ls "myminio/$MINIO_BUCKET_NAME" 2>/dev/null; then
+        mc mb "myminio/$MINIO_BUCKET_NAME"
+      else
+        echo "Bucket already exists"
+      fi
+
+      echo "Listing sample data directory..."
+      ls -la /sample_data
+
+      echo "Copying sample data..."
+      if [ -d /sample_data/data ]; then
+        mc cp --recursive /sample_data/data/* "myminio/$MINIO_BUCKET_NAME/" || echo "No data files to copy"
+      fi
+      if [ -d /sample_data/images ]; then
+        mc cp --recursive /sample_data/images/* "myminio/$MINIO_BUCKET_NAME/" || echo "No image files to copy"
+      fi
+
+      echo "Verifying bucket contents..."
+      mc ls "myminio/$MINIO_BUCKET_NAME"
+
+      echo "Setup completed successfully"
+      '
     volumes:
       - ./storage/sample_data:/sample_data
     networks:
@@ -137,11 +182,12 @@ services:
         condition: service_healthy
     networks:
       - network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    # TODO: Health check is not implemented yet...
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
 
   db-chat-log:
     image: localstack/localstack:latest

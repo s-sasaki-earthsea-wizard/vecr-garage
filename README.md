@@ -51,7 +51,9 @@ make docker-build-up
   - 接続チェック: `make backend-db-registration-conn-info`
 - バックエンドサービス(LLM応答): `make backend-llm-response-shell`
 - データベースサービス: `make member-db-psql`
-- ストレージサービス: `http:localhost:9001`にブラウザでアクセス
+- ストレージサービス: 
+  - `http://localhost:9001`にブラウザでアクセス
+  - または`make storage-shell`でターミナルからアクセス
 
 ## ネットワーク構成
 
