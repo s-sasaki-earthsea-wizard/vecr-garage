@@ -1,5 +1,7 @@
-from minio import Minio
 import os
+import yaml
+from io import BytesIO
+from minio import Minio
 
 class StorageClient:
     def __init__(self):
@@ -11,21 +13,56 @@ class StorageClient:
             secure=False  # In development, HTTP is fine. In production, it should be True
         )
         self.bucket_name = os.environ.get('MINIO_BUCKET_NAME')
+    
+    def storage_connection_check(self):
+        """
+        Check connection to storage
+        
+        Returns:
+            bool: True if connection is successful
+            
+        Raises:
+            Exception: If connection fails
+        """
+        try:
+            self._check_bucket_exists()
+            self.client.list_buckets()
+            return True
+        except Exception as e:
+            raise Exception(f"❌ Error connecting to storage: {e}")
 
-    def read_yaml_from_minio(self, object_name):
+    def _check_bucket_exists(self, bucket_name=None):
+        """
+        Check if a specific bucket exists
+        
+        Args:
+            bucket_name (str, optional): Name of the bucket to check. If None, uses self.bucket_name
+            
+        Returns:
+            bool: True if the bucket exists, False otherwise
+        """
+        if bucket_name is None:
+            bucket_name = self.bucket_name
+            
+        try:
+            return self.client.bucket_exists(bucket_name)
+        except Exception as e:
+            raise Exception(f"❌ Error checking if bucket {bucket_name} exists: {e}")
+
+    def read_yaml_from_minio(self, object_name: str) -> dict:
         """
         Read a YAML file from a MinIO bucket
         
         Args:
-            bucket_name (str): Bucket name
             object_name (str): Object name (including path)
             
         Returns:
             dict: The YAML data read
+            
+        Raises:
+            Exception: If reading the file fails
         """
-        import yaml
-        from io import BytesIO
-        
+        response = None
         try:
             # Get the object
             response = self.client.get_object(self.bucket_name, object_name)
@@ -42,25 +79,24 @@ class StorageClient:
             
             return data
         except Exception as e:
-            print(f"Error reading {object_name} from {self.bucket_name}: {e}")
-            return None
+            raise Exception(f"❌ Error reading {object_name} from {self.bucket_name}: {e}")
 
 def main():
     storage_client = StorageClient()
-    # Read specific files
-    syota_data = storage_client.read_yaml_from_minio("data/human_members/Syota.yml")
-    kasen_data = storage_client.read_yaml_from_minio("data/virtual_members/Kasen.yml")
 
-    print(f"Syota data: {syota_data}")
-    print(f"Kasen data: {kasen_data}")
+    if storage_client.storage_connection_check():
+        print("✅ Successfully connected to storage!")
 
-    # Alternatively, enumerate all files in the directory
-    objects = storage_client.client.list_objects(
-        storage_client.bucket_name, prefix="data/human_members/",
-        recursive=True
-        )
-    for obj in objects:
-        print(f"Found object: {obj.object_name}, size: {obj.size}")
+    try:
+        # Read specific files
+        syota_data = storage_client.read_yaml_from_minio("data/human_members/Syota.yml")
+        kasen_data = storage_client.read_yaml_from_minio("data/virtual_members/Kasen.yml")
+
+        print(f"Syota data: {syota_data}")
+        print(f"Kasen data: {kasen_data}")
+
+    except Exception as e:
+        raise Exception(f"❌ Error reading data from storage: {e}")
 
 if __name__ == "__main__":
     main()
