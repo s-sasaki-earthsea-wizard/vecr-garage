@@ -1,4 +1,4 @@
-# VECR Office
+# VECR Garage
 
 ## 概要
 
@@ -18,8 +18,8 @@ VECRガレージのオフィス環境をDockerコンテナで構築するプロ�
 
 1. リポジトリをクローン
 ```bash
-git clone https://github.com/s-sasaki-earthsea-wizard/vecr-office.git
-cd vecr-office
+git clone https://github.com/s-sasaki-earthsea-wizard/vecr-garage.git
+cd vecr-garage
 ```
 
 2. 環境変数ファイルの作成
@@ -47,15 +47,47 @@ make docker-build-up
 
 ### 各サービスへのアクセス
 
-- バックエンドサービス(DB操作): `make backend-db-operation-shell`
-  - 接続チェック: `make backend-db-registration-conn-info`
+#### `backend-db-registration` サービス
+
+`storage`サービスのバケットに配置されているファイルを読み込み、
+メンバーのデータベースである`db-member`へのインサートを行うサービスです。
+
+以下のコマンドでコンテナのシェルに入ることができます:
+
+```bash
+make backend-db-registration-shell
+```
+
+詳細は`backend-db-operation`サービスの[README](./backend-db-registration/README.md)を参照してください。
+
+#### storage サービス
+
+チームメンバーのプロフィールやカスタムプロンプトを配置するサービスです。
+minIOによって
+以下のコマンドでアクセスできます:
+
+- `http://localhost:9001`にブラウザでアクセス
+- または`make storage-shell`でターミナルからアクセス
+
+詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
+
+#### db-member サービス
+
+人間メンバー、仮装メンバーの両方を含めたチームメンバーのデータベースです。
+以下のコマンドでアクセスできます:
+
+```bash
+db-member-psql
+```
+
+#### TBD
+
 - バックエンドサービス(LLM応答): `make backend-llm-response-shell`
-- データベースサービス: `make member-db-psql`
-- ストレージサービス: `http:localhost:9001`にブラウザでアクセス
+
 
 ## ネットワーク構成
 
-- プロジェクト名: `vecr-office`
+- プロジェクト名: `vecr-garage`
 - サービス構成:
   - backend
     - データベース操作やプロンプト生成、LLMからの応答の送受信を行います。
@@ -78,6 +110,8 @@ make docker-build-up
 _____
 
 # VECR Office
+
+The English README does not reflect the latest Japanese README.
 
 ## Overview
 
