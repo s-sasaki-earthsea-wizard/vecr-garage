@@ -1,12 +1,10 @@
-.PHONY: db-member-connection show-sample-data-in-bucket help
+.PHONY: db-member-connection help
 
 default: help
 
 db-member-connection:  ## Check connection to db-member
 	PGPASSWORD=$${MEMBER_DB_PASSWORD} psql -h $${MEMBER_DB_HOST} -p $${MEMBER_DB_PORT} -U $${MEMBER_DB_USER} -d $${MEMBER_DB_NAME} -c "\conninfo"
 
-show-sample-data-in-bucket:  ## Show sample data in bucket
-	python src/storage/storage_client.py
 
 help: ## Show this help message
 	@echo "------------------------------------------------------------------------------"

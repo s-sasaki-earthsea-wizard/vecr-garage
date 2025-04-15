@@ -16,9 +16,5 @@ RUN pip install --upgrade pip && \
     rm -rf /root/.cache/pip && \
     rm requirements.txt
 
-# Copy the source code and Makefile into the container
-COPY src/ ./src/
-COPY Makefile ./
-
 # Set the entrypoint (This is just a placeholder)
 ENTRYPOINT ["python", "src/app.py"]
