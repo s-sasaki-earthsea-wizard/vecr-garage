@@ -16,5 +16,8 @@ RUN pip install --upgrade pip && \
     rm -rf /root/.cache/pip && \
     rm requirements.txt
 
+# Set the PYTHONPATH to include the src directory
+ENV PYTHONPATH="/app/src:$PYTHONPATH"
+
 # Set the entrypoint (This is just a placeholder)
 ENTRYPOINT ["python", "src/app.py"]
