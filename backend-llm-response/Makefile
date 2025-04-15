@@ -3,8 +3,7 @@
 default: help
 
 db-member-connection:  ## Check connection to db-member
-	PGPASSWORD=$${MEMBER_DB_PASSWORD} psql -h $${MEMBER_DB_HOST} -p $${MEMBER_DB_PORT} -U $${MEMBER_DB_USER} -d $${MEMBER_DB_NAME} -c "\conninfo"
-
+	python src/db/connection/connection.py
 
 help: ## Show this help message
 	@echo "------------------------------------------------------------------------------"

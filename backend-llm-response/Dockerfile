@@ -13,5 +13,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+# Set the PYTHONPATH to include the src directory
+ENV PYTHONPATH="/app/src:$PYTHONPATH"
+
 # Set the entrypoint
 ENTRYPOINT ["python", "src/app.py"]
