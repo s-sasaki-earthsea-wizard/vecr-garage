@@ -12,6 +12,7 @@ class HumanMember(Base):
     member_id = Column(Integer, primary_key=True)
     member_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     member_name = Column(String(50), unique=True, nullable=False)
+    bio = Column(Text)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     
@@ -27,6 +28,8 @@ class VirtualMember(Base):
     member_id = Column(Integer, primary_key=True)
     member_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     member_name = Column(String(50), unique=True, nullable=False)
+    llm_model = Column(String(50), nullable=False)
+    custom_prompt = Column(Text)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     
