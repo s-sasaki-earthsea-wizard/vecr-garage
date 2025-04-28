@@ -59,6 +59,32 @@ Kasen data: {'name': '華扇', 'custom_prompt': "I'm a virtual member.", 'llm_mo
 - `MINIO_ROOT_PASSWORD`: MinIOのシークレットキー
 - `MINIO_BUCKET_NAME`: 使用するバケット名
 
+#### レコードの登録方法
+
+storage サービスへ、DBにインサートしたい情報のファイルを配置してください。
+
+詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
+
+以下のコマンドでコンテナのシェルに入ります：
+
+```bash
+make backend-db-registration-shell
+```
+
+コンテナのシェル内で以下のコマンドを実行：
+
+```bash
+cd /app/src && PYTHONPATH=/app/src python -m scripts.register_members
+```
+
+成功した時、以下のようなメッセージが表示がされます：
+
+```bash
+INFO:operations.member_registration:Human member Syota already exists.
+INFO:operations.member_registration:Virtual member 華扇 registered successfully.
+INFO:__main__:All member registration completed
+```
+
 #### エラーが発生した場合
 
 エラーが発生した場合は、以下の点を確認してください：
