@@ -1,6 +1,5 @@
-from src.models.base import SessionLocal
-from src.db.database import create_human_member, create_virtual_member, get_human_member_by_name, get_virtual_member_by_name
-from ..storage.storage_client import StorageClient
+from db.database import SessionLocal, create_human_member, create_virtual_member, get_human_member_by_name, get_virtual_member_by_name
+from storage.storage_client import StorageClient
 import yaml
 import logging
 
