@@ -15,7 +15,6 @@ def register_human_member_from_yaml(yaml_path: str):
         
         # YAMLからデータを取得
         name = yaml_data.get('name')
-        bio = yaml_data.get('bio')
         
         # DBセッションを開始
         db = SessionLocal()
@@ -27,7 +26,7 @@ def register_human_member_from_yaml(yaml_path: str):
                 return existing_member
             
             # 新しいメンバーを作成
-            new_member = create_human_member(db, name, bio)
+            new_member = create_human_member(db, name)
             logger.info(f"Human member {name} registered successfully.")
             return new_member
         finally:
@@ -45,8 +44,6 @@ def register_virtual_member_from_yaml(yaml_path: str):
         
         # YAMLからデータを取得
         name = yaml_data.get('name')
-        llm_model = yaml_data.get('llm_model')
-        custom_prompt = yaml_data.get('custom_prompt')
         
         # DBセッションを開始
         db = SessionLocal()
@@ -58,7 +55,7 @@ def register_virtual_member_from_yaml(yaml_path: str):
                 return existing_member
             
             # 新しいメンバーを作成
-            new_member = create_virtual_member(db, name, llm_model, custom_prompt)
+            new_member = create_virtual_member(db, name)
             logger.info(f"Virtual member {name} registered successfully.")
             return new_member
         finally:
