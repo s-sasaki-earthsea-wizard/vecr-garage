@@ -18,6 +18,7 @@ try:
     engine = create_engine(DATABASE_URL)
     # 接続テスト
     engine.connect()
+    print("データベースへの接続に成功しました")
 except Exception as e:
     print(f"データベース接続エラー: {e}")
     raise
