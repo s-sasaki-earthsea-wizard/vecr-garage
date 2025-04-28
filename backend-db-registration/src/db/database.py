@@ -1,6 +1,13 @@
 from sqlalchemy.orm import Session
-from src.models.members import HumanMember, VirtualMember
+from models.members import HumanMember, VirtualMember
 import uuid
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+# データベース接続設定
+DATABASE_URL = "postgresql://postgres:postgres@db-member:5432/member_db"
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # 人間メンバー操作
 def create_human_member(db: Session, name: str, bio: str = None):

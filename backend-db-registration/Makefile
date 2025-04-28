@@ -1,4 +1,4 @@
-.PHONY: show_sample_data_in_bucket help
+.PHONY: show_sample_data_in_bucket help register-members
 
 default: help
 
@@ -16,3 +16,11 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "------------------------------------------------------------------------------"
 
+register-members:  ## Register members from YAML files
+	docker-compose -p vecr-garage exec backend-db-registration bash -c 'cd /app/src && PYTHONPATH=/app/src python -m scripts.register_members'
+
+register-human-members:  ## Register human members from YAML files
+	python -m src.scripts.register_members --human
+
+register-virtual-members:  ## Register virtual members from YAML files
+	python -m src.scripts.register_members --virtual

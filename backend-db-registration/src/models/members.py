@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 import datetime
 import uuid
 
-from src.models.base import Base
+from .base import Base
 
 class HumanMember(Base):
     __tablename__ = "human_members"
@@ -15,9 +15,6 @@ class HumanMember(Base):
     bio = Column(Text)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-    
-    # リレーションシップの定義
-    profiles = relationship("HumanMemberProfile", back_populates="member", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<HumanMember(id={self.member_id}, name={self.member_name})>"
@@ -32,9 +29,6 @@ class VirtualMember(Base):
     custom_prompt = Column(Text)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-    
-    # リレーションシップの定義
-    profiles = relationship("VirtualMemberProfile", back_populates="member", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<VirtualMember(id={self.member_id}, name={self.member_name})>"
