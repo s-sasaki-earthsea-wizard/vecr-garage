@@ -65,24 +65,48 @@ storage サービスへ、DBにインサートしたい情報のファイルを�
 
 詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
 
-以下のコマンドでコンテナのシェルに入ります：
+以下のコマンドでディレクトリを移動：
 
 ```bash
-make backend-db-registration-shell
+cd backend-db-registration
 ```
 
-コンテナのシェル内で以下のコマンドを実行：
+backend-db-registrationディレクトリで以下のコマンドを実行：
 
 ```bash
-cd /app/src && PYTHONPATH=/app/src python -m scripts.register_members
+make set-pythonpath register-members
 ```
 
 成功した時、以下のようなメッセージが表示がされます：
 
 ```bash
-INFO:operations.member_registration:Human member Syota already exists.
+INFO:operations.member_registration:Human member Syota registered successfully.
 INFO:operations.member_registration:Virtual member 華扇 registered successfully.
 INFO:__main__:All member registration completed
+```
+
+db-memberサービスで以下のSQL文を入力：
+
+```sql
+--人間メンバーの場合
+SELECT * FROM human_members;
+
+--仮想メンバーの場合
+SELECT * FROM virtual_members;
+```
+
+登録完了時、以下のような結果が返ってくる事を期待しています：
+
+```
+ member_id |             member_uuid              | member_name |          created_at           |          updated_at           
+-----------+--------------------------------------+-------------+-------------------------------+-------------------------------
+         1 | 13e60657-717e-40da-8900-c6ddbec796b0 | Syota       | 2025-04-29 15:47:41.417381+00 | 2025-04-29 15:47:41.417409+00
+(1 row)
+
+ member_id |             member_uuid              | member_name |          created_at          |          updated_at           
+-----------+--------------------------------------+-------------+------------------------------+-------------------------------
+         1 | 2313a16f-29d4-4934-a821-b0981cbf224b | 華扇        | 2025-04-29 15:47:41.43336+00 | 2025-04-29 15:47:41.433365+00
+(1 row)
 ```
 
 #### エラーが発生した場合
