@@ -20,5 +20,8 @@ RUN pip install --upgrade pip && \
 COPY src/ ./src/
 COPY Makefile ./
 
+# Set Python path
+ENV PYTHONPATH="/app/src:$PYTHONPATH"
+
 # Set the entrypoint (This is just a placeholder)
 ENTRYPOINT ["python", "src/app.py"]
