@@ -65,16 +65,16 @@ storage サービスへ、DBにインサートしたい情報のファイルを�
 
 詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
 
-以下のコマンドでディレクトリを移動：
+以下のコマンドを実行：
 
 ```bash
-cd backend-db-registration
-```
+make register-members
 
-backend-db-registrationディレクトリで以下のコマンドを実行：
+##人間メンバーのみの場合
+make register-human-members
 
-```bash
-make set-pythonpath register-members
+##仮想メンバーのみの場合
+make register-virtual-members
 ```
 
 成功した時、以下のようなメッセージが表示がされます：
