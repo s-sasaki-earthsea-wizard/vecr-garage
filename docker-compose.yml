@@ -8,7 +8,6 @@ services:
       - "3000:3000"
     volumes:
       - ./backend-db-registration/src:/app/src
-      - ./.env:/app/.env
     environment:
       - MEMBER_DB_HOST=db-member
       - MEMBER_DB_PORT=5432
