@@ -7,7 +7,13 @@ export
 default: help
 
 db-member-connection:  ## Check connection to db-member
-	PGPASSWORD=$$MEMBER_DB_PASSWORD psql -h $$MEMBER_DB_HOST -p $$MEMBER_DB_PORT -U $$MEMBER_DB_USER -d $$MEMBER_DB_NAME -c "\conninfo"
+	@if [ -z "$$MEMBER_DB_PASSWORD" ] || [ -z "$$MEMBER_DB_HOST" ] || [ -z "$$MEMBER_DB_PORT" ] || [ -z "$$MEMBER_DB_USER" ] || [ -z "$$MEMBER_DB_NAME" ]; then \
+		echo "Error: Required environment variables are not set"; \
+		echo "Please check your .env file"; \
+		exit 1; \
+	fi
+	@echo "Connecting to database..."
+	PGPASSWORD="$$MEMBER_DB_PASSWORD" psql -h "$$MEMBER_DB_HOST" -p "$$MEMBER_DB_PORT" -U "$$MEMBER_DB_USER" -d "$$MEMBER_DB_NAME" -c "\conninfo"
 
 show_sample_data_in_bucket:  ## Show sample data in bucket
 	python src/storage/storage_client.py
