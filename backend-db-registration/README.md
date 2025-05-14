@@ -17,7 +17,7 @@ DB操作を行うサービスです。
 現在、以下のコマンドでdb-memberサービスへの接続を確認しています。
 
 ```bash
-PGPASSWORD=$MEMBER_DB_PASSWORD psql -h $MEMBER_DB_HOST -p $MEMBER_DB_PORT -U $MEMBER_DB_USER -d $MEMBER_DB_NAME -c "\conninfo"
+make db-member-connection
 ```
 
 接続成功時には以下のようなメッセージが表示されます:
