@@ -1,7 +1,3 @@
-# Include .env file
-include .env
-export
-
 .PHONY: show_sample_data_in_bucket help register-members db-member-connection
 
 default: help
@@ -9,7 +5,12 @@ default: help
 db-member-connection:  ## Check connection to db-member
 	@if [ -z "$$MEMBER_DB_PASSWORD" ] || [ -z "$$MEMBER_DB_HOST" ] || [ -z "$$MEMBER_DB_PORT" ] || [ -z "$$MEMBER_DB_USER" ] || [ -z "$$MEMBER_DB_NAME" ]; then \
 		echo "Error: Required environment variables are not set"; \
-		echo "Please check your .env file"; \
+		echo "Please set the following environment variables:"; \
+		echo "  MEMBER_DB_HOST"; \
+		echo "  MEMBER_DB_PORT"; \
+		echo "  MEMBER_DB_USER"; \
+		echo "  MEMBER_DB_PASSWORD"; \
+		echo "  MEMBER_DB_NAME"; \
 		exit 1; \
 	fi
 	@echo "Connecting to database..."
