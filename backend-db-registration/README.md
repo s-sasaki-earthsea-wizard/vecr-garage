@@ -17,7 +17,7 @@ DB操作を行うサービスです。
 現在、以下のコマンドでdb-memberサービスへの接続を確認しています。
 
 ```bash
-PGPASSWORD=$MEMBER_DB_PASSWORD psql -h $MEMBER_DB_HOST -p $MEMBER_DB_PORT -U $MEMBER_DB_USER -d $MEMBER_DB_NAME -c "\conninfo"
+make db-member-connection
 ```
 
 接続成功時には以下のようなメッセージが表示されます:
@@ -58,6 +58,56 @@ Kasen data: {'name': '華扇', 'custom_prompt': "I'm a virtual member.", 'llm_mo
 - `MINIO_ROOT_USER`: MinIOのアクセスキー
 - `MINIO_ROOT_PASSWORD`: MinIOのシークレットキー
 - `MINIO_BUCKET_NAME`: 使用するバケット名
+
+#### レコードの登録方法
+
+storage サービスへ、DBにインサートしたい情報のファイルを配置してください。
+
+詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
+
+以下のコマンドを実行：
+
+```bash
+make register-members
+
+##人間メンバーのみの場合
+make register-human-members
+
+##仮想メンバーのみの場合
+make register-virtual-members
+```
+
+成功した時、以下のようなメッセージが表示がされます：
+
+```bash
+INFO:operations.member_registration:Human member Syota registered successfully.
+INFO:operations.member_registration:Virtual member 華扇 registered successfully.
+INFO:__main__:All member registration completed
+```
+
+db-memberサービスで以下のSQL文を入力：
+
+```sql
+--人間メンバーの場合
+SELECT * FROM human_members;
+
+--仮想メンバーの場合
+SELECT * FROM virtual_members;
+```
+
+登録完了時、以下のような結果が返ってくる事を期待しています：
+
+```
+ member_id |             member_uuid              | member_name |          created_at           |          updated_at           
+-----------+--------------------------------------+-------------+-------------------------------+-------------------------------
+         1 | 13e60657-717e-40da-8900-c6ddbec796b0 | Syota       | 2025-04-29 15:47:41.417381+00 | 2025-04-29 15:47:41.417409+00
+(1 row)
+
+ member_id |             member_uuid              | member_name |          created_at          |          updated_at           
+-----------+--------------------------------------+-------------+------------------------------+-------------------------------
+         1 | 2313a16f-29d4-4934-a821-b0981cbf224b | 華扇        | 2025-04-29 15:47:41.43336+00 | 2025-04-29 15:47:41.433365+00
+(1 row)
+```
 
 #### エラーが発生した場合
 
