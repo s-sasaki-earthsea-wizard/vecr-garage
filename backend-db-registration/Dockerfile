@@ -18,6 +18,7 @@ RUN pip install --upgrade pip && \
 
 # Copy the source code and Makefile into the container
 COPY src/ ./src/
+COPY tests/ ./tests/
 COPY Makefile ./
 
 # Set Python path
