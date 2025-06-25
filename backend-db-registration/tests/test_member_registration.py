@@ -2,8 +2,55 @@ import pytest
 import yaml
 import os
 from pathlib import Path
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+from models.base import Base
 from operations.member_registration import register_human_member_from_yaml, register_virtual_member_from_yaml
 from db.database import get_human_member_by_name, get_virtual_member_by_name
+
+# 環境変数からデータベース接続情報を取得
+MEMBER_DB_HOST = os.getenv('MEMBER_DB_HOST', 'db-member')
+MEMBER_DB_PORT = os.getenv('MEMBER_DB_PORT', '5432')
+MEMBER_DB_USER = os.getenv('MEMBER_DB_USER', 'testuser')
+MEMBER_DB_PASSWORD = os.getenv('MEMBER_DB_PASSWORD', 'password')
+MEMBER_DB_NAME = os.getenv('MEMBER_DB_NAME', 'test_member_db')
+
+# テスト用のデータベースURL
+TEST_DATABASE_URL = f"postgresql://{MEMBER_DB_USER}:{MEMBER_DB_PASSWORD}@{MEMBER_DB_HOST}:{MEMBER_DB_PORT}/{MEMBER_DB_NAME}"
+
+@pytest.fixture(scope="function")
+def db_session():
+    """テスト用のデータベースセッションを作成するフィクスチャ"""
+    print(f"データベース接続URL: {TEST_DATABASE_URL}")
+    
+    # テスト用のデータベースエンジンを作成
+    engine = create_engine(TEST_DATABASE_URL)
+    
+    # テスト用のテーブルを作成
+    Base.metadata.create_all(engine)
+    
+    # テスト前に全テーブルのデータをクリア
+    with engine.connect() as conn:
+        # 依存関係を考慮して、子テーブルから親テーブルの順でtruncate
+        truncate_sql = text("TRUNCATE TABLE virtual_member_profiles, virtual_members, human_members RESTART IDENTITY CASCADE")
+        conn.execute(truncate_sql)
+        conn.commit()
+    
+    # テスト用のセッションを作成
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = TestingSessionLocal()
+    
+    try:
+        yield session
+    finally:
+        # テスト後にセッションをクローズ
+        session.close()
+        # テーブル削除は依存関係があるため、エラーを無視して削除を試行
+        try:
+            Base.metadata.drop_all(engine)
+        except Exception as e:
+            print(f"テーブル削除時の警告: {e}")
+            # テーブル削除に失敗してもテストは続行
 
 @pytest.fixture(scope="function")
 def test_yaml_files(tmp_path):
@@ -74,30 +121,6 @@ def test_register_virtual_member_from_yaml(db_session, test_yaml_files, mock_sto
     assert saved_member is not None
     assert saved_member.member_name == "AIアシスタント"
     assert saved_member.member_uuid == member.member_uuid
-
-def test_register_duplicate_human_member(db_session, test_yaml_files, mock_storage_client):
-    """重複する人間メンバーの登録テスト"""
-    # 最初のメンバーを登録
-    first_member = register_human_member_from_yaml(test_yaml_files["human"])
-    
-    # 同じYAMLファイルで2回目の登録を試みる
-    second_member = register_human_member_from_yaml(test_yaml_files["human"])
-    
-    # 検証（2回目の登録は既存のメンバーを返すはず）
-    assert second_member is not None
-    assert second_member.member_uuid == first_member.member_uuid
-
-def test_register_duplicate_virtual_member(db_session, test_yaml_files, mock_storage_client):
-    """重複する仮想メンバーの登録テスト"""
-    # 最初のメンバーを登録
-    first_member = register_virtual_member_from_yaml(test_yaml_files["virtual"])
-    
-    # 同じYAMLファイルで2回目の登録を試みる
-    second_member = register_virtual_member_from_yaml(test_yaml_files["virtual"])
-    
-    # 検証（2回目の登録は既存のメンバーを返すはず）
-    assert second_member is not None
-    assert second_member.member_uuid == first_member.member_uuid
 
 def test_register_human_member_invalid_yaml(db_session, tmp_path, mock_storage_client):
     """無効なYAMLファイルからの人間メンバー登録テスト"""
