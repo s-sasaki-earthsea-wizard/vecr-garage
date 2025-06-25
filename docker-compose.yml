@@ -45,13 +45,18 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ./backend-llm-response/src:/app/src
+      - ./backend-llm-response/:/app/
     environment:
       - MEMBER_DB_HOST=db-member
       - MEMBER_DB_PORT=5432
       - MEMBER_DB_USER=${MEMBER_DB_USER}
       - MEMBER_DB_PASSWORD=${MEMBER_DB_PASSWORD}
       - MEMBER_DB_NAME=${MEMBER_DB_NAME}
+    depends_on:
+      db-member:
+        condition: service_healthy
+    networks:
+      - network
 
   db-member:
     image: postgres:16

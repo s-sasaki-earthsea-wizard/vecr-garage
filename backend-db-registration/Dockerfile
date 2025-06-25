@@ -21,7 +21,7 @@ COPY src/ ./src/
 COPY tests/ ./tests/
 COPY Makefile ./
 
-# Set Python path
+# Set the PYTHONPATH to include the src directory
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
 # Set the entrypoint (This is just a placeholder)
