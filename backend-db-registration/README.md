@@ -118,5 +118,34 @@ SELECT * FROM virtual_members;
 3. 指定されたバケットが存在するか
 4. 読み込もうとしているファイルが存在するか
 
+#### ロールバック機能とバリデーション機能
+
+データベースへのレコード登録時に、以下の機能が追加されました：
+
+**バリデーション機能:**
+- YAMLファイルの必須フィールドチェック
+- YAML形式の構文チェック
+
+**ロールバック機能:**
+- データベース操作失敗時の自動ロールバック
+- 詳細なエラーメッセージの表示
+- エラーの原因と対処法の提示
+
+**テスト機能:**
+```bash
+make test-rollback-functionality
+```
+
+このコマンドで、バリデーション機能とロールバック機能をテストできます。
+
+**エラー例:**
+```
+❌ Validation error for human member registration from data/human_members/invalid_human.yml: Required fields missing in human member YAML: name
+   Missing fields: name
+
+❌ Database error for virtual member registration from data/virtual_members/invalid_virtual.yml: Failed to create virtual member 'TestMember': (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "virtual_members_member_name_key"
+   Original error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "virtual_members_member_name_key"
+```
+
 現在のスクリプトはストレージの接続チェックとサンプルデータの読み込みを行う処理が同時に実行されており、
 将来的には両者の分離を行います (ストレージのオブジェクトを読み込み、DBへのインサートを行う処理を実装する時に)

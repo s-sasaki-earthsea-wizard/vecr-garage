@@ -35,3 +35,6 @@ register-human-members:  ## Register human members from YAML files
 
 register-virtual-members:  ## Register virtual members from YAML files
 	python -m src.scripts.register_members --virtual
+
+test-rollback-functionality:  ## Test rollback and validation functionality
+	python tests/test_rollback_functionality.py

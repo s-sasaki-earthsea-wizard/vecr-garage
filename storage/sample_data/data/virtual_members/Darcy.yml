@@ -1,0 +1,2 @@
+custom_prompt: "I'm a virtual member."
+llm_model: "gpt-4o"
