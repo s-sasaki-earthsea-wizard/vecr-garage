@@ -120,3 +120,43 @@ SELECT * FROM virtual_members;
 
 現在のスクリプトはストレージの接続チェックとサンプルデータの読み込みを行う処理が同時に実行されており、
 将来的には両者の分離を行います (ストレージのオブジェクトを読み込み、DBへのインサートを行う処理を実装する時に)
+
+
+#### テストコードの実行方法
+
+ルートディレクトリで実行する場合：
+
+```bash
+make backend-db-registration-test
+```
+
+コンテナ内で実行する場合：
+
+```bash
+make test
+```
+
+どちらも以下のような結果が返ってくることを期待しています：
+
+```
+============================================================================= test session starts ==============================================================================
+platform linux -- Python 3.12.11, pytest-8.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /app
+collected 12 items                                                                                                                                                             
+
+tests/test_database.py::test_create_human_member PASSED                                                                                                                  [  8%]
+tests/test_database.py::test_create_virtual_member PASSED                                                                                                                [ 16%]
+tests/test_database.py::test_get_nonexistent_human_member PASSED                                                                                                         [ 25%]
+tests/test_database.py::test_get_nonexistent_virtual_member PASSED                                                                                                       [ 33%]
+tests/test_member_registration.py::test_register_human_member_from_yaml PASSED                                                                                           [ 41%]
+tests/test_member_registration.py::test_register_virtual_member_from_yaml PASSED                                                                                         [ 50%]
+tests/test_member_registration.py::test_register_human_member_invalid_yaml PASSED                                                                                        [ 58%]
+tests/test_member_registration.py::test_register_virtual_member_invalid_yaml PASSED                                                                                      [ 66%]
+tests/test_storage_client.py::test_storage_connection_check PASSED                                                                                                       [ 75%]
+tests/test_storage_client.py::test_read_human_member_yaml PASSED                                                                                                         [ 83%]
+tests/test_storage_client.py::test_read_virtual_member_yaml PASSED                                                                                                       [ 91%]
+tests/test_storage_client.py::test_read_nonexistent_yaml PASSED                                                                                                          [100%]
+
+============================================================================= 12 passed in -0.67s ==============================================================================
+```
