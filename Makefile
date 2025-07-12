@@ -67,6 +67,9 @@ backend-db-registration-clean: ## Clean the backend-db-registration container
 backend-db-registration-conn-info: ## Show connection information for the member database
 	$(COMPOSE) -p $(PROJECT_NAME) exec backend-db-registration bash -c 'PGPASSWORD=$$MEMBER_DB_PASSWORD psql -h $$MEMBER_DB_HOST -p $$MEMBER_DB_PORT -U $$MEMBER_DB_USER -d $$MEMBER_DB_NAME -c "\conninfo"'
 
+backend-db-registration-test: ## Run tests for the backend-db-registration container
+	$(COMPOSE) -p $(PROJECT_NAME) exec backend-db-registration pytest tests/ -v
+
 # ------------------------------------------------------------
 # Backend-llm-response service commands
 # ------------------------------------------------------------
