@@ -7,7 +7,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./backend-db-registration:/app
+      - ./backend-db-registration/src:/app/src
+      - ./backend-db-registration/tests:/app/tests
     environment:
       - MEMBER_DB_HOST=db-member
       - MEMBER_DB_PORT=5432

@@ -1,4 +1,4 @@
-.PHONY: db-member-connection show-sample-data-in-bucket help register-members db-member-connection
+.PHONY: show_sample_data_in_bucket help register-members db-member-connection test
 
 default: help
 
@@ -35,6 +35,9 @@ register-human-members:  ## Register human members from YAML files
 
 register-virtual-members:  ## Register virtual members from YAML files
 	python -m src.scripts.register_members --virtual
+
+test:  ## Run tests
+	pytest tests/ -v
 
 test-rollback-functionality:  ## Test rollback and validation functionality
 	python tests/test_rollback_functionality.py
