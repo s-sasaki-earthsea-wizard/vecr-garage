@@ -40,4 +40,4 @@ test:  ## Run tests
 	pytest tests/ -v
 
 test-rollback-functionality:  ## Test rollback and validation functionality
-	python tests/test_rollback_functionality.py
+	python -m tests.test_rollback_functionality
