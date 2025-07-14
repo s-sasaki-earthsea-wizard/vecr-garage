@@ -3,8 +3,10 @@ from models.members import HumanMember, VirtualMember
 import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 import os
 import logging
+import psycopg2
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +29,27 @@ def create_human_member(db: Session, name: str):
         member_uuid = uuid.uuid4()
         db_member = HumanMember(member_name=name, member_uuid=member_uuid)
         db.add(db_member)
-        db.commit()
-        db.refresh(db_member)
-        logger.info(f"Human member '{name}' created successfully with UUID: {member_uuid}")
+        # コミットは呼び出し元で管理するため、ここでは実行しない
+        logger.info(f"Human member '{name}' prepared for creation with UUID: {member_uuid}")
         return db_member
     except Exception as e:
+        # その他の例外が発生した場合はロールバック
         db.rollback()
         error_msg = f"Failed to create human member '{name}': {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+def create_human_member_with_commit(db: Session, name: str):
+    """人間メンバーを作成してコミットする（完全なトランザクション管理）"""
+    try:
+        member = create_human_member(db, name)
+        db.commit()
+        db.refresh(member)
+        logger.info(f"Human member '{name}' created and committed successfully")
+        return member
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to commit human member '{name}': {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
@@ -56,13 +72,27 @@ def create_virtual_member(db: Session, name: str):
             member_uuid=member_uuid,
         )
         db.add(db_member)
-        db.commit()
-        db.refresh(db_member)
-        logger.info(f"Virtual member '{name}' created successfully with UUID: {member_uuid}")
+        # コミットは呼び出し元で管理するため、ここでは実行しない
+        logger.info(f"Virtual member '{name}' prepared for creation with UUID: {member_uuid}")
         return db_member
     except Exception as e:
+        # その他の例外が発生した場合はロールバック
         db.rollback()
         error_msg = f"Failed to create virtual member '{name}': {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+def create_virtual_member_with_commit(db: Session, name: str):
+    """仮想メンバーを作成してコミットする（完全なトランザクション管理）"""
+    try:
+        member = create_virtual_member(db, name)
+        db.commit()
+        db.refresh(member)
+        logger.info(f"Virtual member '{name}' created and committed successfully")
+        return member
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to commit virtual member '{name}': {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
