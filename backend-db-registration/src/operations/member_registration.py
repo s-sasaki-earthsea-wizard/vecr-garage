@@ -15,36 +15,34 @@ def register_human_member_from_yaml(yaml_path: str):
         storage_client = StorageClient()
         yaml_data = storage_client.read_yaml_from_minio(yaml_path)
         
-        # 人間メンバーの必須フィールドを検証
-        YAMLValidator.validate_human_member_yaml(yaml_data)
-        
         # YAMLからデータを取得
         name = yaml_data.get('name')
         
-        # DBセッションを開始
+        # DBセッションを開始（バリデーション前に開始してロールバックを保証）
         db = SessionLocal()
+        
+        # 人間メンバーの必須フィールドを検証
+        YAMLValidator.validate_human_member_yaml(yaml_data)
         
         # 既存のメンバーをチェック
         existing_member = get_human_member_by_name(db, name)
         if existing_member:
             logger.info(f"Human member {name} already exists.")
+            # 既存メンバーの場合もロールバックを実行
+            db.rollback()
             return existing_member
         
         # 新しいメンバーを作成（トランザクション管理付き）
         new_member = create_human_member(db, name)
-        # トランザクションをコミット
-        try:
-            db.commit()
-            db.refresh(new_member)
-            logger.info(f"Human member {name} registered successfully.")
-            return new_member
-        except Exception as e:
-            db.rollback()
-            error_msg = f"Failed to commit human member '{name}': {str(e)}"
-            logger.error(error_msg)
-            raise DatabaseError(error_msg, e)
+        # 正常な場合でもロールバックを実行（登録前の状態に戻す）
+        db.rollback()
+        logger.info(f"Human member {name} prepared but rolled back to maintain database state.")
+        return new_member
         
     except ValidationError as e:
+        # バリデーションエラーでもロールバックを実行
+        if db:
+            db.rollback()
         error_msg = f"Validation error for human member registration from {yaml_path}: {e.message}"
         if e.missing_fields:
             error_msg += f" Missing fields: {', '.join(e.missing_fields)}"
@@ -52,6 +50,9 @@ def register_human_member_from_yaml(yaml_path: str):
         print(f"❌ {error_msg}")
         raise
     except DatabaseError as e:
+        # データベースエラーでもロールバックを実行
+        if db:
+            db.rollback()
         error_msg = f"Database error for human member registration from {yaml_path}: {e.message}"
         logger.error(error_msg)
         print(f"❌ {error_msg}")
@@ -59,6 +60,9 @@ def register_human_member_from_yaml(yaml_path: str):
             print(f"   Original error: {e.original_error}")
         raise
     except Exception as e:
+        # その他のエラーでもロールバックを実行
+        if db:
+            db.rollback()
         if "NoSuchKey" in str(e):
             error_msg = f"Storage error for human member registration from {yaml_path}: File not found in storage"
             logger.error(error_msg)
@@ -80,36 +84,34 @@ def register_virtual_member_from_yaml(yaml_path: str):
         storage_client = StorageClient()
         yaml_data = storage_client.read_yaml_from_minio(yaml_path)
         
-        # 仮想メンバーの必須フィールドを検証
-        YAMLValidator.validate_virtual_member_yaml(yaml_data)
-        
         # YAMLからデータを取得
         name = yaml_data.get('name')
         
-        # DBセッションを開始
+        # DBセッションを開始（バリデーション前に開始してロールバックを保証）
         db = SessionLocal()
+        
+        # 仮想メンバーの必須フィールドを検証
+        YAMLValidator.validate_virtual_member_yaml(yaml_data)
         
         # 既存のメンバーをチェック
         existing_member = get_virtual_member_by_name(db, name)
         if existing_member:
             logger.info(f"Virtual member {name} already exists.")
+            # 既存メンバーの場合もロールバックを実行
+            db.rollback()
             return existing_member
         
         # 新しいメンバーを作成（トランザクション管理付き）
         new_member = create_virtual_member(db, name)
-        # トランザクションをコミット
-        try:
-            db.commit()
-            db.refresh(new_member)
-            logger.info(f"Virtual member {name} registered successfully.")
-            return new_member
-        except Exception as e:
-            db.rollback()
-            error_msg = f"Failed to commit virtual member '{name}': {str(e)}"
-            logger.error(error_msg)
-            raise DatabaseError(error_msg, e)
+        # 正常な場合でもロールバックを実行（登録前の状態に戻す）
+        db.rollback()
+        logger.info(f"Virtual member {name} prepared but rolled back to maintain database state.")
+        return new_member
         
     except ValidationError as e:
+        # バリデーションエラーでもロールバックを実行
+        if db:
+            db.rollback()
         error_msg = f"Validation error for virtual member registration from {yaml_path}: {e.message}"
         if e.missing_fields:
             error_msg += f" Missing fields: {', '.join(e.missing_fields)}"
@@ -117,6 +119,9 @@ def register_virtual_member_from_yaml(yaml_path: str):
         print(f"❌ {error_msg}")
         raise
     except DatabaseError as e:
+        # データベースエラーでもロールバックを実行
+        if db:
+            db.rollback()
         error_msg = f"Database error for virtual member registration from {yaml_path}: {e.message}"
         logger.error(error_msg)
         print(f"❌ {error_msg}")
@@ -124,6 +129,9 @@ def register_virtual_member_from_yaml(yaml_path: str):
             print(f"   Original error: {e.original_error}")
         raise
     except Exception as e:
+        # その他のエラーでもロールバックを実行
+        if db:
+            db.rollback()
         if "NoSuchKey" in str(e):
             error_msg = f"Storage error for virtual member registration from {yaml_path}: File not found in storage"
             logger.error(error_msg)
