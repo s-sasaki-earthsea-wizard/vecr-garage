@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from operations.member_registration import register_human_member_from_yaml, register_virtual_member_from_yaml
+from operations.member_registration import register_human_members_batch, register_virtual_members_batch
 import logging
 import argparse
 from db.database import SessionLocal
@@ -15,54 +15,13 @@ def get_all_yaml_files_from_storage():
     """ストレージからすべてのYAMLファイルのパスを動的に取得する"""
     storage_client = StorageClient()
     
-    try:
-        # 人間メンバーのYAMLファイルを動的に取得
-        human_files = storage_client.list_yaml_files("data/human_members/")
-        
-        # 仮想メンバーのYAMLファイルを動的に取得
-        virtual_files = storage_client.list_yaml_files("data/virtual_members/")
-        
-        return human_files, virtual_files
-    except Exception as e:
-        logger.error(f"Error getting YAML files from storage: {e}")
-        # フォールバック: 既知のファイルリスト
-        fallback_human_files = [
-            "data/human_members/Syota.yml",
-            "data/human_members/Rin.yml"
-        ]
-        fallback_virtual_files = [
-            "data/virtual_members/Kasen.yml",
-            "data/virtual_members/Darcy.yml"
-        ]
-        logger.info("Using fallback file list")
-        return fallback_human_files, fallback_virtual_files
-
-def register_members():
-    session = SessionLocal()
-    try:
-        # サンプルの人間メンバーを登録
-        human_member = HumanMember(
-            member_name="山田太郎",
-            bio="サンプルの人間メンバーです"
-        )
-        session.add(human_member)
-        
-        # サンプルの仮想メンバーを登録
-        virtual_member = VirtualMember(
-            member_name="AIアシスタント",
-            llm_model="gpt-4",
-            custom_prompt="あなたは親切なAIアシスタントです"
-        )
-        session.add(virtual_member)
-        
-        session.commit()
-        logger.info("メンバーの登録が完了しました")
-    except Exception as e:
-        session.rollback()
-        logger.error(f"エラーが発生しました: {e}")
-        raise
-    finally:
-        session.close()
+    # 人間メンバーのYAMLファイルを動的に取得
+    human_files = storage_client.list_yaml_files("data/human_members/")
+    
+    # 仮想メンバーのYAMLファイルを動的に取得
+    virtual_files = storage_client.list_yaml_files("data/virtual_members/")
+    
+    return human_files, virtual_files
 
 def main():
     parser = argparse.ArgumentParser(description='Register members from YAML files')
@@ -71,58 +30,127 @@ def main():
     args = parser.parse_args()
     
     try:
+        # ストレージからYAMLファイルを動的に取得
+        human_files, virtual_files = get_all_yaml_files_from_storage()
+        
+        # ファイルが見つからない場合の処理
+        if not human_files and not virtual_files:
+            print("❌ No YAML files found in storage.")
+            print("Please ensure YAML files are uploaded to the storage service.")
+            return
+        
         if args.human:
             # 人間メンバーのみ登録
-            human_files, _ = get_all_yaml_files_from_storage()
-            print("=== Processing Human Members ===")
-            for yaml_path in human_files:
-                try:
-                    print(f"Processing: {yaml_path}")
-                    register_human_member_from_yaml(yaml_path)
-                except Exception as e:
-                    print(f"Failed to process {yaml_path}: {e}")
-                    continue
-            logger.info("Human member registration completed")
+            if not human_files:
+                print("❌ No human member YAML files found in storage.")
+                print("Please ensure human member YAML files are uploaded to data/human_members/")
+                return
+                
+            print("=== Processing Human Members (Batch Mode) ===")
+            print(f"Found {len(human_files)} human member files:")
+            for file in human_files:
+                print(f"  - {file}")
+            
+            try:
+                created_members = register_human_members_batch(human_files)
+                print(f"✅ Successfully processed {len(created_members)} human members.")
+            except Exception as e:
+                print(f"❌ Batch registration failed: {e}")
+                return
             
         elif args.virtual:
             # 仮想メンバーのみ登録
-            _, virtual_files = get_all_yaml_files_from_storage()
-            print("=== Processing Virtual Members ===")
-            for yaml_path in virtual_files:
-                try:
-                    print(f"Processing: {yaml_path}")
-                    register_virtual_member_from_yaml(yaml_path)
-                except Exception as e:
-                    print(f"Failed to process {yaml_path}: {e}")
-                    continue
-            logger.info("Virtual member registration completed")
+            if not virtual_files:
+                print("❌ No virtual member YAML files found in storage.")
+                print("Please ensure virtual member YAML files are uploaded to data/virtual_members/")
+                return
+                
+            print("=== Processing Virtual Members (Batch Mode) ===")
+            print(f"Found {len(virtual_files)} virtual member files:")
+            for file in virtual_files:
+                print(f"  - {file}")
+            
+            try:
+                created_members = register_virtual_members_batch(virtual_files)
+                print(f"✅ Successfully processed {len(created_members)} virtual members.")
+            except Exception as e:
+                print(f"❌ Batch registration failed: {e}")
+                return
             
         else:
             # デフォルトで全てのファイルを処理
-            human_files, virtual_files = get_all_yaml_files_from_storage()
+            human_success = False
+            virtual_success = False
+            human_count = 0
+            virtual_count = 0
+            total_files = len(human_files) + len(virtual_files)
             
-            print("=== Processing Human Members ===")
-            for yaml_path in human_files:
+            # 人間メンバーの処理
+            if human_files:
+                print("=== Processing Human Members (Batch Mode) ===")
+                print(f"Found {len(human_files)} human member files:")
+                for file in human_files:
+                    print(f"  - {file}")
+                
                 try:
-                    print(f"Processing: {yaml_path}")
-                    register_human_member_from_yaml(yaml_path)
+                    created_members = register_human_members_batch(human_files)
+                    print(f"✅ Successfully processed {len(created_members)} human members.")
+                    human_success = True
+                    human_count = len(created_members)
                 except Exception as e:
-                    print(f"Failed to process {yaml_path}: {e}")
-                    continue
+                    print(f"❌ Human member batch registration failed: {e}")
+                    print("Continuing with virtual member processing...")
+            else:
+                print("ℹ️  No human member YAML files found in storage.")
             
-            print("\n=== Processing Virtual Members ===")
-            for yaml_path in virtual_files:
+            # 仮想メンバーの処理
+            if virtual_files:
+                print("\n=== Processing Virtual Members (Batch Mode) ===")
+                print(f"Found {len(virtual_files)} virtual member files:")
+                for file in virtual_files:
+                    print(f"  - {file}")
+                
                 try:
-                    print(f"Processing: {yaml_path}")
-                    register_virtual_member_from_yaml(yaml_path)
+                    created_members = register_virtual_members_batch(virtual_files)
+                    print(f"✅ Successfully processed {len(created_members)} virtual members.")
+                    virtual_success = True
+                    virtual_count = len(created_members)
                 except Exception as e:
-                    print(f"Failed to process {yaml_path}: {e}")
-                    continue
+                    print(f"❌ Virtual member batch registration failed: {e}")
+            else:
+                print("ℹ️  No virtual member YAML files found in storage.")
             
-            logger.info("All member registration completed")
+            # 最終結果サマリー
+            print(f"\n=== Final Summary ===")
+            total_success = human_count + virtual_count
+            
+            if human_success and virtual_success:
+                print(f"🎉 All processing completed successfully!")
+                print(f"   Human members: {human_count}/{len(human_files)} processed")
+                print(f"   Virtual members: {virtual_count}/{len(virtual_files)} processed")
+                print(f"   Total: {total_success}/{total_files} members processed")
+            elif human_success or virtual_success:
+                print(f"⚠️  Partial processing completed:")
+                if human_success:
+                    print(f"   ✅ Human members: {human_count}/{len(human_files)} processed")
+                else:
+                    print(f"   ❌ Human members: Failed")
+                if virtual_success:
+                    print(f"   ✅ Virtual members: {virtual_count}/{len(virtual_files)} processed")
+                else:
+                    print(f"   ❌ Virtual members: Failed")
+                print(f"   Total: {total_success}/{total_files} members processed")
+            else:
+                print(f"❌ All processing failed:")
+                print(f"   ❌ Human members: Failed")
+                print(f"   ❌ Virtual members: Failed")
+                print(f"   Total: 0/{total_files} members processed")
             
     except Exception as e:
-        logger.error(f"Error during member registration: {e}")
+        error_msg = f"Error getting YAML files from storage: {e}"
+        logger.error(error_msg)
+        print(f"❌ {error_msg}")
+        print("Please check your storage connection and ensure YAML files are available.")
         raise
 
 if __name__ == "__main__":
