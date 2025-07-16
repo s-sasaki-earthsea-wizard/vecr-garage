@@ -18,7 +18,7 @@ def register_human_member_from_yaml(yaml_path: str):
         # YAMLからデータを取得
         name = yaml_data.get('name')
         
-        # DBセッションを開始（バリデーション前に開始してロールバックを保証）
+        # DBセッションを開始
         db = SessionLocal()
         
         # 人間メンバーの必須フィールドを検証
@@ -28,15 +28,13 @@ def register_human_member_from_yaml(yaml_path: str):
         existing_member = get_human_member_by_name(db, name)
         if existing_member:
             logger.info(f"Human member {name} already exists.")
-            # 既存メンバーの場合もロールバックを実行
-            db.rollback()
             return existing_member
         
-        # 新しいメンバーを作成（トランザクション管理付き）
+        # 新しいメンバーを作成してコミット
         new_member = create_human_member(db, name)
-        # 正常な場合でもロールバックを実行（登録前の状態に戻す）
-        db.rollback()
-        logger.info(f"Human member {name} prepared but rolled back to maintain database state.")
+        db.commit()
+        db.refresh(new_member)
+        logger.info(f"Human member {name} created and committed successfully.")
         return new_member
         
     except ValidationError as e:
@@ -87,7 +85,7 @@ def register_virtual_member_from_yaml(yaml_path: str):
         # YAMLからデータを取得
         name = yaml_data.get('name')
         
-        # DBセッションを開始（バリデーション前に開始してロールバックを保証）
+        # DBセッションを開始
         db = SessionLocal()
         
         # 仮想メンバーの必須フィールドを検証
@@ -97,15 +95,13 @@ def register_virtual_member_from_yaml(yaml_path: str):
         existing_member = get_virtual_member_by_name(db, name)
         if existing_member:
             logger.info(f"Virtual member {name} already exists.")
-            # 既存メンバーの場合もロールバックを実行
-            db.rollback()
             return existing_member
         
-        # 新しいメンバーを作成（トランザクション管理付き）
+        # 新しいメンバーを作成してコミット
         new_member = create_virtual_member(db, name)
-        # 正常な場合でもロールバックを実行（登録前の状態に戻す）
-        db.rollback()
-        logger.info(f"Virtual member {name} prepared but rolled back to maintain database state.")
+        db.commit()
+        db.refresh(new_member)
+        logger.info(f"Virtual member {name} created and committed successfully.")
         return new_member
         
     except ValidationError as e:
@@ -140,6 +136,122 @@ def register_virtual_member_from_yaml(yaml_path: str):
             error_msg = f"Unexpected error for virtual member registration from {yaml_path}: {str(e)}"
             logger.error(error_msg)
             print(f"❌ {error_msg}")
+        raise
+    finally:
+        if db:
+            db.close()
+
+def register_human_members_batch(yaml_paths: list):
+    """複数のYAMLファイルから人間メンバーをバッチ登録する（全成功または全ロールバック）"""
+    db = None
+    created_members = []
+    
+    try:
+        # DBセッションを開始
+        db = SessionLocal()
+        storage_client = StorageClient()
+        
+        # 全てのファイルを事前にバリデーション
+        yaml_data_list = []
+        for yaml_path in yaml_paths:
+            try:
+                yaml_data = storage_client.read_yaml_from_minio(yaml_path)
+                # バリデーション
+                YAMLValidator.validate_human_member_yaml(yaml_data)
+                yaml_data_list.append((yaml_path, yaml_data))
+            except Exception as e:
+                error_msg = f"Validation error for {yaml_path}: {str(e)}"
+                logger.error(error_msg)
+                print(f"❌ {error_msg}")
+                raise
+        
+        # 全てのバリデーションが成功した場合のみ、データベース操作を実行
+        for yaml_path, yaml_data in yaml_data_list:
+            name = yaml_data.get('name')
+            
+            # 既存のメンバーをチェック
+            existing_member = get_human_member_by_name(db, name)
+            if existing_member:
+                logger.info(f"Human member {name} already exists.")
+                created_members.append(existing_member)
+                continue
+            
+            # 新しいメンバーを作成（まだコミットしない）
+            new_member = create_human_member(db, name)
+            created_members.append(new_member)
+            logger.info(f"Human member {name} prepared for creation.")
+        
+        # 全ての処理が成功した場合のみコミット
+        db.commit()
+        logger.info(f"Successfully committed {len(created_members)} human members.")
+        return created_members
+        
+    except Exception as e:
+        # エラーが発生した場合はロールバック
+        if db:
+            db.rollback()
+        error_msg = f"Batch registration failed: {str(e)}"
+        logger.error(error_msg)
+        print(f"❌ {error_msg}")
+        print("All changes have been rolled back.")
+        raise
+    finally:
+        if db:
+            db.close()
+
+def register_virtual_members_batch(yaml_paths: list):
+    """複数のYAMLファイルから仮想メンバーをバッチ登録する（全成功または全ロールバック）"""
+    db = None
+    created_members = []
+    
+    try:
+        # DBセッションを開始
+        db = SessionLocal()
+        storage_client = StorageClient()
+        
+        # 全てのファイルを事前にバリデーション
+        yaml_data_list = []
+        for yaml_path in yaml_paths:
+            try:
+                yaml_data = storage_client.read_yaml_from_minio(yaml_path)
+                # バリデーション
+                YAMLValidator.validate_virtual_member_yaml(yaml_data)
+                yaml_data_list.append((yaml_path, yaml_data))
+            except Exception as e:
+                error_msg = f"Validation error for {yaml_path}: {str(e)}"
+                logger.error(error_msg)
+                print(f"❌ {error_msg}")
+                raise
+        
+        # 全てのバリデーションが成功した場合のみ、データベース操作を実行
+        for yaml_path, yaml_data in yaml_data_list:
+            name = yaml_data.get('name')
+            
+            # 既存のメンバーをチェック
+            existing_member = get_virtual_member_by_name(db, name)
+            if existing_member:
+                logger.info(f"Virtual member {name} already exists.")
+                created_members.append(existing_member)
+                continue
+            
+            # 新しいメンバーを作成（まだコミットしない）
+            new_member = create_virtual_member(db, name)
+            created_members.append(new_member)
+            logger.info(f"Virtual member {name} prepared for creation.")
+        
+        # 全ての処理が成功した場合のみコミット
+        db.commit()
+        logger.info(f"Successfully committed {len(created_members)} virtual members.")
+        return created_members
+        
+    except Exception as e:
+        # エラーが発生した場合はロールバック
+        if db:
+            db.rollback()
+        error_msg = f"Batch registration failed: {str(e)}"
+        logger.error(error_msg)
+        print(f"❌ {error_msg}")
+        print("All changes have been rolled back.")
         raise
     finally:
         if db:

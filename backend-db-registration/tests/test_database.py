@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from models.members import HumanMember, VirtualMember
-from db.database import create_human_member, create_virtual_member, get_human_member_by_name, get_virtual_member_by_name
+from db.database import create_human_member_with_commit, create_virtual_member_with_commit, get_human_member_by_name, get_virtual_member_by_name
 import os
 
 # 環境変数からデータベース接続情報を取得
@@ -60,7 +60,7 @@ def test_create_human_member(db_session):
     print(f"テストメンバー名: {test_name}")
     
     # メンバーを作成
-    member = create_human_member(db_session, test_name)
+    member = create_human_member_with_commit(db_session, test_name)
     print(f"メンバー作成完了: UUID={member.member_uuid}")
     
     # 検証
@@ -85,7 +85,7 @@ def test_create_virtual_member(db_session):
     print(f"テストメンバー名: {test_name}")
     
     # メンバーを作成
-    member = create_virtual_member(db_session, test_name)
+    member = create_virtual_member_with_commit(db_session, test_name)
     print(f"メンバー作成完了: UUID={member.member_uuid}")
     
     # 検証
