@@ -1,4 +1,4 @@
-.PHONY: show_sample_data_in_bucket help register-members db-member-connection test
+.PHONY: show_sample_data_in_bucket help register-members register-members-single register-human-members register-virtual-members db-member-connection test
 
 default: help
 
@@ -27,13 +27,22 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "------------------------------------------------------------------------------"
 
-register-members:  ## Register members from YAML files
+register-members:  ## Register members from YAML files (Batch Mode - Recommended)
+	@echo "=== Batch Registration Mode ==="
+	@echo "Processing all files in a single transaction."
+	@echo "If any file has validation errors, all changes will be rolled back."
 	python -m src.scripts.register_members
 
-register-human-members:  ## Register human members from YAML files
+register-members-single:  ## Register members from YAML files (Single Mode - Individual processing)
+	@echo "=== Single Registration Mode ==="
+	@echo "Processing files individually. Each file is processed separately."
+	@echo "Valid files will be registered even if some files have errors."
+	python -m src.scripts.register_members_single
+
+register-human-members:  ## Register human members from YAML files (Batch Mode)
 	python -m src.scripts.register_members --human
 
-register-virtual-members:  ## Register virtual members from YAML files
+register-virtual-members:  ## Register virtual members from YAML files (Batch Mode)
 	python -m src.scripts.register_members --virtual
 
 test:  ## Run tests

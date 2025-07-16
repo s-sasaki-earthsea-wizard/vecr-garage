@@ -2,10 +2,6 @@
 from operations.member_registration import register_human_members_batch, register_virtual_members_batch
 import logging
 import argparse
-from db.database import SessionLocal
-from models.members import HumanMember, VirtualMember
-import uuid
-import os
 from storage.storage_client import StorageClient
 
 logging.basicConfig(level=logging.INFO)
