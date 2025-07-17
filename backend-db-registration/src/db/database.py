@@ -24,32 +24,29 @@ class DatabaseError(Exception):
 
 # 人間メンバー操作
 def create_human_member(db: Session, name: str):
-    """人間メンバーを作成する（トランザクション管理付き）"""
+    """人間メンバーを作成する"""
     try:
         member_uuid = uuid.uuid4()
         db_member = HumanMember(member_name=name, member_uuid=member_uuid)
-        db.add(db_member)
-        # コミットは呼び出し元で管理するため、ここでは実行しない
-        logger.info(f"Human member '{name}' prepared for creation with UUID: {member_uuid}")
+        logger.info(f"Human member '{name}' created with UUID: {member_uuid}")
         return db_member
     except Exception as e:
-        # その他の例外が発生した場合はロールバック
-        db.rollback()
         error_msg = f"Failed to create human member '{name}': {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
-def create_human_member_with_commit(db: Session, name: str):
-    """人間メンバーを作成してコミットする（完全なトランザクション管理）"""
+def save_human_member(db: Session, name: str):
+    """人間メンバーを作成してデータベースに保存する（完全なトランザクション管理）"""
     try:
         member = create_human_member(db, name)
+        db.add(member)
         db.commit()
         db.refresh(member)
-        logger.info(f"Human member '{name}' created and committed successfully")
+        logger.info(f"Human member '{name}' created and saved successfully")
         return member
     except Exception as e:
         db.rollback()
-        error_msg = f"Failed to commit human member '{name}': {str(e)}"
+        error_msg = f"Failed to save human member '{name}': {str(e)}. Database transaction has been rolled back."
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
@@ -64,35 +61,32 @@ def get_human_member_by_name(db: Session, name: str):
 
 # 仮想メンバー操作
 def create_virtual_member(db: Session, name: str):
-    """仮想メンバーを作成する（トランザクション管理付き）"""
+    """仮想メンバーを作成する"""
     try:
         member_uuid = uuid.uuid4()
         db_member = VirtualMember(
             member_name=name,
             member_uuid=member_uuid,
         )
-        db.add(db_member)
-        # コミットは呼び出し元で管理するため、ここでは実行しない
-        logger.info(f"Virtual member '{name}' prepared for creation with UUID: {member_uuid}")
+        logger.info(f"Virtual member '{name}' created with UUID: {member_uuid}")
         return db_member
     except Exception as e:
-        # その他の例外が発生した場合はロールバック
-        db.rollback()
         error_msg = f"Failed to create virtual member '{name}': {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
-def create_virtual_member_with_commit(db: Session, name: str):
-    """仮想メンバーを作成してコミットする（完全なトランザクション管理）"""
+def save_virtual_member(db: Session, name: str):
+    """仮想メンバーを作成してデータベースに保存する（完全なトランザクション管理）"""
     try:
         member = create_virtual_member(db, name)
+        db.add(member)
         db.commit()
         db.refresh(member)
-        logger.info(f"Virtual member '{name}' created and committed successfully")
+        logger.info(f"Virtual member '{name}' created and saved successfully")
         return member
     except Exception as e:
         db.rollback()
-        error_msg = f"Failed to commit virtual member '{name}': {str(e)}"
+        error_msg = f"Failed to save virtual member '{name}': {str(e)}. Database transaction has been rolled back."
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
