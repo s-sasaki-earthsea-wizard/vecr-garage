@@ -1,4 +1,4 @@
-from db.database import SessionLocal, save_human_member, save_virtual_member, get_human_member_by_name, get_virtual_member_by_name, DatabaseError
+from db.database import SessionLocal, save_human_member, save_virtual_member, get_human_member_by_name, get_virtual_member_by_name, DatabaseError, create_human_member, create_virtual_member
 from storage.storage_client import StorageClient
 from validation.yaml_validator import YAMLValidator, ValidationError
 import yaml
