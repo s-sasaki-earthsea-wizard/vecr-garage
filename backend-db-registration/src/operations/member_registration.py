@@ -1,4 +1,4 @@
-from db.database import SessionLocal, create_human_member, create_virtual_member, get_human_member_by_name, get_virtual_member_by_name, DatabaseError
+from db.database import SessionLocal, save_human_member, save_virtual_member, get_human_member_by_name, get_virtual_member_by_name, DatabaseError
 from storage.storage_client import StorageClient
 from validation.yaml_validator import YAMLValidator, ValidationError
 import yaml
@@ -30,10 +30,8 @@ def register_human_member_from_yaml(yaml_path: str):
             logger.info(f"Human member {name} already exists.")
             return existing_member
         
-        # 新しいメンバーを作成してコミット
-        new_member = create_human_member(db, name)
-        db.commit()
-        db.refresh(new_member)
+        # 新しいメンバーを作成して保存
+        new_member = save_human_member(db, name)
         logger.info(f"Human member {name} created and committed successfully.")
         return new_member
         
@@ -97,10 +95,8 @@ def register_virtual_member_from_yaml(yaml_path: str):
             logger.info(f"Virtual member {name} already exists.")
             return existing_member
         
-        # 新しいメンバーを作成してコミット
-        new_member = create_virtual_member(db, name)
-        db.commit()
-        db.refresh(new_member)
+        # 新しいメンバーを作成して保存
+        new_member = save_virtual_member(db, name)
         logger.info(f"Virtual member {name} created and committed successfully.")
         return new_member
         
