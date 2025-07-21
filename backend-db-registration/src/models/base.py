@@ -30,9 +30,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def get_db():
-    """
-    データベースセッションを取得するための関数
-    """
+    """データベースセッションを取得するための関数"""
     db = SessionLocal()
     try:
         yield db

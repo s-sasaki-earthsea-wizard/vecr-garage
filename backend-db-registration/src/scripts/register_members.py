@@ -8,7 +8,25 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def get_all_yaml_files_from_storage():
-    """ストレージからすべてのYAMLファイルのパスを動的に取得する"""
+    """ストレージからすべてのYAMLファイルのパスを動的に取得する
+    
+    ストレージサービス（MinIO）から人間メンバーと仮想メンバーの
+    YAMLファイルのパスを動的に取得します。ファイルの存在確認や
+    ストレージ接続の確認も行います。
+    
+    Returns:
+        tuple: (human_files, virtual_files) のタプル
+            - human_files (list): 人間メンバーYAMLファイルのパスリスト
+            - virtual_files (list): 仮想メンバーYAMLファイルのパスリスト
+            
+    Raises:
+        Exception: ストレージ接続エラーやファイル取得エラーが発生した場合
+        
+    Note:
+        - 人間メンバーファイルは "data/human_members/" ディレクトリから取得
+        - 仮想メンバーファイルは "data/virtual_members/" ディレクトリから取得
+        - .yml と .yaml の両方の拡張子に対応
+    """
     storage_client = StorageClient()
     
     # 人間メンバーのYAMLファイルを動的に取得
@@ -20,6 +38,33 @@ def get_all_yaml_files_from_storage():
     return human_files, virtual_files
 
 def main():
+    """メンバー登録スクリプトのメイン関数（バッチモード）
+    
+    コマンドライン引数に基づいて、ストレージからYAMLファイルを取得し、
+    バッチ処理でメンバー登録を実行します。全てのファイルを一括で処理し、
+    エラーが発生した場合は該当するバッチ全体をロールバックします。
+    
+    処理モード:
+    - --human: 人間メンバーのみをバッチ処理
+    - --virtual: 仮想メンバーのみをバッチ処理
+    - 引数なし: 人間メンバーと仮想メンバーの両方をバッチ処理
+    
+    特徴:
+    - 複数ファイルを一括処理（バッチモード）
+    - アトミック操作（全成功または全ロールバック）
+    - 効率的なデータベース操作
+    - 詳細な処理結果サマリーを表示
+    
+    Usage:
+        python register_members.py                    # 全メンバーバッチ処理
+        python register_members.py --human           # 人間メンバーのみバッチ処理
+        python register_members.py --virtual         # 仮想メンバーのみバッチ処理
+        
+    Note:
+        - バッチ処理のため、一つでもエラーがあると該当バッチ全体がロールバックされます
+        - 人間メンバーと仮想メンバーは独立して処理されるため、一方が失敗しても他方は処理されます
+        - 既存メンバーが存在する場合は新規作成せず、既存オブジェクトを返します
+    """
     parser = argparse.ArgumentParser(description='Register members from YAML files')
     parser.add_argument('--human', action='store_true', help='Register human members only')
     parser.add_argument('--virtual', action='store_true', help='Register virtual members only')

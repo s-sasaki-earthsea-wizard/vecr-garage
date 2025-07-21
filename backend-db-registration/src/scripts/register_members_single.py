@@ -8,7 +8,25 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def get_all_yaml_files_from_storage():
-    """ストレージからすべてのYAMLファイルのパスを動的に取得する"""
+    """ストレージからすべてのYAMLファイルのパスを動的に取得する
+    
+    ストレージサービス（MinIO）から人間メンバーと仮想メンバーの
+    YAMLファイルのパスを動的に取得します。ファイルの存在確認や
+    ストレージ接続の確認も行います。
+    
+    Returns:
+        tuple: (human_files, virtual_files) のタプル
+            - human_files (list): 人間メンバーYAMLファイルのパスリスト
+            - virtual_files (list): 仮想メンバーYAMLファイルのパスリスト
+            
+    Raises:
+        Exception: ストレージ接続エラーやファイル取得エラーが発生した場合
+        
+    Note:
+        - 人間メンバーファイルは "data/human_members/" ディレクトリから取得
+        - 仮想メンバーファイルは "data/virtual_members/" ディレクトリから取得
+        - .yml と .yaml の両方の拡張子に対応
+    """
     storage_client = StorageClient()
     
     # 人間メンバーのYAMLファイルを動的に取得
@@ -20,6 +38,28 @@ def get_all_yaml_files_from_storage():
     return human_files, virtual_files
 
 def main():
+    """メンバー登録スクリプトのメイン関数（シングルモード）
+    
+    コマンドライン引数に基づいて、ストレージからYAMLファイルを取得し、
+    個別にメンバー登録を実行します。各ファイルを一つずつ処理し、
+    エラーが発生しても他のファイルの処理を継続します。
+    
+    処理モード:
+    - --human: 人間メンバーのみを処理
+    - --virtual: 仮想メンバーのみを処理
+    - 引数なし: 人間メンバーと仮想メンバーの両方を処理
+    
+    特徴:
+    - 各ファイルを個別に処理（シングルモード）
+    - エラーが発生しても他のファイルの処理を継続
+    - 詳細な進捗表示とエラー報告
+    - 最終的な処理結果サマリーを表示
+    
+    Usage:
+        python register_members_single.py                    # 全メンバー処理
+        python register_members_single.py --human           # 人間メンバーのみ
+        python register_members_single.py --virtual         # 仮想メンバーのみ
+    """
     parser = argparse.ArgumentParser(description='Register members from YAML files (Single Mode)')
     parser.add_argument('--human', action='store_true', help='Register human members only')
     parser.add_argument('--virtual', action='store_true', help='Register virtual members only')
