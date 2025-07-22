@@ -67,7 +67,8 @@ def test_yaml_files(tmp_path):
     # 仮想メンバー用のYAMLファイル
     virtual_yaml = {
         "name": "AIアシスタント",
-        "bio": "テスト用の仮想メンバーです"
+        "bio": "テスト用の仮想メンバーです",
+        "llm_model": "gpt-4"
     }
     virtual_yaml_path = tmp_path / "virtual_test.yaml"
     with open(virtual_yaml_path, "w", encoding="utf-8") as f:
