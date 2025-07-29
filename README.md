@@ -13,8 +13,50 @@ VECRガレージのオフィス環境をDockerコンテナで構築するプロ�
 - OS: Ubuntu 24.04.1 LTS
 - Docker: 27.3.1
 - Docker Compose: v2.29.7
+- AWS CLI: 2.27.61
 
 ## インストール方法
+
+### AWS CLI のインストール
+
+AWS CLI は MinIO ストレージとの操作に必要です。以下の手順でインストールしてください：
+
+#### Ubuntu/Debian の場合
+
+```bash
+# AWS CLI v2 のダウンロード
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+# アーカイブの解凍
+unzip awscliv2.zip
+
+# インストール
+sudo ./aws/install
+
+# インストール確認
+aws --version
+
+# 不要ファイルの削除
+rm -rf aws awscliv2.zip
+```
+
+#### macOS の場合
+
+```bash
+# Homebrew を使用
+brew install awscli
+
+# または公式インストーラーを使用
+curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+sudo installer -pkg AWSCLIV2.pkg -target /
+```
+
+#### Windows の場合
+
+1. [AWS CLI 公式サイト](https://aws.amazon.com/cli/) からインストーラーをダウンロード
+2. ダウンロードしたインストーラーを実行
+
+### プロジェクトのセットアップ
 
 1. リポジトリをクローン
 ```bash
@@ -150,8 +192,50 @@ It currently consists of three services: backend, database, and storage. (A user
 - OS: Ubuntu 24.04.1 LTS
 - Docker: 27.3.1
 - Docker Compose: v2.29.7
+- AWS CLI: 2.27.61
 
 ## Installation Instructions
+
+### AWS CLI Installation
+
+AWS CLI is required for operations with MinIO storage. Please install it using the following steps:
+
+#### For Ubuntu/Debian
+
+```bash
+# Download AWS CLI v2
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+# Extract the archive
+unzip awscliv2.zip
+
+# Install
+sudo ./aws/install
+
+# Verify installation
+aws --version
+
+# Clean up
+rm -rf aws awscliv2.zip
+```
+
+#### For macOS
+
+```bash
+# Using Homebrew
+brew install awscli
+
+# Or using the official installer
+curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+sudo installer -pkg AWSCLIV2.pkg -target /
+```
+
+#### For Windows
+
+1. Download the installer from the [AWS CLI official website](https://aws.amazon.com/cli/)
+2. Run the downloaded installer
+
+### Project Setup
 
 1. Clone the repository
 
