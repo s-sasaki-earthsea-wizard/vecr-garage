@@ -65,6 +65,37 @@ storage サービスへ、DBにインサートしたい情報のファイルを�
 
 詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
 
+##### ファイル監視サービス
+
+ファイル監視サービスを使用すると、ストレージ内のYAMLファイルを検知します。
+
+**使用方法:**
+```bash
+# ファイル監視サービスを開始（10秒間隔でポーリング）
+make file-watcher
+```
+
+**監視対象:**
+- `data/human_members/` ディレクトリ内のYAMLファイル
+- `data/virtual_members/` ディレクトリ内のYAMLファイル
+
+**実行例:**
+```bash
+🚀 Starting File Watcher Service Test
+INFO:__main__:FileWatcherService initialized with polling interval: 10s
+INFO:__main__:🚀 Starting file watcher service...
+INFO:__main__:Initializing file tracking...
+INFO:__main__:Initialized tracking for 4 files
+```
+
+**停止方法:**
+- `Ctrl+C` で監視サービスを停止
+
+**注意事項:**
+- 初回実行時は既存ファイルを処理済みとしてマークします
+- ファイルのETag（ハッシュ値）を使用して変更を検知します
+- エラーが発生したファイルはログに記録されますが、監視は継続されます
+
 ##### 登録モードの選択
 
 **バッチ処理モード（推奨）:**

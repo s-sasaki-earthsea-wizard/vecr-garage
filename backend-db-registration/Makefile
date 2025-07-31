@@ -1,4 +1,4 @@
-.PHONY: show_sample_data_in_bucket help register-members register-members-single register-human-members register-virtual-members db-member-connection test
+.PHONY: show_sample_data_in_bucket help register-members register-members-single register-human-members register-virtual-members db-member-connection test file-watcher
 
 default: help
 
@@ -50,3 +50,6 @@ test:  ## Run tests
 
 test-rollback-functionality:  ## Test rollback and validation functionality
 	python -m tests.test_rollback_functionality
+
+file-watcher:  ## Start file watcher service for automatic member registration
+	python src/services/file_watcher.py
