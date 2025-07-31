@@ -65,36 +65,63 @@ storage サービスへ、DBにインサートしたい情報のファイルを�
 
 詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
 
-##### ファイル監視サービス
+##### ファイル監視サービス（Webhookベース）
 
-ファイル監視サービスを使用すると、ストレージ内のYAMLファイルを検知します。
+ファイル監視サービスを使用すると、ストレージ内のYAMLファイルをリアルタイムで検知します。
 
 **使用方法:**
 ```bash
-# ファイル監視サービスを開始（10秒間隔でポーリング）
-make file-watcher
+# 本番環境: Dockerコンテナが自動的にFastAPIサーバーを起動
+docker-compose -p vecr-garage up -d backend-db-registration
+
+# 開発環境: 手動でFastAPIサーバーを起動
+make start-api
+
+# Webhook設定を行う
+python src/scripts/setup_webhook.py setup
+```
+
+**Webhookエンドポイント:**
+- `POST /webhook/file-change` - ファイル変更通知を受け取る
+- `GET /webhook/status` - Webhookサービスの状態を確認
+- `POST /webhook/test` - Webhook機能のテスト
+
+**Webhook設定スクリプト:**
+```bash
+# Webhook設定を作成
+python src/scripts/setup_webhook.py setup
+
+# Webhook接続をテスト
+python src/scripts/setup_webhook.py test
+
+# Webhook設定一覧を表示
+python src/scripts/setup_webhook.py list
+
+# Webhook設定を削除
+python src/scripts/setup_webhook.py remove <webhook_id>
 ```
 
 **監視対象:**
 - `data/human_members/` ディレクトリ内のYAMLファイル
 - `data/virtual_members/` ディレクトリ内のYAMLファイル
 
-**実行例:**
+**利点:**
+- リアルタイムでのファイル変更検知
+- ポーリング不要でリソース効率が良い
+- スケーラブルな設計
+- エラーハンドリングとログ機能
+- 重複イベントの検出と防止
+- **自動起動**: Dockerコンテナ起動時にAPIサーバーが自動的に開始
+
+**テスト:**
 ```bash
-🚀 Starting File Watcher Service Test
-INFO:__main__:FileWatcherService initialized with polling interval: 10s
-INFO:__main__:🚀 Starting file watcher service...
-INFO:__main__:Initializing file tracking...
-INFO:__main__:Initialized tracking for 4 files
+# Webhook機能のテスト
+make test-webhook
+
+# 個別テスト
+python src/scripts/test_webhook.py --test health
+python src/scripts/test_webhook.py --test human
 ```
-
-**停止方法:**
-- `Ctrl+C` で監視サービスを停止
-
-**注意事項:**
-- 初回実行時は既存ファイルを処理済みとしてマークします
-- ファイルのETag（ハッシュ値）を使用して変更を検知します
-- エラーが発生したファイルはログに記録されますが、監視は継続されます
 
 ##### 登録モードの選択
 

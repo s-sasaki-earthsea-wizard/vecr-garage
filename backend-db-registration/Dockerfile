@@ -24,5 +24,5 @@ COPY Makefile ./
 # Set the PYTHONPATH to include the src directory
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
-# Set the entrypoint (This is just a placeholder)
-ENTRYPOINT ["python", "src/app.py"]
+# Set the entrypoint to start FastAPI server
+ENTRYPOINT ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "3000"]
