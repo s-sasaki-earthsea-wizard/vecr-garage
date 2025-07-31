@@ -100,7 +100,7 @@ make docker-build-up
 make backend-db-registration-shell
 ```
 
-詳細は`backend-db-operation`サービスの[README](./backend-db-registration/README.md)を参照してください。
+詳細は`backend-db-registration`サービスの[README](./backend-db-registration/README.md)を参照してください。
 
 #### storage サービス
 
