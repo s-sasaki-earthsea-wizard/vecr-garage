@@ -185,6 +185,35 @@ db-member-psql
 
 各サービスはDocker Composeのネットワーク機能により、プロジェクト名をプレフィックスとしたネットワーク内で通信可能です。
 
+## セキュリティ注意事項
+
+### 本番環境での設定
+
+本番環境で使用する際は、以下の設定を必ず変更してください：
+
+1. **認証情報の変更**
+   ```bash
+   # .envファイルで以下を変更
+   MEMBER_DB_PASSWORD=your-secure-password
+   MINIO_ROOT_USER=your-secure-username
+   MINIO_ROOT_PASSWORD=your-secure-password
+   WEBHOOK_AUTH_TOKEN=your-secure-webhook-token
+   ```
+
+2. **Webhook認証の有効化**
+   - `WEBHOOK_AUTH_TOKEN`を設定してWebhook認証を有効化
+   - 未設定の場合は認証なしで動作（開発環境のみ推奨）
+
+3. **ネットワークセキュリティ**
+   - 本番環境では適切なファイアウォール設定
+   - 必要に応じてVPNやプライベートネットワークの使用
+
+### 開発環境
+
+- 現在の設定は開発環境用です
+- `.env`ファイルはGitにコミットされません
+- 実際の認証情報は環境変数で管理されています
+
 ## その他
 
 - 開発環境のクリーンアップ: `make docker-clean`
