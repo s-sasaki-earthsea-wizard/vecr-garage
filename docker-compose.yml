@@ -23,6 +23,13 @@ services:
       - USE_S3=false
       - DYNAMODB_HOST=db-chat-log
       - DYNAMODB_PORT=4566
+      # Webhook設定
+      - WEBHOOK_ENABLED=true
+      - WEBHOOK_ENDPOINT=/webhook/file-change
+      - WEBHOOK_EVENTS=s3:ObjectCreated:*,s3:ObjectRemoved:*
+      - WEBHOOK_FILTER_PREFIX=data/
+      - WEBHOOK_FILTER_SUFFIX=.yaml,.yml
+      - WEBHOOK_AUTH_TOKEN=${WEBHOOK_AUTH_TOKEN:-}
     depends_on:
       db-member:
         condition: service_healthy
@@ -84,6 +91,14 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      # Webhook設定
+      - MINIO_WEBHOOK_ENABLE=true
+      - MINIO_WEBHOOK_ENDPOINT=http://backend-db-registration:3000/webhook/file-change
+      - MINIO_WEBHOOK_EVENTS=s3:ObjectCreated:*,s3:ObjectRemoved:*
+      - MINIO_WEBHOOK_FILTER_PREFIX=data/
+      - MINIO_WEBHOOK_FILTER_SUFFIX=.yaml,.yml
+      - MINIO_WEBHOOK_AUTH_TOKEN=${WEBHOOK_AUTH_TOKEN:-}
+      - MINIO_WEBHOOK_QUEUE_LIMIT=1000
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"  # API port
@@ -107,12 +122,17 @@ services:
     depends_on:
       storage:
         condition: service_healthy
+      backend-db-registration:
+        condition: service_started
     entrypoint: >
       /bin/sh -c '
       sleep 5 &&
       mc alias set myminio http://storage:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
       mc mb -p myminio/${MINIO_BUCKET_NAME} &&
       mc cp --recursive /sample_data/ myminio/${MINIO_BUCKET_NAME}/ &&
+      echo "Setting up webhook configuration..." &&
+      mc admin config set myminio/ notify_webhook endpoint="http://backend-db-registration:3000/webhook/file-change" queue_limit=1000 &&
+      echo "Webhook configuration completed!" &&
       exit 0
       '
     volumes:
