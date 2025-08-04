@@ -105,11 +105,52 @@ make backend-db-registration-shell
 #### storage サービス
 
 チームメンバーのプロフィールやカスタムプロンプトを配置するサービスです。
-minIOによって
-以下のコマンドでアクセスできます:
+MinIOによって提供されており、以下の方法でアクセスできます:
 
 - `http://localhost:9001`にブラウザでアクセス
 - または`make storage-shell`でターミナルからアクセス
+
+##### AWS CLI を使用したファイル操作
+
+AWS CLIを使用してMinIOストレージにファイルをコピーできます:
+
+```bash
+# AWS CLIプロファイルの設定（初回のみ）
+make s3-setup-profile
+
+# サンプルファイルのコピー
+make s3-cp-sample
+
+# 個別ファイルのコピー
+make s3-cp LOCAL_FILE=./path/to/file.yml S3_KEY=data/human_members/file.yml
+
+# ストレージ内のファイル一覧表示
+make s3-ls
+```
+
+##### テスト実行結果
+
+以下のコマンドを実行した結果:
+
+```bash
+# サンプルファイルのコピー
+$ make s3-cp-sample
+Copying sample YAML files to MinIO storage...
+upload: storage/sample_data/data/human_members/Rin.yml to s3://vecr-storage/data/human_members/Rin.yml
+upload: storage/sample_data/data/human_members/Syota.yml to s3://vecr-storage/data/human_members/Syota.yml
+Sample files copied successfully!
+
+# 個別ファイルのコピー
+$ make s3-cp LOCAL_FILE=./storage/sample_data/data/human_members/Rin.yml S3_KEY=data/human_members/Rin_test.yml
+Copying files to MinIO storage...
+upload: storage/sample_data/data/human_members/Rin.yml to s3://vecr-storage/data/human_members/Rin_test.yml
+
+# ファイル一覧の確認
+$ make s3-ls
+Listing files in MinIO storage bucket...
+                           PRE data/
+2025-04-04 18:12:16         98 sample.yml
+```
 
 詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
 
