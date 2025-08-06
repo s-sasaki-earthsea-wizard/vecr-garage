@@ -186,8 +186,14 @@ lsof -i :9000
 
 ### アクセス方法
 ```bash
-# ローカル環境
+# ローカル環境（認証が必要）
 http://localhost:8000/
+
+# ログインページに自動リダイレクト
+http://localhost:8000/login
+
+# 認証情報は .env.example の ADMIN_USERNAME / ADMIN_PASSWORD を参照
+# デフォルト: Admin / SamplePassword
 
 # Dockerコンテナ内で実行
 docker exec -it vecr-garage-member-manager python app.py
@@ -197,17 +203,25 @@ docker exec -it vecr-garage-member-manager python app.py
 
 ### 認証戦略ロードマップ
 
-#### Phase 1: モックアップ認証（現在実装中）
+#### Phase 1: モックアップ認証（✅ 実装済み）
 **目的**: UI/UX検証・プロトタイピング
 - 環境変数ベースの簡易認証
 - セッション管理（Flask-Session）
 - ログイン/ログアウト機能
+- パスワード表示切り替えボタン（👁️/🙈）
 
 ```bash
 # 環境変数設定例（.env.exampleから.envにコピーして使用）
-ADMIN_USERNAME=vecr_admin
-ADMIN_PASSWORD=vecr_secure_2025
+ADMIN_USERNAME=Admin
+ADMIN_PASSWORD=SamplePassword
+SECRET_KEY=vecr-garage-secret-key-development-only-2025
 ```
+
+**実装済み機能:**
+- 美しいログインページデザイン
+- セッション管理とリダイレクト
+- 全API保護（@login_required）
+- ログアウト機能
 
 #### Phase 2: セッションベース認証（次期実装）
 **目的**: 開発・ステージング環境での実用化
@@ -259,8 +273,10 @@ aws_services:
 ## 今後の開発予定
 
 - [x] member-managerのモックUI実装
+- [x] 認証システム（モックアップ版）実装
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示
+- [ ] Flask-Login + bcryptによる認証強化
 - [ ] チャットログ機能の実装
 - [ ] LLM連携機能の強化
 - [ ] 本番環境用の設定追加
