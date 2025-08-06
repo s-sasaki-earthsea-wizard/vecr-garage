@@ -15,7 +15,6 @@ FastAPIサーバーを起動し、Webhook機能を提供します。
 import os
 import sys
 import logging
-import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
 
