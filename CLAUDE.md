@@ -193,6 +193,69 @@ http://localhost:8000/
 docker exec -it vecr-garage-member-manager python app.py
 ```
 
+## 認証システム
+
+### 認証戦略ロードマップ
+
+#### Phase 1: モックアップ認証（現在実装中）
+**目的**: UI/UX検証・プロトタイピング
+- 環境変数ベースの簡易認証
+- セッション管理（Flask-Session）
+- ログイン/ログアウト機能
+
+```bash
+# 環境変数設定例（.env.exampleから.envにコピーして使用）
+ADMIN_USERNAME=vecr_admin
+ADMIN_PASSWORD=vecr_secure_2025
+```
+
+#### Phase 2: セッションベース認証（次期実装）
+**目的**: 開発・ステージング環境での実用化
+- Flask-Login + Redis セッション管理
+- CSRF保護（Flask-WTF）
+- レート制限（Flask-Limiter）
+- パスワードハッシュ化（bcrypt）
+
+```python
+# 技術スタック例
+auth_stack = [
+    "Flask-Login",      # セッション管理
+    "Flask-WTF",        # CSRF保護
+    "Flask-Limiter",    # レート制限
+    "bcrypt",           # パスワードハッシュ化
+    "Redis"             # セッションストア
+]
+```
+
+#### Phase 3: 本番環境認証（将来実装）
+**目的**: 本格運用・AWS統合
+- AWS Cognito統合
+- MFA（多要素認証）対応
+- ソーシャルログイン連携
+- JWT認証 + API Gateway
+
+```yaml
+# AWS統合サービス
+aws_services:
+  authentication: AWS Cognito
+  secrets: AWS Secrets Manager
+  certificates: AWS Certificate Manager
+  deployment: EKS + ALB
+```
+
+### セキュリティ考慮事項
+
+#### 現在のモックアップ段階
+- ⚠️ 平文パスワード（開発専用）
+- ⚠️ 簡易セッション管理
+- ⚠️ HTTPS非対応（ローカル環境）
+
+#### 将来の本番環境
+- ✅ パスワードハッシュ化必須
+- ✅ HTTPS通信強制
+- ✅ セキュリティヘッダー設定
+- ✅ 監査ログ記録
+
 ## 今後の開発予定
 
 - [x] member-managerのモックUI実装

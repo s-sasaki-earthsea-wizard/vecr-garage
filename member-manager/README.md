@@ -68,31 +68,124 @@ member-manager/
 └── README.md             # このファイル
 ```
 
+## 認証システム
+
+### 現在のモックアップ実装
+- 環境変数ベース簡易認証
+- Flask-Session によるセッション管理
+- ログイン/ログアウト機能
+
+### 本番環境での技術選択肢
+
+#### Option 1: セッションベース認証（推奨・次期実装）
+```python
+# 技術スタック
+auth_stack = [
+    "Flask-Login",      # セッション管理・ユーザーローダー
+    "Flask-WTF",        # CSRF保護
+    "Flask-Limiter",    # レート制限・ブルートフォース対策
+    "bcrypt",           # パスワードハッシュ化
+    "Redis",            # セッションストア（EKS対応）
+    "PostgreSQL"        # ユーザー情報管理
+]
+```
+
+**メリット**: 
+- シンプルな実装
+- EKS移行が容易
+- 既存コンテナ構成を活用
+
+#### Option 2: JWT + OAuth2.0（高度な要求に対応）
+```python
+# 技術スタック
+jwt_stack = [
+    "Flask-JWT-Extended", # JWT管理
+    "Authlib",            # OAuth2.0クライアント
+    "Redis",              # JWTブラックリスト
+    "PostgreSQL"          # ユーザー管理
+]
+```
+
+#### Option 3: AWS Cognito統合（本番推奨）
+```yaml
+# AWSサービス統合
+aws_auth:
+  user_pool: AWS Cognito User Pools
+  identity: AWS Cognito Identity Pools
+  mfa: SMS/TOTP多要素認証
+  social: Google/Facebook/Apple統合
+  secrets: AWS Secrets Manager
+  
+# EKSデプロイメント
+deployment:
+  container: EKS Fargate
+  load_balancer: ALB + SSL termination
+  session_store: ElastiCache Redis
+  database: RDS PostgreSQL
+```
+
+**メリット**:
+- 完全マネージド認証サービス
+- MFA・ソーシャルログイン標準対応
+- AWS IAMとのシームレス統合
+- スケーラビリティ・可用性の保証
+
+### セキュリティ実装ロードマップ
+
+#### Phase 1: モックアップ（現在）
+```bash
+# 環境変数認証（開発専用・.env.exampleから.envにコピーして使用）
+ADMIN_USERNAME=vecr_admin
+ADMIN_PASSWORD=vecr_secure_2025
+```
+
+#### Phase 2: セッション認証（開発・ステージング）
+- パスワードハッシュ化（bcrypt）
+- CSRF保護実装
+- レート制限設定
+- セキュリティヘッダー追加
+
+#### Phase 3: 本番環境（AWS統合）
+- AWS Cognito導入
+- HTTPS強制・SSL証明書管理
+- 監査ログ記録
+- 侵入検知システム連携
+
 ## 将来の実装計画
 
-### Phase 1: データベース連携
+### Phase 1: 認証システム強化
+- [x] モックアップ認証実装
+- [ ] Flask-Login + セッション管理
+- [ ] AWS Cognito統合検討
+
+### Phase 2: データベース連携
 - [ ] PostgreSQL接続の実装
 - [ ] SQLAlchemy ORMの導入
 - [ ] 実データの読み込み・更新・削除
 
-### Phase 2: テンプレート化
+### Phase 3: テンプレート化
 - [ ] Jinjaテンプレートによるサーバーサイドレンダリング
 - [ ] 動的なテーブル一覧取得
 - [ ] カラム情報の自動取得
 
-### Phase 3: 機能拡張
-- [ ] ユーザー認証・認可
+### Phase 4: 機能拡張
 - [ ] バッチインポート/エクスポート
 - [ ] MinIOストレージ連携（プロフィール画像等）
 - [ ] リアルタイム更新（WebSocket）
 - [ ] 検索・フィルタリング機能
 - [ ] ページネーション
 
-### Phase 4: UI/UX改善
+### Phase 5: UI/UX改善
 - [ ] Vue.js/Reactへの移行検討
 - [ ] レスポンシブデザインの強化
 - [ ] ダークモード対応
 - [ ] 多言語対応
+
+### Phase 6: 本番デプロイメント
+- [ ] EKS クラスター設定
+- [ ] ALB + SSL証明書設定
+- [ ] RDS・ElastiCache統合
+- [ ] 監視・ログ収集システム
 
 ## API エンドポイント（モック）
 

@@ -3,9 +3,31 @@ Flask-Cors==4.0.0
 Werkzeug==3.0.1
 
 # 将来的に追加予定のパッケージ
+
+## Phase 2: セッションベース認証
+# Flask-Login==0.6.3  # ユーザーセッション管理
+# Flask-WTF==1.2.1  # CSRF保護・フォーム処理
+# Flask-Limiter==3.5.0  # レート制限・ブルートフォース対策
+# bcrypt==4.1.2  # パスワードハッシュ化
+# redis==5.0.1  # セッションストア
+
+## Phase 3: データベース統合
 # SQLAlchemy==2.0.36  # データベースORM
 # psycopg2==2.9.9  # PostgreSQL接続
 # Flask-SQLAlchemy==3.1.1  # Flask SQLAlchemy統合
 # Flask-Migrate==4.0.5  # データベースマイグレーション
+# alembic==1.13.1  # データベースマイグレーション管理
+
+## Phase 4: 本番環境対応
 # python-dotenv==1.0.0  # 環境変数管理
 # minio==7.2.15  # S3互換ストレージクライアント
+# boto3==1.34.0  # AWS SDK（Cognito統合用）
+# Flask-Talisman==1.1.0  # セキュリティヘッダー
+
+## Phase 5: 監視・ログ
+# structlog==23.2.0  # 構造化ログ
+# prometheus-client==0.19.0  # メトリクス収集
+
+## Phase 6: JWT認証（オプション）
+# Flask-JWT-Extended==4.6.0  # JWT管理
+# Authlib==1.3.0  # OAuth2.0クライアント
