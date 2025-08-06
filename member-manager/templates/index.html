@@ -10,8 +10,17 @@
 <body>
     <div class="container">
         <header>
-            <h1>VECR Garage Member Manager</h1>
-            <p class="subtitle">モックアップ版 - 将来的にはデータベースと連携</p>
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>VECR Garage Member Manager</h1>
+                    <p class="subtitle">モックアップ版 - 将来的にはデータベースと連携</p>
+                </div>
+                <div class="header-actions">
+                    <!-- 将来的にはJinjaでユーザー情報を動的表示 -->
+                    <span class="user-info">ようこそ、{{ username }}さん</span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-logout">ログアウト</a>
+                </div>
+            </div>
         </header>
 
         <main>
