@@ -7,6 +7,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install required Python dependencies, and remove cache
@@ -24,5 +25,5 @@ COPY Makefile ./
 # Set the PYTHONPATH to include the src directory
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
-# Set the entrypoint to start FastAPI server
-ENTRYPOINT ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "3000"]
+# Set the entrypoint to start storage monitoring
+ENTRYPOINT ["python", "src/storage_monitor.py"]
