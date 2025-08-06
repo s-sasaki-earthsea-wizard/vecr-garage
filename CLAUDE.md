@@ -170,9 +170,34 @@ lsof -i :9000
 - データベースパスワードは強力なものに変更する
 - APIエンドポイントには適切な認証を実装する
 
+## member-managerサービス
+
+### 現在の実装状況（モックアップ）
+- Flask + JavaScriptによるWebインターフェース
+- ハードコードされたモックデータを使用
+- テーブル選択、表示、編集、削除機能
+
+### 将来の実装計画
+- Jinjaテンプレートによる動的レンダリング
+- PostgreSQLデータベースとの実際の連携
+- SQLAlchemyによるORM実装
+- MinIOストレージとの統合
+- リアルタイムデータ同期
+
+### アクセス方法
+```bash
+# ローカル環境
+http://localhost:8000/
+
+# Dockerコンテナ内で実行
+docker exec -it vecr-garage-member-manager python app.py
+```
+
 ## 今後の開発予定
 
-- [ ] member-managerのUI実装完了
+- [x] member-managerのモックUI実装
+- [ ] member-managerとデータベースの実連携
+- [ ] Jinjaテンプレートによる動的表示
 - [ ] チャットログ機能の実装
 - [ ] LLM連携機能の強化
 - [ ] 本番環境用の設定追加
