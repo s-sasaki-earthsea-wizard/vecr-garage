@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Manager - Mock</title>
+    <!-- 将来的にはJinjaテンプレートでCSSファイルを管理 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>VECR Garage Member Manager</h1>
+            <p class="subtitle">モックアップ版 - 将来的にはデータベースと連携</p>
+        </header>
+
+        <main>
+            <!-- テーブル選択セクション -->
+            <section class="table-selector">
+                <label for="tableSelect">テーブル選択:</label>
+                <select id="tableSelect" class="form-control">
+                    <option value="">-- テーブルを選択してください --</option>
+                    <!-- 将来的にはJinjaでループ処理 -->
+                    {% for table in tables %}
+                    <option value="{{ table }}">{{ table }}</option>
+                    {% endfor %}
+                </select>
+            </section>
+
+            <!-- データ表示セクション -->
+            <section id="dataSection" class="data-section" style="display: none;">
+                <div class="table-header">
+                    <h2 id="tableName"></h2>
+                    <button id="addRecordBtn" class="btn btn-primary">新規レコード追加</button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="dataTable" class="data-table">
+                        <thead id="tableHead">
+                            <!-- JavaScriptで動的に生成 -->
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- JavaScriptで動的に生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 編集モーダル -->
+            <div id="editModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="modalTitle">レコード編集</h3>
+                        <span class="close" onclick="closeModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editForm">
+                            <!-- JavaScriptで動的に生成 -->
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
+                        <button type="button" class="btn btn-primary" onclick="saveRecord()">保存</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 削除確認モーダル -->
+            <div id="deleteModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>削除確認</h3>
+                        <span class="close" onclick="closeDeleteModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>このレコードを削除してもよろしいですか？</p>
+                        <p id="deleteInfo"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">キャンセル</button>
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">削除</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>※ このアプリケーションはモックアップです。実際のデータベース操作は行われません。</p>
+            <p>※ 将来的にはJinjaテンプレートを使用して動的にデータを表示します。</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
