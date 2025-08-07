@@ -15,6 +15,8 @@ COPY . .
 EXPOSE 8000
 
 # Create necessary directories
-RUN mkdir -p /app/static /app/media
+RUN mkdir -p /app/static /app/templates
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Flaskアプリケーションを起動
+# 将来的にはgunicornやuwsgiなどのWSGIサーバーを使用
+CMD ["python", "app.py"]
