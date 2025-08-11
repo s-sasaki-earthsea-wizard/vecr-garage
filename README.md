@@ -40,22 +40,6 @@ aws --version
 rm -rf aws awscliv2.zip
 ```
 
-#### macOS の場合
-
-```bash
-# Homebrew を使用
-brew install awscli
-
-# または公式インストーラーを使用
-curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
-sudo installer -pkg AWSCLIV2.pkg -target /
-```
-
-#### Windows の場合
-
-1. [AWS CLI 公式サイト](https://aws.amazon.com/cli/) からインストーラーをダウンロード
-2. ダウンロードしたインストーラーを実行
-
 ### プロジェクトのセットアップ
 
 1. リポジトリをクローン
@@ -288,22 +272,6 @@ aws --version
 # Clean up
 rm -rf aws awscliv2.zip
 ```
-
-#### For macOS
-
-```bash
-# Using Homebrew
-brew install awscli
-
-# Or using the official installer
-curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
-sudo installer -pkg AWSCLIV2.pkg -target /
-```
-
-#### For Windows
-
-1. Download the installer from the [AWS CLI official website](https://aws.amazon.com/cli/)
-2. Run the downloaded installer
 
 ### Project Setup
 
