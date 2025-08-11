@@ -147,6 +147,32 @@ Listing files in MinIO storage bucket...
 db-member-psql
 ```
 
+#### member-manager サービス
+
+メンバー管理のWebインターフェースです。認証システム付きで以下の機能を提供：
+
+**アクセス方法:**
+```bash
+# ブラウザでアクセス（認証が必要）
+http://localhost:8000/
+
+# ログインページ（自動リダイレクト）
+http://localhost:8000/login
+```
+
+**認証情報:**
+`.env.example`ファイルの`ADMIN_USERNAME`と`ADMIN_PASSWORD`を参照してください。
+
+デフォルト:
+- ユーザー名: `Admin`
+- パスワード: `SamplePassword`
+
+**機能:**
+- メンバーデータのテーブル表示・編集
+- レコードの追加・更新・削除
+- 認証システム（ログイン/ログアウト）
+- パスワード表示切り替え機能
+
 #### TBD
 
 - バックエンドサービス(LLM応答): `make backend-llm-response-shell`
@@ -165,7 +191,7 @@ db-member-psql
   - chat-log-database 
     - メンバー間のチャットログのデータベース, 暫定的にlocalstack/DynamoDBを使用 (予定)
   - member-manager
-      - ブラウザ操作でバックエンドサービスを介してDB操作やファイルアップロードを行います (予定)。
+      - ブラウザ操作でメンバー管理を行うWebインターフェース。認証システム付き。
 
 各サービスはDocker Composeのネットワーク機能により、プロジェクト名をプレフィックスとしたネットワーク内で通信可能です。
 
