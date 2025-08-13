@@ -12,6 +12,7 @@ import time
 import logging
 from pathlib import Path
 import sys
+import os
 
 # プロジェクトルートをパスに追加
 project_root = Path(__file__).parent.parent.parent
@@ -25,12 +26,16 @@ logger = logging.getLogger(__name__)
 class WebhookTester:
     """Webhook機能テストクラス"""
     
-    def __init__(self, base_url: str = "http://localhost:3000"):
+    def __init__(self, base_url: str = None):
         """Webhookテストクラスを初期化
         
         Args:
             base_url (str): APIサーバーのベースURL
         """
+        if base_url is None:
+            base_url = os.getenv("API_BASE_URL")
+            if not base_url:
+                raise ValueError("API_BASE_URL environment variable is required")
         self.base_url = base_url
         self.webhook_url = f"{base_url}/webhook/file-change"
         self.status_url = f"{base_url}/webhook/status"
@@ -428,8 +433,8 @@ def main():
     parser = argparse.ArgumentParser(description="Test webhook functionality")
     parser.add_argument(
         "--url", 
-        default="http://localhost:3000",
-        help="Base URL of the API server (default: http://localhost:3000)"
+        default=os.getenv("API_BASE_URL"),
+        help="Base URL of the API server (required: set API_BASE_URL env var)"
     )
     parser.add_argument(
         "--test", 
