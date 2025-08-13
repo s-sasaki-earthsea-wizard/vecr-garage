@@ -64,8 +64,8 @@ class StorageMonitor:
             import uvicorn
             uvicorn.run(
                 app,
-                host=os.getenv("HOST", "0.0.0.0"),
-                port=int(os.getenv("PORT", "3000")),
+                host=os.getenv("API_HOST", "0.0.0.0"),
+                port=int(os.getenv("API_PORT", "3000")),
                 log_level="info",
                 access_log=True
             )

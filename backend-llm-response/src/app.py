@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+import os
 from services.member_service import MemberService
 
 app = Flask(__name__)
@@ -20,4 +21,7 @@ def get_member_response():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3001)
+    app.run(
+        host=os.getenv("LLM_HOST", "0.0.0.0"), 
+        port=int(os.getenv("LLM_PORT", "3001"))
+    )

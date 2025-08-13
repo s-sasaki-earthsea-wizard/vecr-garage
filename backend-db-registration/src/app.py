@@ -112,7 +112,7 @@ async def test_webhook():
                     "eventTime": "2024-01-01T00:00:00.000Z",
                     "s3": {
                         "bucket": {
-                            "name": "vecr-storage"
+                            "name": os.getenv("MINIO_BUCKET_NAME", "vecr-storage")
                         },
                         "object": {
                             "key": "data/human_members/test_human_member.yaml",
@@ -139,8 +139,8 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         "app:app",
-        host="0.0.0.0",
-        port=3000,
+        host=os.getenv("API_HOST", "0.0.0.0"),
+        port=int(os.getenv("API_PORT", "3000")),
         reload=True,
         log_level="info"
     )

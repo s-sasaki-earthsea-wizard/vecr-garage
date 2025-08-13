@@ -189,8 +189,14 @@ def main():
     print("=" * 50)
     
     # 環境変数から設定を取得
-    webhook_url = os.getenv("WEBHOOK_URL", "http://localhost:3000/webhook/file-change")
+    webhook_url = os.getenv("WEBHOOK_URL", os.getenv("WEBHOOK_FULL_URL"))
+    if not webhook_url:
+        print("❌ Error: WEBHOOK_URL or WEBHOOK_FULL_URL environment variable is required")
+        sys.exit(1)
     bucket_name = os.getenv("MINIO_BUCKET_NAME")
+    if not bucket_name:
+        print("❌ Error: MINIO_BUCKET_NAME environment variable is required")
+        sys.exit(1)
     
     print(f"Webhook URL: {webhook_url}")
     print(f"Bucket Name: {bucket_name}")
@@ -262,8 +268,8 @@ def print_usage():
     print("  python setup_webhook.py remove <id> - Remove webhook configuration")
     print()
     print("Environment variables:")
-    print("  WEBHOOK_URL - Webhook endpoint URL (default: http://localhost:3000/webhook/file-change)")
-    print("  MINIO_BUCKET_NAME - Target bucket name")
+    print("  WEBHOOK_URL or WEBHOOK_FULL_URL - Webhook endpoint URL (required)")
+    print("  MINIO_BUCKET_NAME - Target bucket name (required)")
 
 
 if __name__ == "__main__":

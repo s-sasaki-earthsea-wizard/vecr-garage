@@ -129,35 +129,35 @@ s3-cp: ## Copy files to MinIO storage using AWS CLI s3 cp command
 		exit 1; \
 	fi
 	aws s3 cp $(LOCAL_FILE) s3://$(MINIO_BUCKET_NAME)/$(S3_KEY) \
-		--endpoint-url http://localhost:9000 \
+		--endpoint-url $(STORAGE_BASE_URL) \
 		--profile minio-local || \
 		aws s3 cp $(LOCAL_FILE) s3://$(MINIO_BUCKET_NAME)/$(S3_KEY) \
-		--endpoint-url http://localhost:9000 \
+		--endpoint-url $(STORAGE_BASE_URL) \
 		--no-sign-request
 
 s3-cp-sample: ## Copy sample YAML files to MinIO storage
 	@echo "Copying sample YAML files to MinIO storage..."
 	aws s3 cp ./storage/sample_data/data/human_members/Rin.yml s3://$(MINIO_BUCKET_NAME)/data/human_members/Rin.yml \
-		--endpoint-url http://localhost:9000 \
+		--endpoint-url $(STORAGE_BASE_URL) \
 		--profile minio-local || \
 		aws s3 cp ./storage/sample_data/data/human_members/Rin.yml s3://$(MINIO_BUCKET_NAME)/data/human_members/Rin.yml \
-		--endpoint-url http://localhost:9000 \
+		--endpoint-url $(STORAGE_BASE_URL) \
 		--no-sign-request
 	aws s3 cp ./storage/sample_data/data/human_members/Syota.yml s3://$(MINIO_BUCKET_NAME)/data/human_members/Syota.yml \
-		--endpoint-url http://localhost:9000 \
+		--endpoint-url $(STORAGE_BASE_URL) \
 		--profile minio-local || \
 		aws s3 cp ./storage/sample_data/data/human_members/Syota.yml s3://$(MINIO_BUCKET_NAME)/data/human_members/Syota.yml \
-		--endpoint-url http://localhost:9000 \
+		--endpoint-url $(STORAGE_BASE_URL) \
 		--no-sign-request
 	@echo "Sample files copied successfully!"
 
 s3-ls: ## List files in MinIO storage bucket
 	@echo "Listing files in MinIO storage bucket..."
 	aws s3 ls s3://$(MINIO_BUCKET_NAME)/ \
-		--endpoint-url http://localhost:9000 \
+		--endpoint-url $(STORAGE_BASE_URL) \
 		--profile minio-local || \
 		aws s3 ls s3://$(MINIO_BUCKET_NAME)/ \
-		--endpoint-url http://localhost:9000 \
+		--endpoint-url $(STORAGE_BASE_URL) \
 		--no-sign-request
 
 s3-setup-profile: ## Setup AWS CLI profile for MinIO local storage
