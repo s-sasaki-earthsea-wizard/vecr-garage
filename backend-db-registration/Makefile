@@ -53,9 +53,9 @@ test-rollback-functionality:  ## Test rollback and validation functionality
 
 start-api:  ## Start FastAPI server with webhook endpoints (for development)
 	@echo "🚀 Starting FastAPI server with webhook endpoints..."
-	@echo "📡 Webhook endpoint: http://localhost:3000/webhook/file-change"
-	@echo "📊 API documentation: http://localhost:3000/docs"
-	@echo "🔍 Health check: http://localhost:3000/health"
+	@echo "📡 Webhook endpoint: $(API_BASE_URL)/webhook/file-change"
+	@echo "📊 API documentation: $(API_BASE_URL)/docs"
+	@echo "🔍 Health check: $(API_BASE_URL)/health"
 	@echo ""
 	@echo "💡 Note: In production, the API server starts automatically with the Docker container."
 	@echo "   To set up webhook notifications, run in another terminal:"
@@ -66,21 +66,21 @@ start-api:  ## Start FastAPI server with webhook endpoints (for development)
 		echo "✅ API server process is already running (container entrypoint)"; \
 		echo ""; \
 		echo "💡 This appears to be running in a Docker container with uvicorn as entrypoint."; \
-		echo "💡 To stop the server, use: docker-compose -p vecr-garage stop backend-db-registration"; \
-		echo "💡 To view logs, use: docker-compose -p vecr-garage logs -f backend-db-registration"; \
+		echo "💡 To stop the server, use: docker-compose -p $(PROJECT_NAME) stop backend-db-registration"; \
+		echo "💡 To view logs, use: docker-compose -p $(PROJECT_NAME) logs -f backend-db-registration"; \
 		echo "💡 To start a new server outside container, run from host machine: make start-api"; \
 		exit 0; \
-	elif curl -s http://localhost:3000/health > /dev/null 2>&1; then \
-		echo "✅ API server is already running on port 3000"; \
-		echo "📊 Server status: http://localhost:3000/health"; \
-		echo "📡 Webhook endpoint: http://localhost:3000/webhook/file-change"; \
+	elif curl -s $(API_BASE_URL)/health > /dev/null 2>&1; then \
+		echo "✅ API server is already running on port $(API_PORT)"; \
+		echo "📊 Server status: $(API_BASE_URL)/health"; \
+		echo "📡 Webhook endpoint: $(API_BASE_URL)/webhook/file-change"; \
 		echo ""; \
-		echo "💡 To stop the server, use: docker-compose -p vecr-garage stop backend-db-registration"; \
-		echo "💡 To view logs, use: docker-compose -p vecr-garage logs -f backend-db-registration"; \
+		echo "💡 To stop the server, use: docker-compose -p $(PROJECT_NAME) stop backend-db-registration"; \
+		echo "💡 To view logs, use: docker-compose -p $(PROJECT_NAME) logs -f backend-db-registration"; \
 		exit 0; \
 	else \
 		echo "🚀 Starting new FastAPI server..."; \
-		uvicorn src.app:app --host 0.0.0.0 --port 3000 --reload; \
+		uvicorn src.app:app --host $(API_HOST) --port $(API_PORT) --reload; \
 	fi
 
 test-webhook:  ## Test webhook functionality
@@ -97,17 +97,17 @@ check-api:  ## Check API server status
 		echo ""; \
 		echo "💡 This is running in a Docker container with uvicorn as entrypoint."; \
 		echo "💡 To check from host machine:"; \
-		echo "   curl http://localhost:3000/health"; \
+		echo "   curl $(API_BASE_URL)/health"; \
 		echo "💡 To view logs:"; \
-		echo "   docker-compose -p vecr-garage logs -f backend-db-registration"; \
-	elif curl -s http://localhost:3000/health > /dev/null 2>&1; then \
+		echo "   docker-compose -p $(PROJECT_NAME) logs -f backend-db-registration"; \
+	elif curl -s $(API_BASE_URL)/health > /dev/null 2>&1; then \
 		echo "✅ API server is running and healthy"; \
 		echo "📊 Health check response:"; \
-		curl -s http://localhost:3000/health; \
+		curl -s $(API_BASE_URL)/health; \
 	else \
 		echo "❌ API server is not running or not accessible"; \
 		echo "💡 To start the server:"; \
-		echo "   - Production: docker-compose -p vecr-garage up -d backend-db-registration"; \
+		echo "   - Production: docker-compose -p $(PROJECT_NAME) up -d backend-db-registration"; \
 		echo "   - Development: make start-api"; \
 		exit 1; \
 	fi
