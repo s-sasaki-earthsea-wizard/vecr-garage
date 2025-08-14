@@ -12,15 +12,10 @@
 """
 
 import os
-import logging
-from pathlib import Path
+from utils.logging_config import setup_logging
 
 # ログ設定
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 
 class StorageMonitor:

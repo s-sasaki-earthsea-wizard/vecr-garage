@@ -1,13 +1,12 @@
-import logging
 import json
 from typing import Dict, List, Optional
 from datetime import datetime
 from storage.storage_client import StorageClient
 from operations.member_registration import register_human_member_from_yaml, register_virtual_member_from_yaml
 from models.webhook_models import FileChangeEvent, WebhookResponse
+from utils.logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 
 class WebhookFileWatcherService:

@@ -87,7 +87,7 @@ test-webhook:  ## Test webhook functionality
 	@echo "🧪 Testing webhook functionality..."
 	@echo "Make sure the API server is running with 'make start-api' first."
 	@echo ""
-	python src/scripts/test_webhook.py
+	python tests/test_webhook.py
 
 check-api:  ## Check API server status
 	@echo "🔍 Checking API server status..."
