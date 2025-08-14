@@ -2,10 +2,9 @@ from db.database import SessionLocal, save_human_member, save_virtual_member, ge
 from storage.storage_client import StorageClient
 from validation.yaml_validator import YAMLValidator, ValidationError
 import yaml
-import logging
+from utils.logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 def register_human_member_from_yaml(yaml_path: str):
     """YAMLファイルから人間メンバーを登録する（バリデーション・ロールバック機能付き）

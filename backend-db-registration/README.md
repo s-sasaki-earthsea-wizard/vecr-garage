@@ -7,6 +7,32 @@ DB操作を行うサービスです。
 
 を行う機能をここで実装する予定です。
 
+## ログ設定
+
+このサービスでは、統一されたログ設定を使用しています。ログレベルやログファイルの設定は環境変数で制御できます。
+
+### 環境変数
+
+- `LOG_LEVEL`: ログレベル（DEBUG, INFO, WARNING, ERROR, CRITICAL）- デフォルト: INFO
+- `LOG_FILE`: ログファイルのパス（指定しない場合はコンソール出力のみ）
+
+### 使用例
+
+```bash
+# デバッグレベルのログを出力
+export LOG_LEVEL=DEBUG
+
+# ログファイルに出力
+export LOG_FILE=logs/vecr-office.log
+
+# サービスを起動
+make start-api
+```
+
+### ログ設定の統一
+
+各モジュールでは `utils.logging_config.setup_logging()` 関数を使用してログ設定を行います。これにより、サービス全体で一貫したログレベルとフォーマットが適用されます。
+
 ## 接続チェック
 
 `backend-db-registration`コンテナのシェルで以下のコマンドを実行することで

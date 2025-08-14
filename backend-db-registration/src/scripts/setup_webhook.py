@@ -25,8 +25,8 @@ from src.storage.storage_client import StorageClient
 load_dotenv()
 
 # ログ設定
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from src.utils.logging_config import setup_logging
+logger = setup_logging(__name__)
 
 
 class WebhookSetup:

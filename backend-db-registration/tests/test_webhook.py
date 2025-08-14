@@ -15,12 +15,12 @@ import sys
 import os
 
 # プロジェクトルートをパスに追加
-project_root = Path(__file__).parent.parent.parent
+project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # ログ設定
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from src.utils.logging_config import setup_logging
+logger = setup_logging(__name__)
 
 
 class WebhookTester:

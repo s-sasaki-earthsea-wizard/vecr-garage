@@ -2,16 +2,15 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 import os
-import logging
 from services.webhook_file_watcher import WebhookFileWatcherService
 from models.webhook_models import WebhookResponse
+from utils.logging_config import setup_logging
 
 # Load environment variables
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 # Create FastAPI app
 app = FastAPI(
