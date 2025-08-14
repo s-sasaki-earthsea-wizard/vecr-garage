@@ -245,4 +245,14 @@ def delete_record(table_name, record_id):
     return jsonify({'error': 'Record not found'}), 404
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    import os
+    from dotenv import load_dotenv
+    
+    # 環境変数を読み込み
+    load_dotenv()
+    
+    host = os.getenv('MEMBER_MANAGER_HOST', '0.0.0.0')
+    port = int(os.getenv('MEMBER_MANAGER_PORT', '8000'))
+    debug = os.getenv('DEBUG', '0').lower() == '1'
+    
+    app.run(host=host, port=port, debug=debug)

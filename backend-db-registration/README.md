@@ -7,6 +7,32 @@ DB操作を行うサービスです。
 
 を行う機能をここで実装する予定です。
 
+## ログ設定
+
+このサービスでは、統一されたログ設定を使用しています。ログレベルやログファイルの設定は環境変数で制御できます。
+
+### 環境変数
+
+- `LOG_LEVEL`: ログレベル（DEBUG, INFO, WARNING, ERROR, CRITICAL）- デフォルト: INFO
+- `LOG_FILE`: ログファイルのパス（指定しない場合はコンソール出力のみ）
+
+### 使用例
+
+```bash
+# デバッグレベルのログを出力
+export LOG_LEVEL=DEBUG
+
+# ログファイルに出力
+export LOG_FILE=logs/vecr-office.log
+
+# サービスを起動
+make start-api
+```
+
+### ログ設定の統一
+
+各モジュールでは `utils.logging_config.setup_logging()` 関数を使用してログ設定を行います。これにより、サービス全体で一貫したログレベルとフォーマットが適用されます。
+
 ## 接続チェック
 
 `backend-db-registration`コンテナのシェルで以下のコマンドを実行することで
@@ -64,6 +90,64 @@ Kasen data: {'name': '華扇', 'custom_prompt': "I'm a virtual member.", 'llm_mo
 storage サービスへ、DBにインサートしたい情報のファイルを配置してください。
 
 詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
+
+##### ファイル監視サービス（Webhookベース）
+
+ファイル監視サービスを使用すると、ストレージ内のYAMLファイルをリアルタイムで検知します。
+
+**使用方法:**
+```bash
+# 本番環境: Dockerコンテナが自動的にFastAPIサーバーを起動
+docker-compose -p vecr-garage up -d backend-db-registration
+
+# 開発環境: 手動でFastAPIサーバーを起動
+make start-api
+
+# Webhook設定を行う
+python src/scripts/setup_webhook.py setup
+```
+
+**Webhookエンドポイント:**
+- `POST /webhook/file-change` - ファイル変更通知を受け取る
+- `GET /webhook/status` - Webhookサービスの状態を確認
+- `POST /webhook/test` - Webhook機能のテスト
+
+**Webhook設定スクリプト:**
+```bash
+# Webhook設定を作成
+python src/scripts/setup_webhook.py setup
+
+# Webhook接続をテスト
+python src/scripts/setup_webhook.py test
+
+# Webhook設定一覧を表示
+python src/scripts/setup_webhook.py list
+
+# Webhook設定を削除
+python src/scripts/setup_webhook.py remove <webhook_id>
+```
+
+**監視対象:**
+- `data/human_members/` ディレクトリ内のYAMLファイル
+- `data/virtual_members/` ディレクトリ内のYAMLファイル
+
+**利点:**
+- リアルタイムでのファイル変更検知
+- ポーリング不要でリソース効率が良い
+- スケーラブルな設計
+- エラーハンドリングとログ機能
+- 重複イベントの検出と防止
+- **自動起動**: Dockerコンテナ起動時にAPIサーバーが自動的に開始
+
+**テスト:**
+```bash
+# Webhook機能のテスト
+make test-webhook
+
+# 個別テスト
+python src/scripts/test_webhook.py --test health
+python src/scripts/test_webhook.py --test human
+```
 
 ##### 登録モードの選択
 
