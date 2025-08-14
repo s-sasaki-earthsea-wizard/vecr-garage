@@ -25,5 +25,5 @@ COPY Makefile ./
 # Set the PYTHONPATH to include the src directory
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
-# Set the entrypoint to start storage monitoring
-ENTRYPOINT ["python", "src/storage_monitor.py"]
+# Set the entrypoint to start the FastAPI application
+ENTRYPOINT ["python", "src/app.py"]
