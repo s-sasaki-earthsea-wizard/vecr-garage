@@ -1,4 +1,5 @@
 import json
+import urllib.parse
 from typing import Dict, List, Optional
 from datetime import datetime
 from storage.storage_client import StorageClient
@@ -97,8 +98,19 @@ class WebhookFileWatcherService:
         Returns:
             bool: 処理すべき場合はTrue
         """
-        # イベントIDを生成（オブジェクト名 + ETag）
-        event_id = f"{event.object_name}_{event.etag}"
+        # オブジェクトキーをURLデコード
+        try:
+            decoded_object_name = urllib.parse.unquote(event.object_name)
+            # デバッグログでエンコード前後のパスを記録
+            if decoded_object_name != event.object_name:
+                logger.debug(f"URL decoded object name: {event.object_name} -> {decoded_object_name}")
+        except Exception as e:
+            logger.warning(f"Failed to URL decode object name '{event.object_name}': {e}")
+            # デコードに失敗した場合は元のパスを使用
+            decoded_object_name = event.object_name
+        
+        # イベントIDを生成（デコード後のオブジェクト名 + ETag）
+        event_id = f"{decoded_object_name}_{event.etag}"
         
         # 既に処理済みのイベントはスキップ
         if event_id in self.processed_events:
@@ -110,15 +122,15 @@ class WebhookFileWatcherService:
             logger.debug(f"Skipping non-creation event: {event.event_name}")
             return False
         
-        # YAMLファイルのみを処理
-        if not event.object_name.endswith(('.yaml', '.yml')):
-            logger.debug(f"Skipping non-YAML file: {event.object_name}")
+        # YAMLファイルのみを処理（デコード後のパスで判定）
+        if not decoded_object_name.endswith(('.yaml', '.yml')):
+            logger.debug(f"Skipping non-YAML file: {decoded_object_name}")
             return False
         
-        # 対象ディレクトリのファイルのみを処理
-        if not (event.object_name.startswith('data/human_members/') or 
-                event.object_name.startswith('data/virtual_members/')):
-            logger.debug(f"Skipping file outside target directories: {event.object_name}")
+        # 対象ディレクトリのファイルのみを処理（デコード後のパスで判定）
+        if not (decoded_object_name.startswith('data/human_members/') or 
+                decoded_object_name.startswith('data/virtual_members/')):
+            logger.debug(f"Skipping file outside target directories: {decoded_object_name}")
             return False
         
         return True
@@ -133,23 +145,34 @@ class WebhookFileWatcherService:
             bool: 処理が成功した場合はTrue
         """
         try:
-            logger.info(f"Processing file event: {event.event_name} for {event.object_name}")
+            # オブジェクトキーをURLデコード
+            try:
+                decoded_object_name = urllib.parse.unquote(event.object_name)
+                # デバッグログでエンコード前後のパスを記録
+                if decoded_object_name != event.object_name:
+                    logger.debug(f"URL decoded object name: {event.object_name} -> {decoded_object_name}")
+            except Exception as e:
+                logger.warning(f"Failed to URL decode object name '{event.object_name}': {e}")
+                # デコードに失敗した場合は元のパスを使用
+                decoded_object_name = event.object_name
             
-            # ファイルパスに基づいてメンバータイプを判定
-            if "human_members" in event.object_name:
-                register_human_member_from_yaml(event.object_name)
-                logger.info(f"✅ Successfully registered human member from: {event.object_name}")
+            logger.info(f"Processing file event: {event.event_name} for {decoded_object_name}")
+            
+            # ファイルパスに基づいてメンバータイプを判定（デコード後のパスで判定）
+            if "human_members" in decoded_object_name:
+                register_human_member_from_yaml(decoded_object_name)
+                logger.info(f"✅ Successfully registered human member from: {decoded_object_name}")
                 
-            elif "virtual_members" in event.object_name:
-                register_virtual_member_from_yaml(event.object_name)
-                logger.info(f"✅ Successfully registered virtual member from: {event.object_name}")
+            elif "virtual_members" in decoded_object_name:
+                register_virtual_member_from_yaml(decoded_object_name)
+                logger.info(f"✅ Successfully registered virtual member from: {decoded_object_name}")
                 
             else:
-                logger.warning(f"⚠️  Unknown file type, skipping: {event.object_name}")
+                logger.warning(f"⚠️  Unknown file type, skipping: {decoded_object_name}")
                 return False
             
-            # 処理済みイベントとしてマーク
-            event_id = f"{event.object_name}_{event.etag}"
+            # 処理済みイベントとしてマーク（デコード後のパスでイベントID生成）
+            event_id = f"{decoded_object_name}_{event.etag}"
             self.processed_events[event_id] = event.etag
             
             return True
