@@ -23,7 +23,7 @@ app = FastAPI(
 webhook_watcher = WebhookFileWatcherService()
 
 # Initialize storage monitor
-from storage_monitor import StorageMonitor
+from storage.storage_monitor import StorageMonitor
 storage_monitor = StorageMonitor()
 
 # Add storage monitor health check endpoints
