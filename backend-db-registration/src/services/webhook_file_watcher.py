@@ -194,13 +194,15 @@ class WebhookFileWatcherService:
                     else:
                         errors.append(f"Failed to process {event.object_name}")
                 else:
-                    logger.debug(f"Skipped event for {event.object_name}")
+                    logger.debug(f"Skipped duplicate event for {event.object_name}")
             
             # 処理済みイベントの履歴をクリーンアップ（古いエントリを削除）
             self._cleanup_processed_events()
             
             # 成功の判定: エラーが0の場合（重複検出による処理スキップは正常な動作）
             success = len(errors) == 0
+            
+            # メッセージの構築
             if len(processed_files) > 0:
                 message = f"Processed {len(processed_files)} files successfully"
             else:
