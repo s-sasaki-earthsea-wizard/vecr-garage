@@ -196,3 +196,7 @@ storage/data/*
 !storage/data/rules/
 !storage/data/rules/*.md
 
+# AWS CLI installation files
+awscliv2.zip
+aws/
+

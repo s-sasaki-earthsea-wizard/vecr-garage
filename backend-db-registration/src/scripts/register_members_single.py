@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 from operations.member_registration import register_human_member_from_yaml, register_virtual_member_from_yaml
-import logging
 import argparse
 from storage.storage_client import StorageClient
+from src.utils.logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 def get_all_yaml_files_from_storage():
     """ストレージからすべてのYAMLファイルのパスを動的に取得する

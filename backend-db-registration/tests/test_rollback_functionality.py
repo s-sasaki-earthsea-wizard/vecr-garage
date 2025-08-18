@@ -13,9 +13,9 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 from src.operations.member_registration import register_human_member_from_yaml, register_virtual_member_from_yaml
 from src.validation.yaml_validator import YAMLValidator, ValidationError
 from src.db.database import DatabaseError
+from src.utils.logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 def test_human_member_validation():
     """人間メンバーのバリデーションテスト"""
