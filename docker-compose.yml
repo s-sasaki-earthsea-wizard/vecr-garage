@@ -33,7 +33,8 @@ services:
       - WEBHOOK_EVENTS=s3:ObjectCreated:*,s3:ObjectRemoved:*
       - WEBHOOK_FILTER_PREFIX=data/
       - WEBHOOK_FILTER_SUFFIX=.yaml,.yml
-      - WEBHOOK_AUTH_TOKEN=${WEBHOOK_AUTH_TOKEN:-}
+      # TODO: 将来的にWebhook認証を実装予定（現在は未使用）
+      # - WEBHOOK_AUTH_TOKEN=${WEBHOOK_AUTH_TOKEN:-}
       - WEBHOOK_FULL_URL=${WEBHOOK_FULL_URL}
       # サーバー設定
       - HOST=${API_HOST}
@@ -108,7 +109,8 @@ services:
       - MINIO_WEBHOOK_EVENTS=s3:ObjectCreated:*,s3:ObjectRemoved:*
       - MINIO_WEBHOOK_FILTER_PREFIX=data/
       - MINIO_WEBHOOK_FILTER_SUFFIX=.yaml,.yml
-      - MINIO_WEBHOOK_AUTH_TOKEN=${WEBHOOK_AUTH_TOKEN:-}
+      # TODO: 将来的にWebhook認証を実装予定（現在は未使用）
+      # - MINIO_WEBHOOK_AUTH_TOKEN=${WEBHOOK_AUTH_TOKEN:-}
       - MINIO_WEBHOOK_QUEUE_LIMIT=1000
     command: server /data --console-address ":${STORAGE_CONSOLE_PORT}"
     ports:
