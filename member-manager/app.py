@@ -33,6 +33,34 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'password')
 # データベースマネージャーの初期化
 db_manager = DatabaseManager()
 
+def get_column_description(column_name):
+    """列の説明を取得"""
+    descriptions = {
+        # human_members
+        'member_id': 'メンバーの一意識別子（自動採番）',
+        'member_uuid': 'メンバーのUUID（グローバル一意識別子）',
+        'member_name': 'メンバーの表示名',
+        'created_at': 'レコード作成日時',
+        'updated_at': 'レコード更新日時',
+        
+        # human_member_profiles
+        'profile_id': 'プロフィールの一意識別子（自動採番）',
+        'profile_uuid': 'プロフィールのUUID（グローバル一意識別子）',
+        'bio': '自己紹介・プロフィール文',
+        
+        # virtual_members
+        'llm_model': '使用するLLMモデル名',
+        'custom_prompt': 'カスタムプロンプト設定',
+        
+        # member_relationships
+        'relationship_id': '関係性の一意識別子（自動採番）',
+        'from_member_uuid': '関係性の起点となるメンバーのUUID',
+        'to_member_uuid': '関係性の終点となるメンバーのUUID',
+        'relationship_type': '関係性の種類（mentor、mentee、peer等）',
+        'name_suffix': '呼び方（さん、くん等）'
+    }
+    return descriptions.get(column_name, '列の説明')
+
 # Jinja2テンプレートフィルターの登録
 @app.template_filter('get_column_description')
 def get_column_description_filter(column_name):
@@ -411,34 +439,6 @@ def get_table_description(table_name):
         'member_relationships': 'メンバー間の関係性情報（メンター・メンティー等）'
     }
     return descriptions.get(table_name, 'テーブルの説明')
-
-def get_column_description(column_name):
-    """列の説明を取得"""
-    descriptions = {
-        # human_members
-        'member_id': 'メンバーの一意識別子（自動採番）',
-        'member_uuid': 'メンバーのUUID（グローバル一意識別子）',
-        'member_name': 'メンバーの表示名',
-        'created_at': 'レコード作成日時',
-        'updated_at': 'レコード更新日時',
-        
-        # human_member_profiles
-        'profile_id': 'プロフィールの一意識別子（自動採番）',
-        'profile_uuid': 'プロフィールのUUID（グローバル一意識別子）',
-        'bio': '自己紹介・プロフィール文',
-        
-        # virtual_members
-        'llm_model': '使用するLLMモデル名',
-        'custom_prompt': 'カスタムプロンプト設定',
-        
-        # member_relationships
-        'relationship_id': '関係性の一意識別子（自動採番）',
-        'from_member_uuid': '関係性の起点となるメンバーのUUID',
-        'to_member_uuid': '関係性の終点となるメンバーのUUID',
-        'relationship_type': '関係性の種類（mentor、mentee、peer等）',
-        'name_suffix': '呼び方（さん、くん等）'
-    }
-    return descriptions.get(column_name, '列の説明')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

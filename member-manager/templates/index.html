@@ -11,37 +11,35 @@
             </h1>
             <p class="lead">メンバー管理システムへようこそ</p>
             <hr class="my-4">
-            <p>現在はモックアップ版ですが、将来的にはデータベースと連携して動的にデータを表示します。</p>
+            <p>データベースと連携して動的にデータを表示・管理できます。</p>
             <div class="d-flex gap-2">
-                <a class="btn btn-primary btn-lg" href="{{ url_for('get_database_tables') }}">
+                <a class="btn btn-primary btn-lg" href="{{ url_for('database_view') }}">
                     <i class="fas fa-database me-2"></i>データベース管理
                 </a>
-                <button class="btn btn-outline-secondary btn-lg" onclick="showMockData()">
-                    <i class="fas fa-eye me-2"></i>モックデータ表示
+                <button class="btn btn-outline-secondary btn-lg" onclick="showTableData()">
+                    <i class="fas fa-table me-2"></i>テーブル一覧表示
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- モックデータ表示セクション -->
-<div class="row" id="mockDataSection" style="display: none;">
+<!-- テーブルデータ表示セクション -->
+<div class="row" id="tableDataSection" style="display: none;">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-table me-2"></i>モックデータ
+                    <i class="fas fa-table me-2"></i>データベーステーブル
                 </h5>
             </div>
             <div class="card-body">
                 <!-- テーブル選択 -->
                 <div class="mb-3">
                     <label for="tableSelect" class="form-label">テーブル選択:</label>
-                    <select id="tableSelect" class="form-select" onchange="loadMockTable()">
+                    <select id="tableSelect" class="form-select" onchange="loadTableData()">
                         <option value="">-- テーブルを選択してください --</option>
-                        {% for table in tables %}
-                        <option value="{{ table }}">{{ table }}</option>
-                        {% endfor %}
+                        <!-- JavaScriptで動的に生成 -->
                     </select>
                 </div>
 
@@ -49,9 +47,14 @@
                 <div id="dataSection" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 id="tableName" class="mb-0"></h6>
-                        <button id="addRecordBtn" class="btn btn-sm btn-primary" onclick="showAddRecordModal()">
-                            <i class="fas fa-plus me-1"></i>新規レコード追加
-                        </button>
+                        <div>
+                            <button id="addRecordBtn" class="btn btn-sm btn-primary me-2" onclick="showAddRecordModal()">
+                                <i class="fas fa-plus me-1"></i>新規レコード追加
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshTableData()">
+                                <i class="fas fa-sync-alt me-1"></i>更新
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="table-responsive">
@@ -65,6 +68,12 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- テーブル未選択時のメッセージ -->
+                <div id="noTableSelected" class="text-center py-4">
+                    <i class="fas fa-arrow-up fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">上記のドロップダウンからテーブルを選択してください。</p>
+                </div>
             </div>
         </div>
     </div>
@@ -72,56 +81,62 @@
 
 <!-- 新規レコード追加モーダル -->
 <div class="modal fade" id="addRecordModal" tabindex="-1">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title">新規レコード追加</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-            <form id="addRecordForm">
-                <!-- JavaScriptで動的に生成 -->
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-            <button type="button" class="btn btn-primary" onclick="saveRecord()">保存</button>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新規レコード追加</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRecordForm">
+                    <!-- JavaScriptで動的に生成 -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="saveRecord()">保存</button>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- 編集モーダル -->
 <div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title">レコード編集</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-            <form id="editForm">
-                <!-- JavaScriptで動的に生成 -->
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-            <button type="button" class="btn btn-primary" onclick="updateRecord()">更新</button>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">レコード編集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <!-- JavaScriptで動的に生成 -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="updateRecord()">更新</button>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- 削除確認モーダル -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title">削除確認</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-            <p>このレコードを削除してもよろしいですか？</p>
-            <p id="deleteInfo" class="text-muted"></p>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-            <button type="button" class="btn btn-danger" onclick="confirmDelete()">削除</button>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">削除確認</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>このレコードを削除してもよろしいですか？</p>
+                <p id="deleteInfo" class="text-muted"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">削除</button>
+            </div>
         </div>
     </div>
 </div>
@@ -129,56 +144,97 @@
 
 {% block scripts %}
 <script>
-// モックデータ表示の切り替え
-function showMockData() {
-    const section = document.getElementById('mockDataSection');
+let currentTableName = '';
+let currentTableData = null;
+
+// テーブルデータ表示の切り替え
+function showTableData() {
+    const section = document.getElementById('tableDataSection');
     if (section.style.display === 'none') {
         section.style.display = 'block';
-        document.querySelector('button[onclick="showMockData()"]').textContent = 'モックデータ非表示';
+        document.querySelector('button[onclick="showTableData()"]').textContent = 'テーブル一覧非表示';
+        loadAvailableTables();
     } else {
         section.style.display = 'none';
-        document.querySelector('button[onclick="showMockData()"]').textContent = 'モックデータ表示';
+        document.querySelector('button[onclick="showTableData()"]').textContent = 'テーブル一覧表示';
     }
 }
 
-// モックテーブルの読み込み
-function loadMockTable() {
+// 利用可能なテーブル一覧を読み込み
+function loadAvailableTables() {
+    fetch('/api/db/tables')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateTableSelect(data.tables);
+            } else {
+                console.error('テーブル一覧の取得に失敗:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('テーブル一覧読み込みエラー:', error);
+        });
+}
+
+// テーブル選択ドロップダウンを生成
+function populateTableSelect(tables) {
+    const tableSelect = document.getElementById('tableSelect');
+    tableSelect.innerHTML = '<option value="">-- テーブルを選択してください --</option>';
+    
+    tables.forEach(table => {
+        const option = document.createElement('option');
+        option.value = table.name;
+        option.textContent = `${table.name} (${table.record_count}件)`;
+        tableSelect.appendChild(option);
+    });
+}
+
+// 選択されたテーブルのデータを読み込み
+function loadTableData() {
     const tableSelect = document.getElementById('tableSelect');
     const tableName = tableSelect.value;
     
     if (!tableName) {
         document.getElementById('dataSection').style.display = 'none';
+        document.getElementById('noTableSelected').style.display = 'block';
         return;
     }
     
-    // モックデータからテーブル情報を取得
-    fetch(`/api/table/${tableName}`)
+    currentTableName = tableName;
+    
+    // テーブルの詳細データを取得
+    fetch(`/api/db/table/${tableName}`)
         .then(response => response.json())
         .then(data => {
-            if (data.data) {
-                displayMockTable(data.data);
+            if (data.success) {
+                currentTableData = data.data;
+                displayTableData(data.data);
+            } else {
+                console.error('テーブルデータの取得に失敗:', data.message);
             }
         })
         .catch(error => {
-            console.error('テーブル読み込みエラー:', error);
+            console.error('テーブルデータ読み込みエラー:', error);
         });
 }
 
-// モックテーブルの表示
-function displayMockTable(tableData) {
+// テーブルデータの表示
+function displayTableData(tableData) {
     const dataSection = document.getElementById('dataSection');
+    const noTableSelected = document.getElementById('noTableSelected');
     const tableName = document.getElementById('tableName');
     const tableHead = document.getElementById('tableHead');
     const tableBody = document.getElementById('tableBody');
     
     tableName.textContent = tableData.table_name || 'テーブル';
     dataSection.style.display = 'block';
+    noTableSelected.style.display = 'none';
     
     // ヘッダー行の生成
     if (tableData.columns && tableData.columns.length > 0) {
         let headerHtml = '<tr>';
         tableData.columns.forEach(column => {
-            headerHtml += `<th>${column}</th>`;
+            headerHtml += `<th>${column.name}</th>`;
         });
         headerHtml += '<th>操作</th></tr>';
         tableHead.innerHTML = headerHtml;
@@ -189,8 +245,9 @@ function displayMockTable(tableData) {
         let bodyHtml = '';
         tableData.data.forEach((row, index) => {
             bodyHtml += '<tr>';
-            Object.values(row).forEach(value => {
-                bodyHtml += `<td>${value !== null ? value : '<span class="text-muted">NULL</span>'}</td>`;
+            tableData.columns.forEach(column => {
+                const value = row[column.name];
+                bodyHtml += `<td>${formatCellValue(value, column.type)}</td>`;
             });
             bodyHtml += `
                 <td>
@@ -209,40 +266,179 @@ function displayMockTable(tableData) {
     }
 }
 
-// レコード編集
-function editRecord(tableName, index) {
-    // 編集モーダルの表示ロジック
-    console.log('編集:', tableName, index);
+// セル値のフォーマット
+function formatCellValue(value, columnType) {
+    if (value === null) {
+        return '<span class="text-muted fst-italic">NULL</span>';
+    }
+    
+    if (columnType === 'timestamp with time zone' || columnType === 'timestamp without time zone') {
+        return `<span class="text-info">${value}</span>`;
+    } else if (columnType === 'uuid') {
+        return `<code class="text-primary">${value}</code>`;
+    } else if (columnType === 'integer' || columnType === 'bigint') {
+        return `<span class="text-success">${value}</span>`;
+    } else if (columnType === 'text' && value.length > 50) {
+        return `<span title="${value}">${value.substring(0, 50)}...</span>`;
+    }
+    
+    return value;
 }
 
-// レコード削除
-function deleteRecord(tableName, index) {
-    // 削除確認モーダルの表示ロジック
-    console.log('削除:', tableName, index);
+// テーブルデータの更新
+function refreshTableData() {
+    if (currentTableName) {
+        loadTableData();
+    }
 }
 
-// 新規レコード追加
+// 新規レコード追加モーダルの表示
 function showAddRecordModal() {
-    // 新規追加モーダルの表示ロジック
-    console.log('新規追加');
+    if (!currentTableData) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('addRecordModal'));
+    const form = document.getElementById('addRecordForm');
+    
+    // フォームを生成
+    form.innerHTML = generateFormFields(currentTableData.columns, {});
+    
+    modal.show();
+}
+
+// 編集モーダルの表示
+function editRecord(tableName, index) {
+    if (!currentTableData || !currentTableData.data[index]) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+    const form = document.getElementById('editForm');
+    const record = currentTableData.data[index];
+    
+    // フォームを生成
+    form.innerHTML = generateFormFields(currentTableData.columns, record);
+    
+    modal.show();
+}
+
+// 削除確認モーダルの表示
+function deleteRecord(tableName, index) {
+    if (!currentTableData || !currentTableData.data[index]) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const record = currentTableData.data[index];
+    
+    // 削除情報を表示
+    const deleteInfo = document.getElementById('deleteInfo');
+    let infoText = '';
+    
+    // 主要な列の値を表示
+    if (record.member_name) infoText += `名前: ${record.member_name} `;
+    if (record.member_id) infoText += `ID: ${record.member_id} `;
+    if (record.relationship_type) infoText += `関係: ${record.relationship_type} `;
+    
+    deleteInfo.textContent = infoText || 'レコード情報がありません';
+    
+    modal.show();
+}
+
+// フォームフィールドの生成
+function generateFormFields(columns, record) {
+    let formHtml = '';
+    
+    columns.forEach(column => {
+        const value = record[column.name] || '';
+        const isRequired = column.nullable === 'NO';
+        
+        formHtml += `
+            <div class="mb-3">
+                <label for="${column.name}" class="form-label">
+                    ${column.name}
+                    ${isRequired ? '<span class="text-danger">*</span>' : ''}
+                </label>
+        `;
+        
+        if (column.type === 'text' || column.type === 'character varying') {
+            formHtml += `
+                <textarea class="form-control" id="${column.name}" name="${column.name}" 
+                          rows="3" ${isRequired ? 'required' : ''}>${value}</textarea>
+            `;
+        } else if (column.type === 'integer' || column.type === 'bigint') {
+            formHtml += `
+                <input type="number" class="form-control" id="${column.name}" name="${column.name}" 
+                       value="${value}" ${isRequired ? 'required' : ''}>
+            `;
+        } else if (column.type === 'uuid') {
+            formHtml += `
+                <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
+                       value="${value}" pattern="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" 
+                       placeholder="UUID形式で入力" ${isRequired ? 'required' : ''}>
+            `;
+        } else {
+            formHtml += `
+                <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
+                       value="${value}" ${isRequired ? 'required' : ''}>
+            `;
+        }
+        
+        formHtml += `
+                <div class="form-text">${getColumnDescription(column.name)}</div>
+            </div>
+        `;
+    });
+    
+    return formHtml;
+}
+
+// 列の説明を取得（簡易版）
+function getColumnDescription(columnName) {
+    const descriptions = {
+        'member_id': 'メンバーの一意識別子',
+        'member_uuid': 'メンバーのUUID',
+        'member_name': 'メンバーの表示名',
+        'bio': '自己紹介・プロフィール文',
+        'llm_model': '使用するLLMモデル名',
+        'custom_prompt': 'カスタムプロンプト設定',
+        'relationship_type': '関係性の種類（mentor、mentee、peer等）',
+        'name_suffix': '呼び方（さん、くん等）'
+    };
+    return descriptions[columnName] || '列の説明';
 }
 
 // レコード保存
 function saveRecord() {
     // 新規レコードの保存ロジック
-    console.log('保存');
+    console.log('新規レコード保存機能は今後の実装予定です');
+    alert('新規レコード保存機能は今後の実装予定です');
+    
+    // モーダルを閉じる
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addRecordModal'));
+    modal.hide();
 }
 
 // レコード更新
 function updateRecord() {
     // レコードの更新ロジック
-    console.log('更新');
+    console.log('レコード更新機能は今後の実装予定です');
+    alert('レコード更新機能は今後の実装予定です');
+    
+    // モーダルを閉じる
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+    modal.hide();
 }
 
 // 削除確認
 function confirmDelete() {
     // レコードの削除ロジック
-    console.log('削除確認');
+    console.log('レコード削除機能は今後の実装予定です');
+    alert('レコード削除機能は今後の実装予定です');
+    
+    // モーダルを閉じる
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+    modal.hide();
 }
+
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    // 必要に応じて初期化処理を追加
+});
 </script>
 {% endblock %}
