@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}テーブル一覧 - VECR Member Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">
+                <i class="fas fa-table me-2"></i>データベーステーブル一覧
+            </h1>
+            <div>
+                <button class="btn btn-primary" onclick="refreshTables()">
+                    <i class="fas fa-sync-alt me-1"></i>更新
+                </button>
+                <a href="{{ url_for('database_view') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-database me-1"></i>データベース管理
+                </a>
+            </div>
+        </div>
+
+        <!-- テーブル一覧カード -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>利用可能なテーブル
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if tables %}
+                    <div class="row">
+                        {% for table in tables %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="card-title mb-0">
+                                        <i class="fas fa-table me-2"></i>{{ table.name }}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{ table.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-database me-1"></i>{{ table.record_count }} 件
+                                        </span>
+                                        <a href="{{ url_for('table_detail_view', table_name=table.name) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>詳細表示
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h5>テーブルが見つかりません</h5>
+                        <p class="text-muted">データベースにテーブルが存在しないか、接続に問題がある可能性があります。</p>
+                        <a href="{{ url_for('database_view') }}" class="btn btn-primary">
+                            <i class="fas fa-database me-1"></i>接続状態を確認
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 統計情報カード -->
+        {% if tables %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>統計情報
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ tables|length }}</h4>
+                            <p class="text-muted mb-0">テーブル数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-success">{{ tables|sum(attribute='record_count') }}</h4>
+                            <p class="text-muted mb-0">総レコード数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-info">
+                                {% set max_count = tables|map(attribute='record_count')|max %}
+                                {{ max_count if max_count > 0 else 0 }}
+                            </h4>
+                            <p class="text-muted mb-0">最大レコード数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-warning">
+                            {% set empty_tables = tables|selectattr('record_count', 'equalto', 0)|list|length %}
+                            {{ empty_tables }}
+                        </h4>
+                        <p class="text-muted mb-0">空のテーブル</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// テーブル一覧の更新
+function refreshTables() {
+    location.reload();
+}
+
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    // 必要に応じて初期化処理を追加
+});
+</script>
+{% endblock %}

@@ -33,6 +33,12 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'password')
 # データベースマネージャーの初期化
 db_manager = DatabaseManager()
 
+# Jinja2テンプレートフィルターの登録
+@app.template_filter('get_column_description')
+def get_column_description_filter(column_name):
+    """テンプレート用の列説明フィルター"""
+    return get_column_description(column_name)
+
 def login_required(f):
     """
     認証デコレーター（モック実装）
@@ -350,6 +356,89 @@ def get_database_tables():
 def database_view():
     """データベース管理画面を表示（認証が必要）"""
     return render_template('database.html')
+
+@app.route('/tables')
+@login_required
+def tables_view():
+    """データベーステーブル一覧画面を表示（認証が必要）"""
+    try:
+        # 利用可能なテーブル一覧を取得
+        tables = db_manager.get_table_list()
+        
+        # 各テーブルの基本情報を取得
+        table_info = []
+        for table in tables:
+            count = db_manager.get_table_count(table)
+            table_info.append({
+                'name': table,
+                'record_count': count,
+                'description': get_table_description(table)
+            })
+        
+        return render_template('tables.html', tables=table_info)
+        
+    except Exception as e:
+        flash(f'テーブル情報の取得に失敗しました: {str(e)}', 'error')
+        return render_template('tables.html', tables=[])
+
+@app.route('/table/<table_name>')
+@login_required
+def table_detail_view(table_name):
+    """特定のテーブルの詳細画面を表示（認証が必要）"""
+    try:
+        # テーブルの詳細データを取得
+        table_data = db_manager.get_table_data(table_name)
+        
+        if table_data:
+            return render_template('table_detail.html', 
+                                table_data=table_data,
+                                table_name=table_name)
+        else:
+            flash(f'テーブル "{table_name}" のデータ取得に失敗しました', 'error')
+            return redirect(url_for('tables_view'))
+            
+    except Exception as e:
+        flash(f'テーブル詳細の取得中にエラーが発生: {str(e)}', 'error')
+        return redirect(url_for('tables_view'))
+
+def get_table_description(table_name):
+    """テーブルの説明を取得"""
+    descriptions = {
+        'human_members': '人間メンバーの基本情報（ID、名前、UUID等）',
+        'human_member_profiles': '人間メンバーのプロフィール情報（自己紹介等）',
+        'virtual_members': '仮想メンバーの基本情報（ID、名前、UUID等）',
+        'virtual_member_profiles': '仮想メンバーのプロフィール情報（LLMモデル、プロンプト等）',
+        'member_relationships': 'メンバー間の関係性情報（メンター・メンティー等）'
+    }
+    return descriptions.get(table_name, 'テーブルの説明')
+
+def get_column_description(column_name):
+    """列の説明を取得"""
+    descriptions = {
+        # human_members
+        'member_id': 'メンバーの一意識別子（自動採番）',
+        'member_uuid': 'メンバーのUUID（グローバル一意識別子）',
+        'member_name': 'メンバーの表示名',
+        'created_at': 'レコード作成日時',
+        'updated_at': 'レコード更新日時',
+        
+        # human_member_profiles
+        'profile_id': 'プロフィールの一意識別子（自動採番）',
+        'profile_uuid': 'プロフィールのUUID（グローバル一意識別子）',
+        'bio': '自己紹介・プロフィール文',
+        
+        # virtual_members
+        'llm_model': '使用するLLMモデル名',
+        'custom_prompt': 'カスタムプロンプト設定',
+        
+        # member_relationships
+        'relationship_id': '関係性の一意識別子（自動採番）',
+        'from_member_uuid': '関係性の起点となるメンバーのUUID',
+        'to_member_uuid': '関係性の終点となるメンバーのUUID',
+        'relationship_type': '関係性の種類（mentor、mentee、peer等）',
+        'name_suffix': '呼び方（さん、くん等）'
+    }
+    return descriptions.get(column_name, '列の説明')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

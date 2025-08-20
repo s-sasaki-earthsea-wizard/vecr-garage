@@ -24,8 +24,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('get_database_tables') }}">
-                            <i class="fas fa-database me-1"></i>データベース
+                        <a class="nav-link" href="{{ url_for('tables_view') }}">
+                            <i class="fas fa-table me-1"></i>テーブル一覧
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('database_view') }}">
+                            <i class="fas fa-database me-1"></i>データベース管理
                         </a>
                     </li>
                 </ul>
