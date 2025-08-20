@@ -91,7 +91,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {{ get_column_description(column.name) }}
+                                    {{ column.name | get_column_description }}
                                 </td>
                             </tr>
                             {% endfor %}
