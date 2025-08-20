@@ -345,5 +345,11 @@ def get_database_tables():
             'message': f'テーブル一覧取得中にエラーが発生: {str(e)}'
         }), 500
 
+@app.route('/database')
+@login_required
+def database_view():
+    """データベース管理画面を表示（認証が必要）"""
+    return render_template('database.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
