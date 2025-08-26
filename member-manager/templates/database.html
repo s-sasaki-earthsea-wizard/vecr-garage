@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}データベース - VECR Member Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">
+                <i class="fas fa-database me-2"></i>データベース管理
+            </h1>
+            <div>
+                <button class="btn btn-primary" onclick="refreshDatabaseInfo()">
+                    <i class="fas fa-sync-alt me-1"></i>更新
+                </button>
+                <button class="btn btn-success" onclick="testConnection()">
+                    <i class="fas fa-plug me-1"></i>接続テスト
+                </button>
+            </div>
+        </div>
+
+        <!-- 接続情報カード -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>接続情報
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>ホスト:</strong> <span id="db-host">-</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>ポート:</strong> <span id="db-port">-</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>データベース:</strong> <span id="db-name">-</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>ユーザー:</strong> <span id="db-user">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 接続状態カード -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>接続状態
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <span class="me-2">psycopg2:</span>
+                            <span id="psycopg2-status" class="badge bg-secondary">未確認</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <span class="me-2">SQLAlchemy:</span>
+                            <span id="sqlalchemy-status" class="badge bg-secondary">未確認</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- テーブル一覧カード -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-table me-2"></i>テーブル一覧
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="tables-loading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">読み込み中...</span>
+                    </div>
+                    <p class="mt-2">テーブル情報を読み込み中...</p>
+                </div>
+                
+                <div id="tables-content" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>テーブル名</th>
+                                    <th>レコード数</th>
+                                    <th>説明</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tables-tbody">
+                                <!-- テーブル情報がここに動的に挿入される -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tables-error" class="alert alert-danger" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    テーブル情報の取得に失敗しました。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- テーブル詳細モーダル -->
+<div class="modal fade" id="tableDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-table me-2"></i>テーブル詳細: <span id="modal-table-name"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="table-detail-loading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">読み込み中...</span>
+                    </div>
+                    <p class="mt-2">テーブル詳細を読み込み中...</p>
+                </div>
+                
+                <div id="table-detail-content" style="display: none;">
+                    <!-- テーブル詳細情報がここに動的に挿入される -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    refreshDatabaseInfo();
+});
+
+// データベース情報の更新
+function refreshDatabaseInfo() {
+    // 接続テストを実行して情報を取得
+    testConnection();
+    
+    // テーブル一覧を取得
+    loadTables();
+}
+
+// 接続テストの実行
+function testConnection() {
+    fetch('/api/db/test')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 接続情報を表示
+                document.getElementById('db-host').textContent = data.connection_info.host;
+                document.getElementById('db-port').textContent = data.connection_info.port;
+                document.getElementById('db-name').textContent = data.connection_info.database;
+                document.getElementById('db-user').textContent = data.connection_info.user;
+                
+                // 接続状態を表示
+                document.getElementById('psycopg2-status').textContent = '接続成功';
+                document.getElementById('psycopg2-status').className = 'badge bg-success';
+                document.getElementById('sqlalchemy-status').textContent = '接続成功';
+                document.getElementById('sqlalchemy-status').className = 'badge bg-success';
+            } else {
+                // エラー状態を表示
+                document.getElementById('psycopg2-status').textContent = '接続失敗';
+                document.getElementById('psycopg2-status').className = 'badge bg-danger';
+                document.getElementById('sqlalchemy-status').textContent = '接続失敗';
+                document.getElementById('sqlalchemy-status').className = 'badge bg-danger';
+            }
+        })
+        .catch(error => {
+            console.error('接続テストエラー:', error);
+            document.getElementById('psycopg2-status').textContent = 'エラー';
+            document.getElementById('psycopg2-status').className = 'badge bg-danger';
+            document.getElementById('sqlalchemy-status').textContent = 'エラー';
+            document.getElementById('sqlalchemy-status').className = 'badge bg-danger';
+        });
+}
+
+// テーブル一覧の読み込み
+function loadTables() {
+    const loadingEl = document.getElementById('tables-loading');
+    const contentEl = document.getElementById('tables-content');
+    const errorEl = document.getElementById('tables-error');
+    const tbodyEl = document.getElementById('tables-tbody');
+    
+    loadingEl.style.display = 'block';
+    contentEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    
+    fetch('/api/db/tables')
+        .then(response => response.json())
+        .then(data => {
+            loadingEl.style.display = 'none';
+            
+            if (data.success) {
+                contentEl.style.display = 'block';
+                displayTables(data.tables);
+            } else {
+                errorEl.style.display = 'block';
+                errorEl.querySelector('.alert').textContent = data.message || 'テーブル情報の取得に失敗しました。';
+            }
+        })
+        .catch(error => {
+            console.error('テーブル読み込みエラー:', error);
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+            errorEl.querySelector('.alert').textContent = 'テーブル情報の取得中にエラーが発生しました。';
+        });
+}
+
+// テーブル一覧の表示
+function displayTables(tables) {
+    const tbodyEl = document.getElementById('tables-tbody');
+    tbodyEl.innerHTML = '';
+    
+    tables.forEach(table => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <strong>${table.name}</strong>
+            </td>
+            <td>
+                <span class="badge bg-info">${table.record_count} 件</span>
+            </td>
+            <td>${getTableDescription(table.name)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="showTableDetail('${table.name}')">
+                    <i class="fas fa-eye me-1"></i>詳細
+                </button>
+            </td>
+        `;
+        tbodyEl.appendChild(row);
+    });
+}
+
+// テーブルの説明を取得
+function getTableDescription(tableName) {
+    const descriptions = {
+        'human_members': '人間メンバーの基本情報',
+        'human_member_profiles': '人間メンバーのプロフィール情報',
+        'virtual_members': '仮想メンバーの基本情報',
+        'virtual_member_profiles': '仮想メンバーのプロフィール情報',
+        'member_relationships': 'メンバー間の関係性情報'
+    };
+    return descriptions[tableName] || 'テーブルの説明';
+}
+
+// テーブル詳細の表示
+function showTableDetail(tableName) {
+    const modal = new bootstrap.Modal(document.getElementById('tableDetailModal'));
+    const modalTitle = document.getElementById('modal-table-name');
+    const loadingEl = document.getElementById('table-detail-loading');
+    const contentEl = document.getElementById('table-detail-content');
+    
+    modalTitle.textContent = tableName;
+    loadingEl.style.display = 'block';
+    contentEl.style.display = 'none';
+    
+    modal.show();
+    
+    // テーブル詳細データを取得
+    fetch(`/api/db/table/${tableName}`)
+        .then(response => response.json())
+        .then(data => {
+            loadingEl.style.display = 'none';
+            
+            if (data.success) {
+                contentEl.style.display = 'block';
+                displayTableDetail(data.data);
+            } else {
+                contentEl.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${data.message || 'テーブル詳細の取得に失敗しました。'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('テーブル詳細読み込みエラー:', error);
+            loadingEl.style.display = 'none';
+            contentEl.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    テーブル詳細の取得中にエラーが発生しました。
+                </div>
+            `;
+        });
+}
+
+// テーブル詳細の表示
+function displayTableDetail(tableData) {
+    const contentEl = document.getElementById('table-detail-content');
+    
+    let html = `
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6>テーブル情報</h6>
+                <p><strong>テーブル名:</strong> ${tableData.table_name}</p>
+                <p><strong>総レコード数:</strong> ${tableData.total_count} 件</p>
+            </div>
+            <div class="col-md-6">
+                <h6>列情報</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>列名</th>
+                                <th>データ型</th>
+                                <th>NULL許可</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+    
+    tableData.columns.forEach(column => {
+        html += `
+            <tr>
+                <td><code>${column.name}</code></td>
+                <td><span class="badge bg-secondary">${column.type}</span></td>
+                <td>${column.nullable === 'YES' ? '<span class="text-success">許可</span>' : '<span class="text-danger">禁止</span>'}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    if (tableData.data && tableData.data.length > 0) {
+        html += `
+            <div class="row">
+                <div class="col-12">
+                    <h6>データサンプル (最大${tableData.data.length}件)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+        `;
+        
+        // ヘッダー行
+        Object.keys(tableData.data[0]).forEach(key => {
+            html += `<th>${key}</th>`;
+        });
+        
+        html += `
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+        
+        // データ行
+        tableData.data.forEach(row => {
+            html += '<tr>';
+            Object.values(row).forEach(value => {
+                html += `<td>${value !== null ? value : '<span class="text-muted">NULL</span>'}</td>`;
+            });
+            html += '</tr>';
+        });
+        
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                このテーブルにはまだデータがありません。
+            </div>
+        `;
+    }
+    
+    contentEl.innerHTML = html;
+}
+</script>
+{% endblock %}

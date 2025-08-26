@@ -1,6 +1,7 @@
 Flask==3.0.0
 Flask-Cors==4.0.0
 Werkzeug==3.0.1
+Jinja2==3.1.2
 
 # 将来的に追加予定のパッケージ
 
@@ -12,11 +13,11 @@ Werkzeug==3.0.1
 # redis==5.0.1  # セッションストア
 
 ## Phase 3: データベース統合
-# SQLAlchemy==2.0.36  # データベースORM
-# psycopg2==2.9.9  # PostgreSQL接続
-# Flask-SQLAlchemy==3.1.1  # Flask SQLAlchemy統合
-# Flask-Migrate==4.0.5  # データベースマイグレーション
-# alembic==1.13.1  # データベースマイグレーション管理
+SQLAlchemy==2.0.36  # データベースORM
+psycopg2-binary==2.9.9  # PostgreSQL接続（バイナリ版）
+Flask-SQLAlchemy==3.1.1  # Flask SQLAlchemy統合
+Flask-Migrate==4.0.5  # データベースマイグレーション
+alembic==1.13.1  # データベースマイグレーション管理
 
 ## Phase 4: 本番環境対応
 # python-dotenv==1.0.0  # 環境変数管理
