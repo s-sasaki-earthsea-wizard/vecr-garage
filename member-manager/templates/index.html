@@ -344,7 +344,18 @@ function deleteRecord(tableName, index) {
 function generateFormFields(columns, record) {
     let formHtml = '';
     
+    // 新規レコード登録時に除外するフィールド（バックエンド/DB側で自動生成）
+    const excludeFields = [
+        'uuid', 'member_id', 'id', 'created_at', 'updated_at',
+        'member_uuid', 'profile_uuid', 'profile_id', 'relationship_id'
+    ];
+    
     columns.forEach(column => {
+        // 新規レコード登録時は除外フィールドをスキップ
+        if (!record.uuid && excludeFields.includes(column.name)) {
+            return;
+        }
+        
         const value = record[column.name] || '';
         const isRequired = column.nullable === 'NO';
         
