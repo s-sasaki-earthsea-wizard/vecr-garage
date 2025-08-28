@@ -370,28 +370,37 @@ function generateFormFields(columns, record) {
         if (column.type === 'text' || column.type === 'character varying') {
             formHtml += `
                 <textarea class="form-control" id="${column.name}" name="${column.name}" 
-                          rows="3" ${isRequired ? 'required' : ''}>${value}</textarea>
+                          rows="3" ${isRequired ? 'required' : ''} 
+                          onblur="validateField('${column.name}', this.value)"
+                          oninput="clearValidationError('${column.name}')">${value}</textarea>
             `;
         } else if (column.type === 'integer' || column.type === 'bigint') {
             formHtml += `
                 <input type="number" class="form-control" id="${column.name}" name="${column.name}" 
-                       value="${value}" ${isRequired ? 'required' : ''}>
+                       value="${value}" ${isRequired ? 'required' : ''}
+                       onblur="validateField('${column.name}', this.value)"
+                       oninput="clearValidationError('${column.name}')">
             `;
         } else if (column.type === 'uuid') {
             formHtml += `
                 <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
                        value="${value}" pattern="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" 
-                       placeholder="UUID形式で入力" ${isRequired ? 'required' : ''}>
+                       placeholder="UUID形式で入力" ${isRequired ? 'required' : ''}
+                       onblur="validateField('${column.name}', this.value)"
+                       oninput="clearValidationError('${column.name}')">
             `;
         } else {
             formHtml += `
                 <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
-                       value="${value}" ${isRequired ? 'required' : ''}>
+                       value="${value}" ${isRequired ? 'required' : ''}
+                       onblur="validateField('${column.name}', this.value)"
+                       oninput="clearValidationError('${column.name}')">
             `;
         }
         
         formHtml += `
                 <div class="form-text">${getColumnDescription(column.name)}</div>
+                <div id="${column.name}-error" class="invalid-feedback" style="display: none;"></div>
             </div>
         `;
     });
@@ -416,6 +425,12 @@ function getColumnDescription(columnName) {
 
 // レコード保存
 function saveRecord() {
+    // 全フィールドのバリデーションを実行
+    if (!validateAllFields()) {
+        alert('入力内容にエラーがあります。エラーメッセージを確認してください。');
+        return;
+    }
+    
     // 新規レコードの保存ロジック
     console.log('新規レコード保存機能は今後の実装予定です');
     alert('新規レコード保存機能は今後の実装予定です');
@@ -445,6 +460,177 @@ function confirmDelete() {
     // モーダルを閉じる
     const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
     modal.hide();
+}
+
+// フィールドバリデーション（バリデーションルールは今後修正する可能性あり）
+// 修正が必要な場合は、この関数内のロジックと各フィールドの個別バリデーション関数を更新してください
+function validateField(fieldName, value) {
+    const errorElement = document.getElementById(`${fieldName}-error`);
+    const inputElement = document.getElementById(fieldName);
+    
+    // エラーをクリア
+    clearValidationError(fieldName);
+    
+    // 必須チェック
+    if (isFieldRequired(fieldName) && (!value || value.trim() === '')) {
+        showValidationError(fieldName, 'このフィールドは必須です');
+        return false;
+    }
+    
+    // 空の値の場合はバリデーションをスキップ
+    if (!value || value.trim() === '') {
+        return true;
+    }
+    
+    // フィールド別のバリデーション
+    let isValid = true;
+    let errorMessage = '';
+    
+    switch (fieldName) {
+        case 'member_name':
+            isValid = validateMemberName(value);
+            if (!isValid) errorMessage = 'メンバー名は1-50文字で入力してください';
+            break;
+        case 'bio':
+            isValid = validateBio(value);
+            if (!isValid) errorMessage = '自己紹介は10-1000文字で入力してください';
+            break;
+        case 'llm_model':
+            isValid = validateLlmModel(value);
+            if (!isValid) errorMessage = 'LLMモデル名は1-50文字で入力してください';
+            break;
+        case 'custom_prompt':
+            isValid = validateCustomPrompt(value);
+            if (!isValid) errorMessage = 'カスタムプロンプトは最大5000文字で入力してください';
+            break;
+        case 'relationship_type':
+            isValid = validateRelationshipType(value);
+            if (!isValid) errorMessage = '関係性の種類を選択してください';
+            break;
+        case 'name_suffix':
+            isValid = validateNameSuffix(value);
+            if (!isValid) errorMessage = '呼び方は1-50文字で入力してください';
+            break;
+    }
+    
+    if (!isValid && errorMessage) {
+        showValidationError(fieldName, errorMessage);
+    }
+    
+    return isValid;
+}
+
+// フィールドが必須かどうかを判定
+function isFieldRequired(fieldName) {
+    const inputElement = document.getElementById(fieldName);
+    return inputElement && inputElement.hasAttribute('required');
+}
+
+// バリデーションエラーを表示
+function showValidationError(fieldName, message) {
+    const errorElement = document.getElementById(`${fieldName}-error`);
+    const inputElement = document.getElementById(fieldName);
+    
+    if (errorElement && inputElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        inputElement.classList.add('is-invalid');
+    }
+}
+
+// バリデーションエラーをクリア
+function clearValidationError(fieldName) {
+    const errorElement = document.getElementById(`${fieldName}-error`);
+    const inputElement = document.getElementById(fieldName);
+    
+    if (errorElement && inputElement) {
+        errorElement.style.display = 'none';
+        inputElement.classList.remove('is-invalid');
+    }
+}
+
+// メンバー名のバリデーション
+function validateMemberName(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length < 1 || trimmedValue.length > 50) {
+        return false;
+    }
+    // 特殊文字の過度な使用を制限
+    const specialCharCount = (trimmedValue.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g) || []).length;
+    if (specialCharCount > trimmedValue.length * 0.3) {
+        return false;
+    }
+    return true;
+}
+
+// 自己紹介のバリデーション
+function validateBio(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length < 10 || trimmedValue.length > 1000) {
+        return false;
+    }
+    return true;
+}
+
+// LLMモデルのバリデーション
+function validateLlmModel(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length < 1 || trimmedValue.length > 50) {
+        return false;
+    }
+    // 有効なLLMモデル名の形式チェック
+    const validModels = ['gpt-4', 'gpt-3.5-turbo', 'claude-3', 'claude-2', 'gemini-pro', 'llama-2'];
+    if (validModels.some(model => trimmedValue.toLowerCase().includes(model))) {
+        return true;
+    }
+    // カスタムモデル名も許可（基本的な形式チェック）
+    return /^[a-zA-Z0-9\-_\.]+$/.test(trimmedValue);
+}
+
+// カスタムプロンプトのバリデーション
+function validateCustomPrompt(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length > 5000) {
+        return false;
+    }
+    return true;
+}
+
+// 関係性の種類のバリデーション
+function validateRelationshipType(value) {
+    const trimmedValue = value.trim();
+    const validTypes = ['mentor', 'mentee', 'peer', 'colleague', 'friend', 'family'];
+    return validTypes.includes(trimmedValue.toLowerCase());
+}
+
+// 呼び方のバリデーション
+function validateNameSuffix(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length < 1 || trimmedValue.length > 50) {
+        return false;
+    }
+    // 日本語の敬語表現の妥当性チェック
+    const validSuffixes = ['さん', 'くん', 'ちゃん', '様', '氏', '先生', '先輩'];
+    if (validSuffixes.some(suffix => trimmedValue.includes(suffix))) {
+        return true;
+    }
+    // カスタム呼び方も許可
+    return true;
+}
+
+// 全フィールドのバリデーション
+function validateAllFields() {
+    let isValid = true;
+    const form = document.getElementById('addRecordForm');
+    const inputs = form.querySelectorAll('input, textarea');
+    
+    inputs.forEach(input => {
+        if (!validateField(input.name, input.value)) {
+            isValid = false;
+        }
+    });
+    
+    return isValid;
 }
 
 // ページ読み込み時の初期化
