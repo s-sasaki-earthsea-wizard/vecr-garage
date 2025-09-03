@@ -292,5 +292,108 @@ def get_database_tables():
             'message': f'テーブル一覧取得中にエラーが発生: {str(e)}'
         }), 500
 
+@app.route('/api/member/create', methods=['POST'])
+def create_member():
+    """新規メンバー作成API
+    
+    フォームデータからYAMLファイルを生成し、ストレージにアップロードします。
+    """
+    try:
+        from yaml_generator import YAMLGenerator
+        from storage_client import StorageClient
+        
+        # リクエストデータの取得
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'リクエストデータがありません'
+            }), 400
+        
+        # メンバータイプの取得
+        member_type = data.get('member_type')
+        if member_type not in ['human', 'virtual']:
+            return jsonify({
+                'success': False,
+                'message': '無効なメンバータイプです'
+            }), 400
+        
+        # フォームデータのバリデーション
+        form_data = data.get('form_data', {})
+        validation_errors = YAMLGenerator.validate_form_data(form_data, member_type)
+        
+        if validation_errors:
+            return jsonify({
+                'success': False,
+                'message': 'バリデーションエラーがあります',
+                'errors': validation_errors
+            }), 400
+        
+        # YAMLファイルの生成
+        if member_type == 'human':
+            yaml_content = YAMLGenerator.generate_human_member_yaml(form_data)
+        else:  # virtual
+            yaml_content = YAMLGenerator.generate_virtual_member_yaml(form_data)
+        
+        # ストレージパスの生成
+        member_name = form_data['member_name'].strip()
+        storage_path = YAMLGenerator.generate_storage_path(member_name, member_type)
+        
+        # ストレージクライアントの初期化
+        storage_client = StorageClient()
+        
+        # ストレージパスの検証
+        if not storage_client.validate_storage_path(storage_path):
+            return jsonify({
+                'success': False,
+                'message': '無効なストレージパスです'
+            }), 400
+        
+        # YAMLファイルのアップロード
+        upload_result = storage_client.upload_yaml_file(yaml_content, storage_path)
+        
+        return jsonify({
+            'success': True,
+            'message': f'{member_type}メンバー「{member_name}」のYAMLファイルを作成・アップロードしました',
+            'data': {
+                'member_name': member_name,
+                'member_type': member_type,
+                'storage_path': storage_path,
+                'upload_result': upload_result
+            }
+        })
+        
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': f'データエラー: {str(e)}'
+        }), 400
+    except Exception as e:
+        logger.error(f"Member creation error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'メンバー作成中にエラーが発生: {str(e)}'
+        }), 500
+
+@app.route('/api/storage/info', methods=['GET'])
+def get_storage_info():
+    """ストレージサービスの情報を取得"""
+    try:
+        from storage_client import StorageClient
+        
+        storage_client = StorageClient()
+        storage_info = storage_client.get_storage_info()
+        
+        return jsonify({
+            'success': True,
+            'data': storage_info
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'ストレージ情報取得中にエラーが発生: {str(e)}'
+        }), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
