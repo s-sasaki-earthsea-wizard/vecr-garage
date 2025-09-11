@@ -128,8 +128,18 @@ class WebhookFileWatcherService:
             return False
         
         # 対象ディレクトリのファイルのみを処理（デコード後のパスで判定）
-        if not (decoded_object_name.startswith('data/human_members/') or 
-                decoded_object_name.startswith('data/virtual_members/')):
+        # 新しいディレクトリ構造に対応: samples/とtest_cases/両方をサポート
+        target_patterns = [
+            'data/samples/human_members/',
+            'data/samples/virtual_members/',
+            'data/test_cases/human_members/',
+            'data/test_cases/virtual_members/',
+            # 旧形式との互換性のため（段階的移行）
+            'data/human_members/',
+            'data/virtual_members/'
+        ]
+        
+        if not any(decoded_object_name.startswith(pattern) for pattern in target_patterns):
             logger.debug(f"Skipping file outside target directories: {decoded_object_name}")
             return False
         
