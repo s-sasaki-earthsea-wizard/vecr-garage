@@ -142,7 +142,8 @@ services:
       sleep 5 &&
       mc alias set myminio http://storage:${STORAGE_PORT} ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
       mc mb -p myminio/${MINIO_BUCKET_NAME} &&
-      mc cp --recursive /sample_data/ myminio/${MINIO_BUCKET_NAME}/ &&
+      mc cp --recursive /sample_data/samples/ myminio/${MINIO_BUCKET_NAME}/data/samples/ &&
+      mc cp --recursive /sample_data/test_cases/ myminio/${MINIO_BUCKET_NAME}/data/test_cases/ &&
       echo "Setting up webhook configuration..." &&
       mc admin config set myminio/ notify_webhook endpoint="${WEBHOOK_FULL_URL}" queue_limit=1000 &&
       echo "Webhook configuration completed!" &&
