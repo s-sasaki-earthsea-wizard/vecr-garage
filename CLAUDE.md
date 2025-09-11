@@ -48,12 +48,34 @@ backend-*/
 ### テスト
 
 ```bash
-# backend-db-registrationのテスト
-docker exec -it vecr-garage-backend-db-registration pytest tests/
+# backend-db-registrationのテスト（統合Makefileターゲット使用）
+make backend-db-registration-test
 
 # backend-llm-responseのテスト
 docker exec -it vecr-garage-backend-llm-response pytest tests/
 ```
+
+#### テストケース設計
+
+**正常系テスト**:
+- `data/samples/human_members/`: 人間メンバーの正常な登録ファイル
+- `data/samples/virtual_members/`: 仮想メンバーの正常な登録ファイル
+
+**異常系テスト**:
+- `data/test_cases/human_members/`: 人間メンバーの異常系テストケース
+  - `invalid_missing_name.yml`: nameフィールド欠損（ValidationError）
+  - `invalid_empty_file.yml`: 空ファイル（'NoneType' object エラー）
+- `data/test_cases/virtual_members/`: 仮想メンバーの異常系テストケース
+  - `invalid_missing_name.yml`: nameフィールド欠損（ValidationError）
+  - `invalid_missing_model.yml`: llm_modelフィールド欠損（ValidationError）
+
+#### バリデーション処理
+
+**エラーハンドリング設計**:
+- `process_file_event`: 純粋なファイル処理の責任（単一責任の原則）
+- `handle_webhook`: 例外処理とエラーログの統一管理
+- ValidationError、DatabaseError、その他の例外を適切に分離
+- 異常系ファイルは確実にエラーとして検出され、HTTP 400で応答
 
 ### 型チェック・リンター
 
