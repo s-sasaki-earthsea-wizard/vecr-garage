@@ -200,19 +200,19 @@ def main():
         
         # List human member files
         print("\n=== Human member YAML files ===")
-        human_files = storage_client.list_yaml_files("data/human_members/")
+        human_files = storage_client.list_yaml_files("data/samples/human_members/")
         for file in human_files:
             print(f"  {file}")
         
         # List virtual member files
         print("\n=== Virtual member YAML files ===")
-        virtual_files = storage_client.list_yaml_files("data/virtual_members/")
+        virtual_files = storage_client.list_yaml_files("data/samples/virtual_members/")
         for file in virtual_files:
             print(f"  {file}")
 
         # Read specific files
-        syota_data = storage_client.read_yaml_from_minio("data/human_members/Syota.yml")
-        kasen_data = storage_client.read_yaml_from_minio("data/virtual_members/Kasen.yml")
+        syota_data = storage_client.read_yaml_from_minio("data/samples/human_members/syota.yml")
+        kasen_data = storage_client.read_yaml_from_minio("data/samples/virtual_members/kasen.yml")
 
         print(f"\nSyota data: {syota_data}")
         print(f"Kasen data: {kasen_data}")

@@ -29,10 +29,10 @@ def get_all_yaml_files_from_storage():
     storage_client = StorageClient()
     
     # 人間メンバーのYAMLファイルを動的に取得
-    human_files = storage_client.list_yaml_files("data/human_members/")
+    human_files = storage_client.list_yaml_files("data/samples/human_members/")
     
     # 仮想メンバーのYAMLファイルを動的に取得
-    virtual_files = storage_client.list_yaml_files("data/virtual_members/")
+    virtual_files = storage_client.list_yaml_files("data/samples/virtual_members/")
     
     return human_files, virtual_files
 

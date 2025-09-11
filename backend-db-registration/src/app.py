@@ -193,7 +193,7 @@ async def test_webhook():
                             "name": os.getenv("MINIO_BUCKET_NAME", "vecr-storage")
                         },
                         "object": {
-                            "key": "data/human_members/test_human_member.yaml",
+                            "key": "data/samples/human_members/test_human_member.yaml",
                             "eTag": "test-etag-123",
                             "size": 1024
                         }
