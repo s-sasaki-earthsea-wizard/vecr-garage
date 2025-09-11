@@ -49,26 +49,7 @@ docker-clean: ## Stop and remove all containers, volumes, and images
 # Backend-db-operation service commands
 # ------------------------------------------------------------
 
-backend-db-registration-shell: ## Open a shell into the backend-db-registration container
-	$(COMPOSE) -p $(PROJECT_NAME) exec backend-db-registration /bin/bash
-
-backend-db-registration-start: ## Start the backend-db-registration container
-	$(COMPOSE) -p $(PROJECT_NAME) start backend-db-registration
-
-backend-db-registration-stop: ## Stop the backend-db-registration container
-	$(COMPOSE) -p $(PROJECT_NAME) stop backend-db-registration
-
-backend-db-registration-restart: ## Restart the backend-db-registration container
-	$(COMPOSE) -p $(PROJECT_NAME) restart backend-db-registration
-
-backend-db-registration-clean: ## Clean the backend-db-registration container
-	$(COMPOSE) -p $(PROJECT_NAME) down --volumes --rmi all --remove-orphans
-
-backend-db-registration-conn-info: ## Show connection information for the member database
-	$(COMPOSE) -p $(PROJECT_NAME) exec backend-db-registration bash -c 'PGPASSWORD=$$MEMBER_DB_PASSWORD psql -h $$MEMBER_DB_HOST -p $$MEMBER_DB_PORT -U $$MEMBER_DB_USER -d $$MEMBER_DB_NAME -c "\conninfo"'
-
-backend-db-registration-test: ## Run tests for the backend-db-registration container
-	$(COMPOSE) -p $(PROJECT_NAME) exec backend-db-registration pytest tests/ -v
+# Removed: backend-db-registration targets moved to makefiles/backend-db-registration.mk
 
 # ------------------------------------------------------------
 # Backend-llm-response service commands

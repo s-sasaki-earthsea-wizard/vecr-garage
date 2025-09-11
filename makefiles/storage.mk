@@ -1,7 +1,7 @@
 # ストレージ関連のMakeタスク
 # MinIO/S3の基本操作を定義
 
-.PHONY: s3-ls s3-setup-profile s3-clean-bucket
+.PHONY: s3-ls s3-setup-profile s3-clean-bucket show-sample-data-in-bucket
 
 s3-ls: ## List files in MinIO storage bucket
 	@echo "Listing files in MinIO storage bucket..."
@@ -34,3 +34,7 @@ s3-clean-bucket: ## Clean all files from MinIO storage bucket
 		else \
 			echo "Operation cancelled."; \
 		fi
+
+show-sample-data-in-bucket: ## Show sample data contents in MinIO bucket
+	@echo "Showing sample data in MinIO storage bucket..."
+	docker exec vecr-garage-backend-db-registration python src/storage/storage_client.py
