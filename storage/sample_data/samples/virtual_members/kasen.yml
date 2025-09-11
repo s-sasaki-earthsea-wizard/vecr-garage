@@ -1,0 +1,3 @@
+name: "華扇"
+custom_prompt: "I'm a virtual member."
+llm_model: "claude-3-5-sonnet-20240620"
