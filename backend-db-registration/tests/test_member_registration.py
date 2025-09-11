@@ -149,4 +149,171 @@ def test_register_virtual_member_invalid_yaml(db_session, tmp_path, mock_storage
     
     # 無効なYAMLファイルで登録を試みる
     with pytest.raises(Exception):
-        register_virtual_member_from_yaml(str(invalid_yaml_path)) 
+        register_virtual_member_from_yaml(str(invalid_yaml_path))
+
+# 実際のtest_casesファイルを使用した異常系テスト
+@pytest.fixture
+def mock_storage_with_real_files(monkeypatch, tmp_path):
+    """実際のtest_casesと同等の内容でテスト用ファイルを作成するモック"""
+    import os
+    
+    # テスト用の異常系ファイルを作成
+    test_files = {
+        "data/test_cases/human_members/invalid_missing_bio.yml": {
+            "bio": "プロフィールのみが存在しています"
+            # nameフィールドが意図的に欠損
+        },
+        "data/test_cases/human_members/invalid_missing_name.yml": {
+            "bio": "名前フィールドが欠損しているテストファイル"
+            # nameフィールドが意図的に欠損
+        },
+        "data/test_cases/virtual_members/invalid_missing_name.yml": {
+            "llm_model": "gpt-4o",
+            "custom_prompt": "名前フィールドが欠損している仮想メンバー"
+            # nameフィールドが意図的に欠損
+        },
+        "data/test_cases/virtual_members/invalid_missing_model.yml": {
+            "name": "テスト仮想メンバー",
+            "custom_prompt": "正常なプロンプトです"
+            # llm_modelフィールドが意図的に欠損
+        },
+        "data/test_cases/human_members/invalid_empty_file.yml": None,  # 空ファイル
+        "data/samples/human_members/rin.yml": {
+            "name": "Rin",
+            "bio": "I'm a human member."
+        },
+        "data/samples/virtual_members/darcy.yml": {
+            "name": "Darcy",
+            "custom_prompt": "I'm a virtual member.",
+            "llm_model": "gpt-4o"
+        },
+        "data/samples/human_members/syota.yml": {
+            "name": "Syota",
+            "bio": "I'm a human member."
+        },
+        "data/samples/virtual_members/kasen.yml": {
+            "name": "華扇",
+            "custom_prompt": "私は華扇です。",
+            "llm_model": "gpt-4o"
+        }
+    }
+    
+    class MockStorageClientForRealFiles:
+        def read_yaml_from_minio(self, yaml_path):
+            if yaml_path in test_files:
+                content = test_files[yaml_path]
+                if content is None:  # 空ファイルの場合
+                    return None
+                return content
+            else:
+                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+    
+    monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClientForRealFiles)
+    return MockStorageClientForRealFiles()
+
+def test_human_member_missing_name_validation(db_session, mock_storage_with_real_files):
+    """実際のテストケース: 人間メンバーのname欠損でバリデーションエラー"""
+    from validation.yaml_validator import ValidationError
+    
+    with pytest.raises(ValidationError) as exc_info:
+        register_human_member_from_yaml("data/test_cases/human_members/invalid_missing_bio.yml")
+    
+    # 日本語エラーメッセージの検証
+    assert "人間メンバーYAMLに必須フィールドが不足しています: name" in str(exc_info.value) or \
+           "Required fields missing in human member YAML: name" in str(exc_info.value)
+    assert "name" in exc_info.value.missing_fields
+
+def test_human_member_missing_name_original(db_session, mock_storage_with_real_files):
+    """実際のテストケース: 人間メンバーのname欠損（元ファイル）でバリデーションエラー"""
+    from validation.yaml_validator import ValidationError
+    
+    with pytest.raises(ValidationError) as exc_info:
+        register_human_member_from_yaml("data/test_cases/human_members/invalid_missing_name.yml")
+    
+    # 日本語エラーメッセージの検証
+    assert "人間メンバーYAMLに必須フィールドが不足しています: name" in str(exc_info.value) or \
+           "Required fields missing in human member YAML: name" in str(exc_info.value)
+    assert "name" in exc_info.value.missing_fields
+
+def test_virtual_member_missing_name_validation(db_session, mock_storage_with_real_files):
+    """実際のテストケース: 仮想メンバーのname欠損でバリデーションエラー"""
+    from validation.yaml_validator import ValidationError
+    
+    with pytest.raises(ValidationError) as exc_info:
+        register_virtual_member_from_yaml("data/test_cases/virtual_members/invalid_missing_name.yml")
+    
+    # 日本語エラーメッセージの検証
+    assert "仮想メンバーYAMLに必須フィールドが不足しています: name" in str(exc_info.value) or \
+           "Required fields missing in virtual member YAML: name" in str(exc_info.value)
+    assert "name" in exc_info.value.missing_fields
+
+def test_virtual_member_missing_model_validation(db_session, mock_storage_with_real_files):
+    """実際のテストケース: 仮想メンバーのllm_model欠損でバリデーションエラー"""
+    from validation.yaml_validator import ValidationError
+    
+    with pytest.raises(ValidationError) as exc_info:
+        register_virtual_member_from_yaml("data/test_cases/virtual_members/invalid_missing_model.yml")
+    
+    # 日本語エラーメッセージの検証
+    assert "仮想メンバーYAMLに必須フィールドが不足しています: llm_model" in str(exc_info.value) or \
+           "Required fields missing in virtual member YAML: llm_model" in str(exc_info.value)
+    assert "llm_model" in exc_info.value.missing_fields
+
+def test_human_member_empty_file_error(db_session, mock_storage_with_real_files):
+    """実際のテストケース: 空ファイルでエラー"""
+    with pytest.raises(Exception) as exc_info:
+        register_human_member_from_yaml("data/test_cases/human_members/invalid_empty_file.yml")
+    
+    # 'NoneType' object has no attribute 'get' エラーが発生することを確認
+    assert "'NoneType' object has no attribute 'get'" in str(exc_info.value) or "ValidationError" in str(exc_info.type)
+
+# 新しいディレクトリ構造（samples/）を使用した正常系テスト
+def test_human_member_from_samples_directory(db_session, mock_storage_with_real_files):
+    """新しいディレクトリ構造: samplesディレクトリから人間メンバー登録"""
+    # Rinファイルが正常に登録されることを確認
+    member = register_human_member_from_yaml("data/samples/human_members/rin.yml")
+    
+    # 検証
+    assert member is not None
+    assert member.member_name == "Rin"
+    assert member.member_uuid is not None
+    
+    # データベースから取得して検証
+    saved_member = get_human_member_by_name(db_session, "Rin")
+    assert saved_member is not None
+    assert saved_member.member_name == "Rin"
+
+def test_virtual_member_from_samples_directory(db_session, mock_storage_with_real_files):
+    """新しいディレクトリ構造: samplesディレクトリから仮想メンバー登録"""
+    # Darcyファイルが正常に登録されることを確認
+    member = register_virtual_member_from_yaml("data/samples/virtual_members/darcy.yml")
+    
+    # 検証
+    assert member is not None
+    assert member.member_name == "Darcy"
+    assert member.member_uuid is not None
+    
+    # データベースから取得して検証
+    saved_member = get_virtual_member_by_name(db_session, "Darcy")
+    assert saved_member is not None
+    assert saved_member.member_name == "Darcy"
+
+def test_human_member_syota_from_samples(db_session, mock_storage_with_real_files):
+    """新しいディレクトリ構造: Syotaファイルから人間メンバー登録"""
+    # Syotaファイルが正常に登録されることを確認
+    member = register_human_member_from_yaml("data/samples/human_members/syota.yml")
+    
+    # 検証
+    assert member is not None
+    assert member.member_name == "Syota"
+    assert member.member_uuid is not None
+
+def test_virtual_member_kasen_from_samples(db_session, mock_storage_with_real_files):
+    """新しいディレクトリ構造: 華扇ファイルから仮想メンバー登録"""
+    # 華扇ファイルが正常に登録されることを確認
+    member = register_virtual_member_from_yaml("data/samples/virtual_members/kasen.yml")
+    
+    # 検証
+    assert member is not None
+    assert member.member_name == "華扇"
+    assert member.member_uuid is not None 
