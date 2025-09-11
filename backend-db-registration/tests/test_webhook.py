@@ -134,7 +134,7 @@ class WebhookTester:
                                 "name": "test-bucket"
                             },
                             "object": {
-                                "key": "data/human_members/Syota.yml",
+                                "key": "data/samples/human_members/syota.yml",
                                 "eTag": "test-etag-human-123",
                                 "size": 2048
                             }
@@ -186,7 +186,7 @@ class WebhookTester:
                                 "name": "test-bucket"
                             },
                             "object": {
-                                "key": "data/virtual_members/Kasen.yml",
+                                "key": "data/samples/virtual_members/kasen.yml",
                                 "eTag": "test-etag-virtual-456",
                                 "size": 3072
                             }
@@ -279,7 +279,7 @@ class WebhookTester:
                                 "name": "test-bucket"
                             },
                             "object": {
-                                "key": "data/human_members/webhook_test_member.yml",
+                                "key": "data/samples/human_members/webhook_test_member.yml",
                                 "eTag": unique_etag,
                                 "size": 1024
                             }
@@ -299,7 +299,7 @@ class WebhookTester:
                                 "name": "test-bucket"
                             },
                             "object": {
-                                "key": "data/human_members/webhook_test_member.yml",
+                                "key": "data/samples/human_members/webhook_test_member.yml",
                                 "eTag": unique_etag,
                                 "size": 1024
                             }
