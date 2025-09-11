@@ -112,28 +112,50 @@ make s3-cp LOCAL_FILE=./path/to/file.yml S3_KEY=data/human_members/file.yml
 make s3-ls
 ```
 
-##### テスト実行結果
+##### テストケース構造
 
-以下のコマンドを実行した結果:
+**新しいディレクトリ構造**: 
+
+- `data/samples/`: 正常系テストファイル（実際の登録用データ）
+  - `human_members/`: 人間メンバー（rin.yml, syota.yml）
+  - `virtual_members/`: 仮想メンバー（darcy.yml, kasen.yml）
+
+- `data/test_cases/`: 異常系テストファイル（バリデーション検証用）
+  - `human_members/`: バリデーションエラーテスト
+    - `invalid_missing_name.yml`: nameフィールド欠損
+    - `invalid_empty_file.yml`: 空ファイル
+  - `virtual_members/`: バリデーションエラーテスト
+    - `invalid_missing_name.yml`: nameフィールド欠損  
+    - `invalid_missing_model.yml`: llm_modelフィールド欠損
+
+##### ユニットテスト実行
 
 ```bash
-# サンプルファイルのコピー
-$ make s3-cp-sample
-Copying sample YAML files to MinIO storage...
-upload: storage/sample_data/data/human_members/Rin.yml to s3://vecr-storage/data/human_members/Rin.yml
-upload: storage/sample_data/data/human_members/Syota.yml to s3://vecr-storage/data/human_members/Syota.yml
-Sample files copied successfully!
+# backend-db-registrationサービスのテスト実行
+$ make backend-db-registration-test
+Running tests for backend-db-registration service...
+============================= test session starts ==============================
+25 passed in 2.94s
+Tests completed!
+```
 
-# 個別ファイルのコピー
-$ make s3-cp LOCAL_FILE=./storage/sample_data/data/human_members/Rin.yml S3_KEY=data/human_members/Rin_test.yml
-Copying files to MinIO storage...
-upload: storage/sample_data/data/human_members/Rin.yml to s3://vecr-storage/data/human_members/Rin_test.yml
+**テストケース概要**:
+- 正常系: 4つのサンプルファイルからの正常な登録テスト
+- 異常系: 5つの異常系ファイルでのバリデーションエラー検証テスト
+- 合計25テストケース（既存16 + 新規9）が全て成功
 
+##### ストレージ操作結果
+
+```bash
 # ファイル一覧の確認
 $ make s3-ls
 Listing files in MinIO storage bucket...
                            PRE data/
-2025-04-04 18:12:16         98 sample.yml
+2025-09-11 09:22:35        38 data/samples/human_members/rin.yml
+2025-09-11 09:22:35        40 data/samples/human_members/syota.yml
+2025-09-11 09:22:35        72 data/samples/virtual_members/darcy.yml
+2025-09-11 09:22:35        93 data/samples/virtual_members/kasen.yml
+2025-09-11 09:22:35       143 data/test_cases/human_members/invalid_missing_bio.yml
 ```
 
 詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
