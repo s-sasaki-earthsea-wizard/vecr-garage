@@ -153,43 +153,43 @@ class WebhookFileWatcherService:
             
         Returns:
             bool: 処理が成功した場合はTrue
+            
+        Raises:
+            ValidationError: YAMLデータのバリデーションに失敗した場合
+            DatabaseError: データベース操作に失敗した場合
+            Exception: その他の予期しないエラーが発生した場合
         """
+        # オブジェクトキーをURLデコード
         try:
-            # オブジェクトキーをURLデコード
-            try:
-                decoded_object_name = urllib.parse.unquote(event.object_name)
-                # デバッグログでエンコード前後のパスを記録
-                if decoded_object_name != event.object_name:
-                    logger.debug(f"URL decoded object name: {event.object_name} -> {decoded_object_name}")
-            except Exception as e:
-                logger.warning(f"Failed to URL decode object name '{event.object_name}': {e}")
-                # デコードに失敗した場合は元のパスを使用
-                decoded_object_name = event.object_name
-            
-            logger.info(f"Processing file event: {event.event_name} for {decoded_object_name}")
-            
-            # ファイルパスに基づいてメンバータイプを判定（デコード後のパスで判定）
-            if "human_members" in decoded_object_name:
-                register_human_member_from_yaml(decoded_object_name)
-                logger.info(f"✅ Successfully registered human member from: {decoded_object_name}")
-                
-            elif "virtual_members" in decoded_object_name:
-                register_virtual_member_from_yaml(decoded_object_name)
-                logger.info(f"✅ Successfully registered virtual member from: {decoded_object_name}")
-                
-            else:
-                logger.warning(f"⚠️  Unknown file type, skipping: {decoded_object_name}")
-                return False
-            
-            # 処理済みイベントとしてマーク（デコード後のパスでイベントID生成）
-            event_id = f"{decoded_object_name}_{event.etag}"
-            self.processed_events[event_id] = event.etag
-            
-            return True
-            
+            decoded_object_name = urllib.parse.unquote(event.object_name)
+            # デバッグログでエンコード前後のパスを記録
+            if decoded_object_name != event.object_name:
+                logger.debug(f"URL decoded object name: {event.object_name} -> {decoded_object_name}")
         except Exception as e:
-            logger.error(f"❌ Failed to process file event {event.object_name}: {e}")
+            logger.warning(f"Failed to URL decode object name '{event.object_name}': {e}")
+            # デコードに失敗した場合は元のパスを使用
+            decoded_object_name = event.object_name
+        
+        logger.info(f"Processing file event: {event.event_name} for {decoded_object_name}")
+        
+        # ファイルパスに基づいてメンバータイプを判定（デコード後のパスで判定）
+        if "human_members" in decoded_object_name:
+            register_human_member_from_yaml(decoded_object_name)
+            logger.info(f"✅ Successfully registered human member from: {decoded_object_name}")
+            
+        elif "virtual_members" in decoded_object_name:
+            register_virtual_member_from_yaml(decoded_object_name)
+            logger.info(f"✅ Successfully registered virtual member from: {decoded_object_name}")
+            
+        else:
+            logger.warning(f"⚠️  Unknown file type, skipping: {decoded_object_name}")
             return False
+        
+        # 処理済みイベントとしてマーク（デコード後のパスでイベントID生成）
+        event_id = f"{decoded_object_name}_{event.etag}"
+        self.processed_events[event_id] = event.etag
+        
+        return True
     
     def handle_webhook(self, payload: dict) -> WebhookResponse:
         """Webhook通知を処理する
@@ -222,10 +222,16 @@ class WebhookFileWatcherService:
             # 各イベントを処理
             for event in events:
                 if self.should_process_event(event):
-                    if self.process_file_event(event):
-                        processed_files.append(event.object_name)
-                    else:
-                        errors.append(f"Failed to process {event.object_name}")
+                    try:
+                        if self.process_file_event(event):
+                            processed_files.append(event.object_name)
+                        else:
+                            errors.append(f"Failed to process {event.object_name}")
+                    except Exception as e:
+                        # ValidationError, DatabaseError, その他全ての例外をここでキャッチ
+                        # エラーは既にregister_*_member_from_yaml関数内でログ出力済み
+                        errors.append(f"Failed to process {event.object_name}: {str(e)}")
+                        logger.error(f"❌ Failed to process file event {event.object_name}: {str(e)}")
                 else:
                     logger.debug(f"Skipped duplicate event for {event.object_name}")
             
