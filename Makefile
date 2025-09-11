@@ -135,37 +135,16 @@ s3-cp: ## Copy files to MinIO storage using AWS CLI s3 cp command
 		--endpoint-url $(STORAGE_BASE_URL) \
 		--no-sign-request
 
-s3-cp-sample: ## Copy sample YAML files to MinIO storage
-	@echo "Copying sample YAML files to MinIO storage..."
-	aws s3 cp ./storage/sample_data/data/human_members/Rin.yml s3://$(MINIO_BUCKET_NAME)/data/human_members/Rin.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/data/human_members/Rin.yml s3://$(MINIO_BUCKET_NAME)/data/human_members/Rin.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
-	aws s3 cp ./storage/sample_data/data/human_members/Syota.yml s3://$(MINIO_BUCKET_NAME)/data/human_members/Syota.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/data/human_members/Syota.yml s3://$(MINIO_BUCKET_NAME)/data/human_members/Syota.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
-	@echo "Sample files copied successfully!"
+# モジュール化されたMakefileをinclude
+include makefiles/storage.mk
+include makefiles/samples.mk
+include makefiles/test-cases.mk
+include makefiles/backend-db-registration.mk
 
-s3-ls: ## List files in MinIO storage bucket
-	@echo "Listing files in MinIO storage bucket..."
-	aws s3 ls s3://$(MINIO_BUCKET_NAME)/ \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 ls s3://$(MINIO_BUCKET_NAME)/ \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
-
-s3-setup-profile: ## Setup AWS CLI profile for MinIO local storage
-	@echo "Setting up AWS CLI profile for MinIO local storage..."
-	@aws configure set aws_access_key_id $(MINIO_ROOT_USER) --profile minio-local || echo "Failed to set access key"
-	@aws configure set aws_secret_access_key $(MINIO_ROOT_PASSWORD) --profile minio-local || echo "Failed to set secret key"
-	@aws configure set region us-east-1 --profile minio-local || echo "Failed to set region"
-	@echo "MinIO profile setup completed!"
+# 便利なエイリアスと後方互換性
+s3-cp-samples: samples-copy ## Copy normal sample files to MinIO storage
+s3-cp-test-cases: test-cases-copy ## Copy test case files to MinIO storage
+s3-cp-sample: samples-copy ## Backward compatibility: Copy normal sample files
 
 # ------------------------------------------------------------
 # Member manager service commands
