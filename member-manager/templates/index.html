@@ -340,52 +340,177 @@ function deleteRecord(tableName, index) {
     modal.show();
 }
 
-// フォームフィールドの生成
+// フォームフィールドの生成（統合フォーム表示）
 function generateFormFields(columns, record) {
     let formHtml = '';
     
-    columns.forEach(column => {
-        const value = record[column.name] || '';
-        const isRequired = column.nullable === 'NO';
-        
-        formHtml += `
-            <div class="mb-3">
-                <label for="${column.name}" class="form-label">
-                    ${column.name}
-                    ${isRequired ? '<span class="text-danger">*</span>' : ''}
-                </label>
-        `;
-        
-        if (column.type === 'text' || column.type === 'character varying') {
-            formHtml += `
-                <textarea class="form-control" id="${column.name}" name="${column.name}" 
-                          rows="3" ${isRequired ? 'required' : ''}>${value}</textarea>
-            `;
-        } else if (column.type === 'integer' || column.type === 'bigint') {
-            formHtml += `
-                <input type="number" class="form-control" id="${column.name}" name="${column.name}" 
-                       value="${value}" ${isRequired ? 'required' : ''}>
-            `;
-        } else if (column.type === 'uuid') {
-            formHtml += `
-                <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
-                       value="${value}" pattern="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" 
-                       placeholder="UUID形式で入力" ${isRequired ? 'required' : ''}>
-            `;
-        } else {
-            formHtml += `
-                <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
-                       value="${value}" ${isRequired ? 'required' : ''}>
-            `;
+    // 新規レコード登録時に除外するフィールド（バックエンド/DB側で自動生成）
+    const excludeFields = [
+        'uuid', 'member_id', 'id', 'created_at', 'updated_at',
+        'member_uuid', 'profile_uuid', 'profile_id', 'relationship_id'
+    ];
+    
+    // テーブル名に基づいて統合フィールドを取得
+    const integratedFields = getIntegratedFields(currentTableName);
+    
+    // メンバー名フィールドを最初に表示
+    const memberNameField = getMemberNameField(currentTableName);
+    if (memberNameField) {
+        formHtml += generateFieldHtml(memberNameField, record[memberNameField.name] || '');
+    }
+    
+    // 統合フィールドのみを表示（重複を避けるため既存列は使用しない）
+    integratedFields.forEach(field => {
+        if (!isMemberNameField(field.name)) {
+            formHtml += generateFieldHtml(field, record[field.name] || '');
         }
-        
-        formHtml += `
-                <div class="form-text">${getColumnDescription(column.name)}</div>
-            </div>
-        `;
     });
     
     return formHtml;
+}
+
+// テーブル名に基づいて統合フィールドを取得
+function getIntegratedFields(tableName) {
+    const integratedFields = [];
+    
+    if (tableName === 'human_members') {
+        // human_member_profilesのフィールドを追加
+        integratedFields.push({
+            name: 'bio',
+            type: 'text',
+            nullable: 'YES',
+            description: '自己紹介・プロフィール文'
+        });
+    } else if (tableName === 'virtual_members') {
+        // virtual_member_profilesのフィールドを追加
+        integratedFields.push({
+            name: 'llm_model',
+            type: 'character varying',
+            nullable: 'NO',
+            description: '使用するLLMモデル名'
+        });
+        integratedFields.push({
+            name: 'custom_prompt',
+            type: 'text',
+            nullable: 'YES',
+            description: 'カスタムプロンプト設定'
+        });
+    } else if (tableName === 'human_member_profiles') {
+        // human_member_profilesのフィールドを追加
+        integratedFields.push({
+            name: 'bio',
+            type: 'text',
+            nullable: 'YES',
+            description: '自己紹介・プロフィール文'
+        });
+    } else if (tableName === 'virtual_member_profiles') {
+        // virtual_member_profilesのフィールドを追加
+        integratedFields.push({
+            name: 'llm_model',
+            type: 'character varying',
+            nullable: 'NO',
+            description: '使用するLLMモデル名'
+        });
+        integratedFields.push({
+            name: 'custom_prompt',
+            type: 'text',
+            nullable: 'YES',
+            description: 'カスタムプロンプト設定'
+        });
+    }
+    
+    return integratedFields;
+}
+
+// フィールドHTMLを生成
+function generateFieldHtml(column, value) {
+    const isRequired = column.nullable === 'NO';
+    
+    let fieldHtml = `
+        <div class="mb-3">
+            <label for="${column.name}" class="form-label">
+                ${getFieldDisplayName(column.name)}
+                ${isRequired ? '<span class="text-danger">*</span>' : ''}
+            </label>
+    `;
+    
+    if (column.type === 'text' || column.type === 'character varying') {
+        if (column.name === 'bio' || column.name === 'custom_prompt') {
+            fieldHtml += `
+                <textarea class="form-control" id="${column.name}" name="${column.name}" 
+                          rows="3" ${isRequired ? 'required' : ''} 
+                          onblur="validateField('${column.name}', this.value)"
+                          oninput="clearValidationError('${column.name}')">${value}</textarea>
+            `;
+        } else {
+            fieldHtml += `
+                <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
+                       value="${value}" ${isRequired ? 'required' : ''}
+                       onblur="validateField('${column.name}', this.value)"
+                       oninput="clearValidationError('${column.name}')">
+            `;
+        }
+    } else if (column.type === 'integer' || column.type === 'bigint') {
+        fieldHtml += `
+            <input type="number" class="form-control" id="${column.name}" name="${column.name}" 
+                   value="${value}" ${isRequired ? 'required' : ''}
+                   onblur="validateField('${column.name}', this.value)"
+                   oninput="clearValidationError('${column.name}')">
+        `;
+    } else if (column.type === 'uuid') {
+        fieldHtml += `
+            <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
+                   value="${value}" pattern="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" 
+                   placeholder="UUID形式で入力" ${isRequired ? 'required' : ''}
+                   onblur="validateField('${column.name}', this.value)"
+                   oninput="clearValidationError('${column.name}')">
+        `;
+    } else {
+        fieldHtml += `
+            <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
+                   value="${value}" ${isRequired ? 'required' : ''}
+                   onblur="validateField('${column.name}', this.value)"
+                   oninput="clearValidationError('${column.name}')">
+        `;
+    }
+    
+    fieldHtml += `
+            <div class="form-text">${column.description || getColumnDescription(column.name)}</div>
+            <div id="${column.name}-error" class="invalid-feedback" style="display: none;"></div>
+        </div>
+    `;
+    
+    return fieldHtml;
+}
+
+// メンバー名フィールドを取得（すべてmember_nameに統一）
+function getMemberNameField(tableName) {
+    if (tableName === 'human_members' || tableName === 'virtual_members' || 
+        tableName === 'human_member_profiles' || tableName === 'virtual_member_profiles') {
+        return {
+            name: 'member_name',
+            type: 'character varying',
+            nullable: 'NO',
+            description: 'メンバー名（必須）'
+        };
+    }
+    return null;
+}
+
+// フィールドがメンバー名フィールドかどうかを判定（member_nameに統一）
+function isMemberNameField(fieldName) {
+    return fieldName === 'member_name';
+}
+
+// フィールド表示名を取得
+function getFieldDisplayName(fieldName) {
+    const displayNames = {
+        'member_name': 'メンバー名',
+        'bio': '自己紹介',
+        'llm_model': 'LLMモデル',
+        'custom_prompt': 'カスタムプロンプト'
+    };
+    return displayNames[fieldName] || fieldName;
 }
 
 // 列の説明を取得（簡易版）
@@ -405,13 +530,72 @@ function getColumnDescription(columnName) {
 
 // レコード保存
 function saveRecord() {
-    // 新規レコードの保存ロジック
-    console.log('新規レコード保存機能は今後の実装予定です');
-    alert('新規レコード保存機能は今後の実装予定です');
+    // 全フィールドのバリデーションを実行
+    if (!validateAllFields()) {
+        alert('入力内容にエラーがあります。エラーメッセージを確認してください。');
+        return;
+    }
     
-    // モーダルを閉じる
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addRecordModal'));
-    modal.hide();
+    // フォームデータを収集
+    const formData = collectFormData();
+    if (!formData) {
+        return;
+    }
+    
+    // メンバータイプを判定（テーブル名から）
+    const memberType = getMemberTypeFromTable(currentTableName);
+    if (!memberType) {
+        alert('サポートされていないテーブルです。');
+        return;
+    }
+    
+    // APIリクエストの準備
+    const requestData = {
+        member_type: memberType,
+        form_data: formData
+    };
+    
+    // ローディング表示
+    showLoadingState();
+    
+    // APIリクエストの送信
+    fetch('/api/member/create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoadingState();
+        
+        if (data.success) {
+            // 成功時の処理
+            alert(data.message);
+            console.log('Member created successfully:', data.data);
+            
+            // モーダルを閉じる
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addRecordModal'));
+            modal.hide();
+            
+            // テーブルデータを更新
+            refreshTableData();
+        } else {
+            // エラー時の処理
+            if (data.errors) {
+                // バリデーションエラーの表示
+                displayValidationErrors(data.errors);
+            } else {
+                alert('エラー: ' + data.message);
+            }
+        }
+    })
+    .catch(error => {
+        hideLoadingState();
+        console.error('Error:', error);
+        alert('通信エラーが発生しました。');
+    });
 }
 
 // レコード更新
@@ -434,6 +618,249 @@ function confirmDelete() {
     // モーダルを閉じる
     const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
     modal.hide();
+}
+
+// フィールドバリデーション（バリデーションルールは今後修正する可能性あり）
+// 修正が必要な場合は、この関数内のロジックと各フィールドの個別バリデーション関数を更新してください
+function validateField(fieldName, value) {
+    const errorElement = document.getElementById(`${fieldName}-error`);
+    const inputElement = document.getElementById(fieldName);
+    
+    // エラーをクリア
+    clearValidationError(fieldName);
+    
+    // 必須チェック
+    if (isFieldRequired(fieldName) && (!value || value.trim() === '')) {
+        showValidationError(fieldName, 'このフィールドは必須です');
+        return false;
+    }
+    
+    // 空の値の場合はバリデーションをスキップ
+    if (!value || value.trim() === '') {
+        return true;
+    }
+    
+    // フィールド別のバリデーション
+    let isValid = true;
+    let errorMessage = '';
+    
+    switch (fieldName) {
+        case 'member_name':
+            isValid = validateMemberName(value);
+            if (!isValid) errorMessage = 'メンバー名は1-50文字で入力してください';
+            break;
+        case 'bio':
+            isValid = validateBio(value);
+            if (!isValid) errorMessage = '自己紹介は10-1000文字で入力してください';
+            break;
+        case 'llm_model':
+            isValid = validateLlmModel(value);
+            if (!isValid) errorMessage = 'LLMモデル名は1-50文字で入力してください';
+            break;
+        case 'custom_prompt':
+            isValid = validateCustomPrompt(value);
+            if (!isValid) errorMessage = 'カスタムプロンプトは最大5000文字で入力してください';
+            break;
+        case 'relationship_type':
+            isValid = validateRelationshipType(value);
+            if (!isValid) errorMessage = '関係性の種類を選択してください';
+            break;
+        case 'name_suffix':
+            isValid = validateNameSuffix(value);
+            if (!isValid) errorMessage = '呼び方は1-50文字で入力してください';
+            break;
+    }
+    
+    if (!isValid && errorMessage) {
+        showValidationError(fieldName, errorMessage);
+    }
+    
+    return isValid;
+}
+
+// フィールドが必須かどうかを判定
+function isFieldRequired(fieldName) {
+    const inputElement = document.getElementById(fieldName);
+    return inputElement && inputElement.hasAttribute('required');
+}
+
+// バリデーションエラーを表示
+function showValidationError(fieldName, message) {
+    const errorElement = document.getElementById(`${fieldName}-error`);
+    const inputElement = document.getElementById(fieldName);
+    
+    if (errorElement && inputElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        inputElement.classList.add('is-invalid');
+    }
+}
+
+// バリデーションエラーをクリア
+function clearValidationError(fieldName) {
+    const errorElement = document.getElementById(`${fieldName}-error`);
+    const inputElement = document.getElementById(fieldName);
+    
+    if (errorElement && inputElement) {
+        errorElement.style.display = 'none';
+        inputElement.classList.remove('is-invalid');
+    }
+}
+
+// メンバー名のバリデーション
+function validateMemberName(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length < 1 || trimmedValue.length > 50) {
+        return false;
+    }
+    // 特殊文字の過度な使用を制限
+    const specialCharCount = (trimmedValue.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g) || []).length;
+    if (specialCharCount > trimmedValue.length * 0.3) {
+        return false;
+    }
+    return true;
+}
+
+
+
+// 自己紹介のバリデーション
+function validateBio(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length < 10 || trimmedValue.length > 1000) {
+        return false;
+    }
+    return true;
+}
+
+// LLMモデルのバリデーション
+function validateLlmModel(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length < 1 || trimmedValue.length > 50) {
+        return false;
+    }
+    // 有効なLLMモデル名の形式チェック
+    const validModels = ['gpt-4', 'gpt-3.5-turbo', 'claude-3', 'claude-2', 'gemini-pro', 'llama-2'];
+    if (validModels.some(model => trimmedValue.toLowerCase().includes(model))) {
+        return true;
+    }
+    // カスタムモデル名も許可（基本的な形式チェック）
+    return /^[a-zA-Z0-9\-_\.]+$/.test(trimmedValue);
+}
+
+// カスタムプロンプトのバリデーション
+function validateCustomPrompt(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length > 5000) {
+        return false;
+    }
+    return true;
+}
+
+// 関係性の種類のバリデーション
+function validateRelationshipType(value) {
+    const trimmedValue = value.trim();
+    const validTypes = ['mentor', 'mentee', 'peer', 'colleague', 'friend', 'family'];
+    return validTypes.includes(trimmedValue.toLowerCase());
+}
+
+// 呼び方のバリデーション
+function validateNameSuffix(value) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length < 1 || trimmedValue.length > 50) {
+        return false;
+    }
+    // 日本語の敬語表現の妥当性チェック
+    const validSuffixes = ['さん', 'くん', 'ちゃん', '様', '氏', '先生', '先輩'];
+    if (validSuffixes.some(suffix => trimmedValue.includes(suffix))) {
+        return true;
+    }
+    // カスタム呼び方も許可
+    return true;
+}
+
+// 全フィールドのバリデーション
+function validateAllFields() {
+    let isValid = true;
+    const form = document.getElementById('addRecordForm');
+    const inputs = form.querySelectorAll('input, textarea');
+    
+    inputs.forEach(input => {
+        if (!validateField(input.name, input.value)) {
+            isValid = false;
+        }
+    });
+    
+    return isValid;
+}
+
+// フォームデータを収集
+function collectFormData() {
+    const form = document.getElementById('addRecordForm');
+    const inputs = form.querySelectorAll('input, textarea');
+    const formData = {};
+    
+    inputs.forEach(input => {
+        if (input.name && input.value) {
+            formData[input.name] = input.value;
+        }
+    });
+    
+    return formData;
+}
+
+// テーブル名からメンバータイプを判定
+function getMemberTypeFromTable(tableName) {
+    if (tableName === 'human_members' || tableName === 'human_member_profiles') {
+        return 'human';
+    } else if (tableName === 'virtual_members' || tableName === 'virtual_member_profiles') {
+        return 'virtual';
+    }
+    return null;
+}
+
+// ローディング状態の表示
+function showLoadingState() {
+    const saveButton = document.querySelector('#addRecordModal .btn-primary');
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>処理中...';
+    }
+}
+
+// ローディング状態の非表示
+function hideLoadingState() {
+    const saveButton = document.querySelector('#addRecordModal .btn-primary');
+    if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.innerHTML = '保存';
+    }
+}
+
+// バリデーションエラーの表示
+function displayValidationErrors(errors) {
+    // 既存のエラーをクリア
+    const form = document.getElementById('addRecordForm');
+    const errorElements = form.querySelectorAll('.invalid-feedback');
+    errorElements.forEach(element => {
+        element.style.display = 'none';
+    });
+    
+    const inputElements = form.querySelectorAll('.is-invalid');
+    inputElements.forEach(element => {
+        element.classList.remove('is-invalid');
+    });
+    
+    // 新しいエラーを表示
+    for (const [fieldName, errorMessage] of Object.entries(errors)) {
+        const inputElement = document.getElementById(fieldName);
+        const errorElement = document.getElementById(`${fieldName}-error`);
+        
+        if (inputElement && errorElement) {
+            inputElement.classList.add('is-invalid');
+            errorElement.textContent = errorMessage;
+            errorElement.style.display = 'block';
+        }
+    }
 }
 
 // ページ読み込み時の初期化
