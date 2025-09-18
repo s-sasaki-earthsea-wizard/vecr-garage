@@ -1,0 +1,3 @@
+# name属性が欠如しているため登録に失敗するテストケース
+custom_prompt: "正常なカスタムプロンプトです"
+llm_model: "claude-3-5-sonnet-20240620"

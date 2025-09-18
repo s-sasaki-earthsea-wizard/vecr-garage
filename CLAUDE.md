@@ -4,6 +4,10 @@
 
 人間とAIアシスタントエンジニアが協働する仮想スタートアップオフィス「VECRガレージ」のDockerベース環境です。
 
+## 言語設定
+
+このプロジェクトでは**日本語**での応答を行ってください。コード内のコメント、ログメッセージ、エラーメッセージ、ドキュメンテーション文字列なども日本語で記述してください。
+
 ## アーキテクチャ
 
 ### サービス構成
@@ -44,12 +48,34 @@ backend-*/
 ### テスト
 
 ```bash
-# backend-db-registrationのテスト
-docker exec -it vecr-garage-backend-db-registration pytest tests/
+# backend-db-registrationのテスト（統合Makefileターゲット使用）
+make backend-db-registration-test
 
 # backend-llm-responseのテスト
 docker exec -it vecr-garage-backend-llm-response pytest tests/
 ```
+
+#### テストケース設計
+
+**正常系テスト**:
+- `data/samples/human_members/`: 人間メンバーの正常な登録ファイル
+- `data/samples/virtual_members/`: 仮想メンバーの正常な登録ファイル
+
+**異常系テスト**:
+- `data/test_cases/human_members/`: 人間メンバーの異常系テストケース
+  - `invalid_missing_name.yml`: nameフィールド欠損（ValidationError）
+  - `invalid_empty_file.yml`: 空ファイル（'NoneType' object エラー）
+- `data/test_cases/virtual_members/`: 仮想メンバーの異常系テストケース
+  - `invalid_missing_name.yml`: nameフィールド欠損（ValidationError）
+  - `invalid_missing_model.yml`: llm_modelフィールド欠損（ValidationError）
+
+#### バリデーション処理
+
+**エラーハンドリング設計**:
+- `process_file_event`: 純粋なファイル処理の責任（単一責任の原則）
+- `handle_webhook`: 例外処理とエラーログの統一管理
+- ValidationError、DatabaseError、その他の例外を適切に分離
+- 異常系ファイルは確実にエラーとして検出され、HTTP 400で応答
 
 ### 型チェック・リンター
 
@@ -111,10 +137,25 @@ docker exec -it vecr-garage-db-member psql -U testuser -d member_db
 - コミットメッセージ: 日本語可、動詞から始める
 - PRはmainブランチへ
 
+## 開発ガイドライン
+
+### ドキュメント更新プロセス
+
+機能追加やPhase完了時には、以下のドキュメントを同期更新する：
+
+1. **CLAUDE.md**: プロジェクト全体状況、Phase完了記録、技術仕様
+2. **README.md**: ユーザー向け機能概要、実装状況、使用方法
+3. **Makefile**: コマンドヘルプテキスト（## コメント）の更新
+4. **makefiles/**: コマンドヘルプテキスト（## コメント）の更新
+
 ### コミットメッセージ規約
 
-プレフィックスに応じた絵文字を付ける：
+#### コミット粒度
+- **1コミット = 1つの主要な変更**: 複数の独立した機能や修正を1つのコミットにまとめない
+- **論理的な単位でコミット**: 関連する変更は1つのコミットにまとめる
+- **段階的コミット**: 大きな変更は段階的に分割してコミット
 
+#### プレフィックスと絵文字
 - ✨ feat: 新機能
 - 🐛 fix: バグ修正
 - 📚 docs: ドキュメント
@@ -270,10 +311,38 @@ aws_services:
 - ✅ セキュリティヘッダー設定
 - ✅ 監査ログ記録
 
+## 一時的な実装事項
+
+### name-based UPSERT処理（暫定実装）
+
+**実装目的**: ETag重複チェック問題の解決とDBリセット後の再登録対応
+
+**実装範囲**:
+- `save_or_update_human_member()`: 人間メンバーのUPSERT処理
+- `save_or_update_virtual_member()`: 仮想メンバーのUPSERT処理
+
+**影響ファイル**:
+- `backend-db-registration/src/db/database.py`: UPSERT関数実装
+- `backend-db-registration/src/operations/member_registration.py`: UPSERT関数使用
+- `backend-db-registration/src/services/webhook_file_watcher.py`: 関連コメント追加
+
+**現在の動作**:
+- 同名メンバーが存在する場合: `updated_at`フィールドを現在時刻で更新
+- 存在しない場合: 新規作成
+
+**将来の実装計画**:
+- file_uri（ファイルパス）をプライマリーキーとした本格的なUPSERT
+- PostgreSQLの`ON CONFLICT DO UPDATE`句の活用
+- ファイル単位での厳密な重複管理
+
+**関連Issue**: https://github.com/your-org/vecr-garage/issues/xxx
+
 ## 今後の開発予定
 
 - [x] member-managerのモックUI実装
 - [x] 認証システム（モックアップ版）実装
+- [x] name-based UPSERT処理（暫定実装）
+- [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示
 - [ ] Flask-Login + bcryptによる認証強化

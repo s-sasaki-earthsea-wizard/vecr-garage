@@ -4,6 +4,7 @@ import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime
 import os
 import logging
 import psycopg2
@@ -222,5 +223,103 @@ def get_virtual_member_by_name(db: Session, name: str):
         return db.query(VirtualMember).filter(VirtualMember.member_name == name).first()
     except Exception as e:
         error_msg = f"Failed to get virtual member '{name}': {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+# 一時的なUPSERT機能（将来的にfile_uriベースの実装に移行予定）
+# TODO: 将来的にfile_uriをプライマリーキーとした本格的なUPSERT実装に移行する
+# Issue: https://github.com/your-org/vecr-garage/issues/xxx
+
+def save_or_update_human_member(db: Session, name: str):
+    """人間メンバーを保存または更新する（一時的なUPSERT実装）
+
+    指定された名前の人間メンバーが既に存在する場合は更新（updated_atフィールド）し、
+    存在しない場合は新規作成します。この実装は一時的なもので、将来的には
+    file_uriをプライマリーキーとしたより適切なUPSERT実装に移行予定です。
+
+    Args:
+        db (Session): SQLAlchemyのデータベースセッション
+        name (str): 人間メンバーの名前
+
+    Returns:
+        HumanMember: 保存または更新された人間メンバーオブジェクト
+
+    Raises:
+        DatabaseError: データベース操作時にエラーが発生した場合
+
+    Note:
+        【一時的な実装】この関数は名前ベースの重複チェックを行います。
+        将来的には以下の仕様に移行予定:
+        - file_uriをプライマリーキーとして使用
+        - ON CONFLICT DO UPDATEによる本格的なUPSERT
+        - より厳密なファイルベースの管理
+    """
+    try:
+        # 既存のメンバーをチェック
+        existing_member = get_human_member_by_name(db, name)
+
+        if existing_member:
+            # 更新: updated_atフィールドを現在時刻に更新
+            existing_member.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(existing_member)
+            logger.info(f"Human member '{name}' updated successfully (updated_at: {existing_member.updated_at})")
+            return existing_member
+        else:
+            # 新規作成
+            new_member = save_human_member(db, name)
+            logger.info(f"Human member '{name}' created successfully")
+            return new_member
+
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to save or update human member '{name}': {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+def save_or_update_virtual_member(db: Session, name: str):
+    """仮想メンバーを保存または更新する（一時的なUPSERT実装）
+
+    指定された名前の仮想メンバーが既に存在する場合は更新（updated_atフィールド）し、
+    存在しない場合は新規作成します。この実装は一時的なもので、将来的には
+    file_uriをプライマリーキーとしたより適切なUPSERT実装に移行予定です。
+
+    Args:
+        db (Session): SQLAlchemyのデータベースセッション
+        name (str): 仮想メンバーの名前
+
+    Returns:
+        VirtualMember: 保存または更新された仮想メンバーオブジェクト
+
+    Raises:
+        DatabaseError: データベース操作時にエラーが発生した場合
+
+    Note:
+        【一時的な実装】この関数は名前ベースの重複チェックを行います。
+        将来的には以下の仕様に移行予定:
+        - file_uriをプライマリーキーとして使用
+        - ON CONFLICT DO UPDATEによる本格的なUPSERT
+        - より厳密なファイルベースの管理
+    """
+    try:
+        # 既存のメンバーをチェック
+        existing_member = get_virtual_member_by_name(db, name)
+
+        if existing_member:
+            # 更新: updated_atフィールドを現在時刻に更新
+            existing_member.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(existing_member)
+            logger.info(f"Virtual member '{name}' updated successfully (updated_at: {existing_member.updated_at})")
+            return existing_member
+        else:
+            # 新規作成
+            new_member = save_virtual_member(db, name)
+            logger.info(f"Virtual member '{name}' created successfully")
+            return new_member
+
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to save or update virtual member '{name}': {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
