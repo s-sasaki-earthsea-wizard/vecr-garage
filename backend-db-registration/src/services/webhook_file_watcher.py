@@ -186,6 +186,9 @@ class WebhookFileWatcherService:
             return False
         
         # 処理済みイベントとしてマーク（デコード後のパスでイベントID生成）
+        # TODO: 将来的にfile_uriベースのUPSERT実装でこのETagチェックは不要になる
+        # Issue: https://github.com/your-org/vecr-garage/issues/xxx
+        # 現在はDB側の一時的なUPSERT処理により同じファイルの更新が正しく処理される
         event_id = f"{decoded_object_name}_{event.etag}"
         self.processed_events[event_id] = event.etag
         
