@@ -311,10 +311,38 @@ aws_services:
 - ✅ セキュリティヘッダー設定
 - ✅ 監査ログ記録
 
+## 一時的な実装事項
+
+### name-based UPSERT処理（暫定実装）
+
+**実装目的**: ETag重複チェック問題の解決とDBリセット後の再登録対応
+
+**実装範囲**:
+- `save_or_update_human_member()`: 人間メンバーのUPSERT処理
+- `save_or_update_virtual_member()`: 仮想メンバーのUPSERT処理
+
+**影響ファイル**:
+- `backend-db-registration/src/db/database.py`: UPSERT関数実装
+- `backend-db-registration/src/operations/member_registration.py`: UPSERT関数使用
+- `backend-db-registration/src/services/webhook_file_watcher.py`: 関連コメント追加
+
+**現在の動作**:
+- 同名メンバーが存在する場合: `updated_at`フィールドを現在時刻で更新
+- 存在しない場合: 新規作成
+
+**将来の実装計画**:
+- file_uri（ファイルパス）をプライマリーキーとした本格的なUPSERT
+- PostgreSQLの`ON CONFLICT DO UPDATE`句の活用
+- ファイル単位での厳密な重複管理
+
+**関連Issue**: https://github.com/your-org/vecr-garage/issues/xxx
+
 ## 今後の開発予定
 
 - [x] member-managerのモックUI実装
 - [x] 認証システム（モックアップ版）実装
+- [x] name-based UPSERT処理（暫定実装）
+- [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示
 - [ ] Flask-Login + bcryptによる認証強化
