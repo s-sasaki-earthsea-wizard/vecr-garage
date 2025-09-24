@@ -147,6 +147,34 @@ services:
     networks:
       - network
 
+  minio-restarter:
+    image: docker:dind
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: docker restart vecr-garage-storage
+    depends_on:
+      minio-setup:
+        condition: service_completed_successfully
+    networks:
+      - network
+
+  webhook-configurator:
+    image: minio/mc
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - STORAGE_PORT=${STORAGE_PORT}
+      - WEBHOOK_FULL_URL=${WEBHOOK_FULL_URL}
+    depends_on:
+      minio-restarter:
+        condition: service_completed_successfully
+    entrypoint: /scripts/webhook-configurator.sh
+    volumes:
+      - ./scripts:/scripts
+    networks:
+      - network
+
   member-manager:
     build:
       context: ./member-manager
