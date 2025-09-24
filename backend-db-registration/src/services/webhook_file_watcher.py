@@ -1,4 +1,5 @@
 import json
+import os
 import urllib.parse
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -25,13 +26,17 @@ class WebhookFileWatcherService:
     Attributes:
         storage_client (StorageClient): ストレージクライアント
         processed_events (Dict[str, str]): 処理済みイベントの追跡
+        etag_check_enabled (bool): ETag重複チェック機能の有効/無効
     """
     
     def __init__(self):
         """Webhookファイル監視サービスを初期化する"""
         self.storage_client = StorageClient()
         self.processed_events: Dict[str, str] = {}  # event_id -> etag
-        logger.info("WebhookFileWatcherService initialized")
+
+        # ETagチェック機能の有効/無効を環境変数から取得
+        self.etag_check_enabled = os.getenv('WEBHOOK_ETAG_CHECK_ENABLED', 'true').lower() == 'true'
+        logger.info(f"WebhookFileWatcherService initialized (ETag check: {'enabled' if self.etag_check_enabled else 'disabled'})")
     
     def parse_webhook_payload(self, payload: dict) -> List[FileChangeEvent]:
         """Webhookペイロードを解析してファイル変更イベントを抽出する
@@ -111,11 +116,14 @@ class WebhookFileWatcherService:
         
         # イベントIDを生成（デコード後のオブジェクト名 + ETag）
         event_id = f"{decoded_object_name}_{event.etag}"
-        
-        # 既に処理済みのイベントはスキップ
-        if event_id in self.processed_events:
-            logger.debug(f"Skipping already processed event: {event_id}")
-            return False
+
+        # ETagチェックが有効な場合のみ重複チェックを実行
+        if self.etag_check_enabled:
+            if event_id in self.processed_events:
+                logger.debug(f"Skipping already processed event: {event_id}")
+                return False
+        else:
+            logger.debug(f"ETag check disabled - processing event: {event_id}")
         
         # 対象外のイベントをスキップ
         if event.event_name not in ['s3:ObjectCreated:Put', 's3:ObjectCreated:Post', 's3:ObjectCreated:CompleteMultipartUpload']:
@@ -185,12 +193,17 @@ class WebhookFileWatcherService:
             logger.warning(f"⚠️  Unknown file type, skipping: {decoded_object_name}")
             return False
         
-        # 処理済みイベントとしてマーク（デコード後のパスでイベントID生成）
-        # TODO: 将来的にfile_uriベースのUPSERT実装でこのETagチェックは不要になる
-        # Issue: https://github.com/your-org/vecr-garage/issues/xxx
-        # 現在はDB側の一時的なUPSERT処理により同じファイルの更新が正しく処理される
-        event_id = f"{decoded_object_name}_{event.etag}"
-        self.processed_events[event_id] = event.etag
+        # ETagチェックが有効な場合のみ処理済みイベントとしてマーク
+        if self.etag_check_enabled:
+            # 処理済みイベントとしてマーク（デコード後のパスでイベントID生成）
+            # TODO: 将来的にfile_uriベースのUPSERT実装でこのETagチェックは不要になる
+            # Issue: https://github.com/your-org/vecr-garage/issues/xxx
+            # 現在はDB側の一時的なUPSERT処理により同じファイルの更新が正しく処理される
+            event_id = f"{decoded_object_name}_{event.etag}"
+            self.processed_events[event_id] = event.etag
+            logger.debug(f"Marked event as processed: {event_id}")
+        else:
+            logger.debug(f"ETag check disabled - not marking event as processed: {decoded_object_name}")
         
         return True
     
@@ -238,8 +251,10 @@ class WebhookFileWatcherService:
                 else:
                     logger.debug(f"Skipped duplicate event for {event.object_name}")
             
-            # 処理済みイベントの履歴をクリーンアップ（古いエントリを削除）
-            self._cleanup_processed_events()
+            # ETagチェックが有効な場合のみクリーンアップを実行
+            if self.etag_check_enabled:
+                # 処理済みイベントの履歴をクリーンアップ（古いエントリを削除）
+                self._cleanup_processed_events()
             
             # 成功の判定: エラーが0の場合（重複検出による処理スキップは正常な動作）
             success = len(errors) == 0
