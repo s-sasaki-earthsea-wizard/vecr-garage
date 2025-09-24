@@ -126,7 +126,7 @@ class WebhookFileWatcherService:
             logger.debug(f"ETag check disabled - processing event: {event_id}")
         
         # 対象外のイベントをスキップ
-        if event.event_name not in ['s3:ObjectCreated:Put', 's3:ObjectCreated:Post', 's3:ObjectCreated:CompleteMultipartUpload']:
+        if event.event_name not in ['s3:ObjectCreated:Put', 's3:ObjectCreated:Post', 's3:ObjectCreated:CompleteMultipartUpload', 's3:ObjectCreated:Copy']:
             logger.debug(f"Skipping non-creation event: {event.event_name}")
             return False
         

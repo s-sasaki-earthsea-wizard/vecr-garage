@@ -315,19 +315,47 @@ aws_services:
 
 ### MinIO Webhook設定の完全自動化（✅ 実装完了）
 
-**実装目的**: リポジトリクローン時の完全な再現性確保と開発環境の柔軟性向上
+**実装目的**: リポジトリクローン時の完全な再現性確保と手動設定の完全排除
 
-**主な改善点**:
-1. **minio-setup.shの外部分離**: docker-compose.ymlから長大なentrypointスクリプトを分離し、保守性向上
-2. **環境変数による制御**: `WEBHOOK_ETAG_CHECK_ENABLED`でETag重複チェックの有効/無効を制御
-3. **堅牢なエラーハンドリング**: TTY問題対応、リトライロジック、詳細ログ出力
-4. **完全な自動化**: `make docker-up`だけでWebhookシステムが稼働
+#### 🚀 3段階自動化アーキテクチャ
+
+**完全自動化プロセス**: `make docker-build-up` → 手動作業ゼロでWebhookシステム稼働
+
+1. **minio-setup** → MinIO基本設定、サンプルデータコピー、webhook設定適用
+2. **minio-restarter** → MinIO再起動（設定反映のため）
+3. **webhook-configurator** → イベント設定とテスト実行
+
+**docker-compose.ymlサービス依存関係**:
+```yaml
+minio-setup:
+  depends_on: [storage: service_healthy]
+minio-restarter:
+  depends_on: [minio-setup: service_completed_successfully]
+webhook-configurator:
+  depends_on: [minio-restarter: service_completed_successfully]
+```
+
+#### 🔧 主な技術改善
+
+**自動化の実現方法**:
+1. **外部スクリプト分離**: docker-composeエントリーポイントの保守性向上
+2. **Docker-in-Docker**: minio-restarterサービスによるコンテナ間制御
+3. **イベント対応拡張**: `s3:ObjectCreated:Copy`イベントサポート追加
+4. **環境変数制御**: `WEBHOOK_ETAG_CHECK_ENABLED`による重複チェック制御
 
 **影響ファイル**:
-- `scripts/minio-setup.sh`: MinIO初期化とWebhook設定の外部スクリプト
-- `backend-db-registration/src/services/webhook_file_watcher.py`: ETag制御ロジック実装
-- `docker-compose.yml`: minio-setupサービスの簡潔化
-- `.env.example`: Webhook制御用環境変数追加
+- `scripts/minio-setup.sh`: MinIO初期化（webhook設定のみ、イベント設定は除外）
+- `scripts/webhook-configurator.sh`: イベント設定とリトライロジック（新規作成）
+- `backend-db-registration/src/services/webhook_file_watcher.py`: Copy イベント対応とETag制御
+- `docker-compose.yml`: 3段階サービス依存関係実装
+
+#### 🧪 テスト結果
+
+**完全再現性テスト** (`make docker-down` → `make docker-build-up`):
+- ✅ 人間メンバー: 2件自動登録 (Syota, Rin)
+- ✅ 仮想メンバー: 2件自動登録 (華扇, Darcy)
+- ✅ 異常系ファイル: HTTP 400で適切にエラー処理
+- ✅ 手動作業: 完全にゼロ
 
 **環境変数設定**:
 ```bash
@@ -344,12 +372,20 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 - `WEBHOOK_ETAG_CHECK_ENABLED=false`: 同じファイルでも毎回処理実行（開発環境向け）
 - `WEBHOOK_ETAG_CHECK_ENABLED=true`: 重複ファイルはスキップ（本番環境向け）
 - 自動的なMinIOバケット作成、サンプルデータコピー、Webhook設定
+- s3:ObjectCreated:* イベント（Put, Post, CompleteMultipartUpload, Copy）の完全サポート
 
 **技術的改善**:
 - TTY問題の適切な処理とフォールバック機能
 - リトライロジックによる堅牢性向上
 - 詳細なログ出力による運用性向上
 - 設定の外部化による保守性向上
+- Docker-in-Dockerによるコンテナ間操作の実現
+
+#### 🎯 完全自動化の達成
+
+**ユーザー要求**:「手動での設定は一切排除してください。環境の再現性が失われます。docker-compose.ymlやMakefileの更新のみを行い、make docker-build-upで環境が再現されるようにしてください」
+
+✅ **達成状況**: 完全達成 - 手動作業ゼロで環境が完全再現される
 
 ## 一時的な実装事項
 
@@ -383,6 +419,8 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 - [x] name-based UPSERT処理（暫定実装）
 - [x] **MinIO Webhook自動化システム完全実装**
 - [x] **ETag重複チェック制御機能実装**
+- [x] **3段階自動化アーキテクチャ実装（完全再現性達成）**
+- [x] **s3:ObjectCreated:Copy イベント対応**
 - [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示
