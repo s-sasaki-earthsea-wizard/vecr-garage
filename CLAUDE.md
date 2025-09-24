@@ -311,6 +311,46 @@ aws_services:
 - ✅ セキュリティヘッダー設定
 - ✅ 監査ログ記録
 
+## Webhook自動化システム
+
+### MinIO Webhook設定の完全自動化（✅ 実装完了）
+
+**実装目的**: リポジトリクローン時の完全な再現性確保と開発環境の柔軟性向上
+
+**主な改善点**:
+1. **minio-setup.shの外部分離**: docker-compose.ymlから長大なentrypointスクリプトを分離し、保守性向上
+2. **環境変数による制御**: `WEBHOOK_ETAG_CHECK_ENABLED`でETag重複チェックの有効/無効を制御
+3. **堅牢なエラーハンドリング**: TTY問題対応、リトライロジック、詳細ログ出力
+4. **完全な自動化**: `make docker-up`だけでWebhookシステムが稼働
+
+**影響ファイル**:
+- `scripts/minio-setup.sh`: MinIO初期化とWebhook設定の外部スクリプト
+- `backend-db-registration/src/services/webhook_file_watcher.py`: ETag制御ロジック実装
+- `docker-compose.yml`: minio-setupサービスの簡潔化
+- `.env.example`: Webhook制御用環境変数追加
+
+**環境変数設定**:
+```bash
+# ETag重複チェック機能の有効/無効制御
+# 本番環境: true (重複処理を防ぐ)
+# 開発環境: false (DBリセット後の再処理を可能にする)
+WEBHOOK_ETAG_CHECK_ENABLED=false
+
+# docker-compose起動時のWebhook自動設定を制御
+WEBHOOK_AUTO_SETUP_ENABLED=true
+```
+
+**現在の動作**:
+- `WEBHOOK_ETAG_CHECK_ENABLED=false`: 同じファイルでも毎回処理実行（開発環境向け）
+- `WEBHOOK_ETAG_CHECK_ENABLED=true`: 重複ファイルはスキップ（本番環境向け）
+- 自動的なMinIOバケット作成、サンプルデータコピー、Webhook設定
+
+**技術的改善**:
+- TTY問題の適切な処理とフォールバック機能
+- リトライロジックによる堅牢性向上
+- 詳細なログ出力による運用性向上
+- 設定の外部化による保守性向上
+
 ## 一時的な実装事項
 
 ### name-based UPSERT処理（暫定実装）
@@ -324,24 +364,25 @@ aws_services:
 **影響ファイル**:
 - `backend-db-registration/src/db/database.py`: UPSERT関数実装
 - `backend-db-registration/src/operations/member_registration.py`: UPSERT関数使用
-- `backend-db-registration/src/services/webhook_file_watcher.py`: 関連コメント追加
+- `backend-db-registration/src/services/webhook_file_watcher.py`: ETag制御ロジック実装
 
 **現在の動作**:
 - 同名メンバーが存在する場合: `updated_at`フィールドを現在時刻で更新
 - 存在しない場合: 新規作成
+- ETag制御によりDBリセット後の再処理が可能
 
 **将来の実装計画**:
 - file_uri（ファイルパス）をプライマリーキーとした本格的なUPSERT
 - PostgreSQLの`ON CONFLICT DO UPDATE`句の活用
 - ファイル単位での厳密な重複管理
 
-**関連Issue**: https://github.com/your-org/vecr-garage/issues/xxx
-
 ## 今後の開発予定
 
 - [x] member-managerのモックUI実装
 - [x] 認証システム（モックアップ版）実装
 - [x] name-based UPSERT処理（暫定実装）
+- [x] **MinIO Webhook自動化システム完全実装**
+- [x] **ETag重複チェック制御機能実装**
 - [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示

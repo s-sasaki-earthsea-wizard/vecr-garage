@@ -33,6 +33,7 @@ services:
       - WEBHOOK_EVENTS=s3:ObjectCreated:*,s3:ObjectRemoved:*
       - WEBHOOK_FILTER_PREFIX=data/
       - WEBHOOK_FILTER_SUFFIX=.yaml,.yml
+      - WEBHOOK_ETAG_CHECK_ENABLED=${WEBHOOK_ETAG_CHECK_ENABLED}
       # TODO: 将来的にWebhook認証を実装予定（現在は未使用）
       # - WEBHOOK_AUTH_TOKEN=${WEBHOOK_AUTH_TOKEN:-}
       - WEBHOOK_FULL_URL=${WEBHOOK_FULL_URL}
@@ -132,25 +133,17 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - WEBHOOK_FULL_URL=${WEBHOOK_FULL_URL}
+      - STORAGE_PORT=${STORAGE_PORT}
     depends_on:
       storage:
         condition: service_healthy
       backend-db-registration:
         condition: service_started
-    entrypoint: >
-      /bin/sh -c '
-      sleep 5 &&
-      mc alias set myminio http://storage:${STORAGE_PORT} ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
-      mc mb -p myminio/${MINIO_BUCKET_NAME} &&
-      mc cp --recursive /sample_data/samples/ myminio/${MINIO_BUCKET_NAME}/data/samples/ &&
-      mc cp --recursive /sample_data/test_cases/ myminio/${MINIO_BUCKET_NAME}/data/test_cases/ &&
-      echo "Setting up webhook configuration..." &&
-      mc admin config set myminio/ notify_webhook endpoint="${WEBHOOK_FULL_URL}" queue_limit=1000 &&
-      echo "Webhook configuration completed!" &&
-      exit 0
-      '
+    entrypoint: /scripts/minio-setup.sh
     volumes:
       - ./storage/sample_data:/sample_data
+      - ./scripts:/scripts
     networks:
       - network
 
