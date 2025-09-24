@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from models.members import HumanMember, VirtualMember
 import uuid
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 import os
@@ -31,7 +31,7 @@ class DatabaseError(Exception):
         super().__init__(self.message)
 
 # 人間メンバー操作
-def create_human_member(db: Session, name: str):
+def create_human_member(db: Session, name: str, yml_file_uri: str = None):
     """人間メンバーのデータベースオブジェクトを作成する
     
     新しいUUIDを生成し、指定された名前でHumanMemberオブジェクトを作成します。
@@ -54,7 +54,7 @@ def create_human_member(db: Session, name: str):
     """
     try:
         member_uuid = uuid.uuid4()
-        db_member = HumanMember(member_name=name, member_uuid=member_uuid)
+        db_member = HumanMember(member_name=name, member_uuid=member_uuid, yml_file_uri=yml_file_uri)
         logger.info(f"Human member '{name}' created with UUID: {member_uuid}")
         return db_member
     except Exception as e:
@@ -62,7 +62,7 @@ def create_human_member(db: Session, name: str):
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
-def save_human_member(db: Session, name: str):
+def save_human_member(db: Session, name: str, yml_file_uri: str = None):
     """人間メンバーを作成してデータベースに保存する（完全なトランザクション管理）
     
     人間メンバーオブジェクトを作成し、データベースに保存します。
@@ -84,7 +84,7 @@ def save_human_member(db: Session, name: str):
         エラー時は自動的にロールバックが実行されます。
     """
     try:
-        member = create_human_member(db, name)
+        member = create_human_member(db, name, yml_file_uri)
         db.add(member)
         db.commit()
         db.refresh(member)
@@ -98,20 +98,20 @@ def save_human_member(db: Session, name: str):
 
 def get_human_member_by_name(db: Session, name: str):
     """名前で人間メンバーをデータベースから取得する
-    
+
     指定された名前の人間メンバーを検索し、見つかった場合は
     そのオブジェクトを返します。見つからない場合はNoneを返します。
-    
+
     Args:
         db (Session): SQLAlchemyのデータベースセッション
         name (str): 検索する人間メンバーの名前
-        
+
     Returns:
         HumanMember or None: 見つかった人間メンバーオブジェクト、またはNone
-        
+
     Raises:
         DatabaseError: データベース検索時にエラーが発生した場合
-        
+
     Example:
         >>> member = get_human_member_by_name(db, "田中太郎")
         >>> if member:
@@ -126,8 +126,75 @@ def get_human_member_by_name(db: Session, name: str):
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
+def get_human_member_by_uri(db: Session, yml_file_uri: str):
+    """YAMLファイルURIで人間メンバーをデータベースから取得する
+
+    指定されたYAMLファイルURIの人間メンバーを検索し、見つかった場合は
+    そのオブジェクトを返します。見つからない場合はNoneを返します。
+
+    Args:
+        db (Session): SQLAlchemyのデータベースセッション
+        yml_file_uri (str): 検索するYAMLファイルURI
+
+    Returns:
+        HumanMember or None: 見つかった人間メンバーオブジェクト、またはNone
+
+    Raises:
+        DatabaseError: データベース検索時にエラーが発生した場合
+    """
+    try:
+        return db.query(HumanMember).filter(HumanMember.yml_file_uri == yml_file_uri).first()
+    except Exception as e:
+        error_msg = f"Failed to get human member by URI '{yml_file_uri}': {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+def upsert_human_member(db: Session, name: str, yml_file_uri: str):
+    """人間メンバーをUPSERT（存在すれば更新、存在しなければ挿入）する
+
+    指定されたYAMLファイルURIの人間メンバーが存在する場合は更新し、
+    存在しない場合は新規作成します。
+
+    Args:
+        db (Session): SQLAlchemyのデータベースセッション
+        name (str): 人間メンバーの名前
+        yml_file_uri (str): YAMLファイルURI
+
+    Returns:
+        HumanMember: UPSERT処理後の人間メンバーオブジェクト
+
+    Raises:
+        DatabaseError: UPSERT処理時にエラーが発生した場合
+    """
+    try:
+        # URIで既存メンバーを検索
+        existing_member = get_human_member_by_uri(db, yml_file_uri)
+
+        if existing_member:
+            # 既存メンバーを更新
+            existing_member.member_name = name
+            existing_member.updated_at = db.query(func.current_timestamp()).scalar()
+            db.commit()
+            db.refresh(existing_member)
+            logger.info(f"Human member '{name}' updated for URI: {yml_file_uri}")
+            return existing_member
+        else:
+            # 新規メンバーを作成
+            member = create_human_member(db, name, yml_file_uri)
+            db.add(member)
+            db.commit()
+            db.refresh(member)
+            logger.info(f"Human member '{name}' created for URI: {yml_file_uri}")
+            return member
+
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to upsert human member '{name}' for URI '{yml_file_uri}': {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
 # 仮想メンバー操作
-def create_virtual_member(db: Session, name: str):
+def create_virtual_member(db: Session, name: str, yml_file_uri: str = None):
     """仮想メンバーのデータベースオブジェクトを作成する
     
     新しいUUIDを生成し、指定された名前でVirtualMemberオブジェクトを作成します。
@@ -153,6 +220,7 @@ def create_virtual_member(db: Session, name: str):
         db_member = VirtualMember(
             member_name=name,
             member_uuid=member_uuid,
+            yml_file_uri=yml_file_uri
         )
         logger.info(f"Virtual member '{name}' created with UUID: {member_uuid}")
         return db_member
@@ -161,7 +229,7 @@ def create_virtual_member(db: Session, name: str):
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
-def save_virtual_member(db: Session, name: str):
+def save_virtual_member(db: Session, name: str, yml_file_uri: str = None):
     """仮想メンバーを作成してデータベースに保存する（完全なトランザクション管理）
     
     仮想メンバーオブジェクトを作成し、データベースに保存します。
@@ -183,7 +251,7 @@ def save_virtual_member(db: Session, name: str):
         エラー時は自動的にロールバックが実行されます。
     """
     try:
-        member = create_virtual_member(db, name)
+        member = create_virtual_member(db, name, yml_file_uri)
         db.add(member)
         db.commit()
         db.refresh(member)
@@ -197,20 +265,20 @@ def save_virtual_member(db: Session, name: str):
 
 def get_virtual_member_by_name(db: Session, name: str):
     """名前で仮想メンバーをデータベースから取得する
-    
+
     指定された名前の仮想メンバーを検索し、見つかった場合は
     そのオブジェクトを返します。見つからない場合はNoneを返します。
-    
+
     Args:
         db (Session): SQLAlchemyのデータベースセッション
         name (str): 検索する仮想メンバーの名前
-        
+
     Returns:
         VirtualMember or None: 見つかった仮想メンバーオブジェクト、またはNone
-        
+
     Raises:
         DatabaseError: データベース検索時にエラーが発生した場合
-        
+
     Example:
         >>> member = get_virtual_member_by_name(db, "AI助手")
         >>> if member:
@@ -222,5 +290,72 @@ def get_virtual_member_by_name(db: Session, name: str):
         return db.query(VirtualMember).filter(VirtualMember.member_name == name).first()
     except Exception as e:
         error_msg = f"Failed to get virtual member '{name}': {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+def get_virtual_member_by_uri(db: Session, yml_file_uri: str):
+    """YAMLファイルURIで仮想メンバーをデータベースから取得する
+
+    指定されたYAMLファイルURIの仮想メンバーを検索し、見つかった場合は
+    そのオブジェクトを返します。見つからない場合はNoneを返します。
+
+    Args:
+        db (Session): SQLAlchemyのデータベースセッション
+        yml_file_uri (str): 検索するYAMLファイルURI
+
+    Returns:
+        VirtualMember or None: 見つかった仮想メンバーオブジェクト、またはNone
+
+    Raises:
+        DatabaseError: データベース検索時にエラーが発生した場合
+    """
+    try:
+        return db.query(VirtualMember).filter(VirtualMember.yml_file_uri == yml_file_uri).first()
+    except Exception as e:
+        error_msg = f"Failed to get virtual member by URI '{yml_file_uri}': {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
+    """仮想メンバーをUPSERT（存在すれば更新、存在しなければ挿入）する
+
+    指定されたYAMLファイルURIの仮想メンバーが存在する場合は更新し、
+    存在しない場合は新規作成します。
+
+    Args:
+        db (Session): SQLAlchemyのデータベースセッション
+        name (str): 仮想メンバーの名前
+        yml_file_uri (str): YAMLファイルURI
+
+    Returns:
+        VirtualMember: UPSERT処理後の仮想メンバーオブジェクト
+
+    Raises:
+        DatabaseError: UPSERT処理時にエラーが発生した場合
+    """
+    try:
+        # URIで既存メンバーを検索
+        existing_member = get_virtual_member_by_uri(db, yml_file_uri)
+
+        if existing_member:
+            # 既存メンバーを更新
+            existing_member.member_name = name
+            existing_member.updated_at = db.query(func.current_timestamp()).scalar()
+            db.commit()
+            db.refresh(existing_member)
+            logger.info(f"Virtual member '{name}' updated for URI: {yml_file_uri}")
+            return existing_member
+        else:
+            # 新規メンバーを作成
+            member = create_virtual_member(db, name, yml_file_uri)
+            db.add(member)
+            db.commit()
+            db.refresh(member)
+            logger.info(f"Virtual member '{name}' created for URI: {yml_file_uri}")
+            return member
+
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to upsert virtual member '{name}' for URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)

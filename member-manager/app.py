@@ -292,6 +292,65 @@ def get_database_tables():
             'message': f'テーブル一覧取得中にエラーが発生: {str(e)}'
         }), 500
 
+@app.route('/api/table/<table_name>', methods=['GET'])
+@login_required
+def get_table_data_api(table_name):
+    """テーブルデータをJSON形式で返すAPI"""
+    try:
+        table_data = db_manager.get_table_data(table_name)
+
+        if table_data:
+            return jsonify({
+                'success': True,
+                'table_name': table_name,
+                'columns': [col.name for col in table_data.columns],
+                'data': [dict(row._mapping) for row in table_data.data]
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'テーブル "{table_name}" のデータ取得に失敗しました'
+            }), 404
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'テーブルデータ取得中にエラーが発生: {str(e)}'
+        }), 500
+
+@app.route('/api/table/<table_name>/record', methods=['POST'])
+@login_required
+def create_table_record_api(table_name):
+    """テーブルに新規レコードを作成するAPI"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'リクエストデータがありません'
+            }), 400
+
+        # データベースへの直接挿入
+        result = db_manager.insert_record(table_name, data)
+
+        if result:
+            return jsonify({
+                'success': True,
+                'message': f'{table_name}テーブルにレコードが追加されました',
+                'data': result
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'レコードの作成に失敗しました'
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'レコード作成中にエラーが発生: {str(e)}'
+        }), 500
+
 @app.route('/api/member/create', methods=['POST'])
 def create_member():
     """新規メンバー作成API
@@ -351,15 +410,35 @@ def create_member():
         
         # YAMLファイルのアップロード
         upload_result = storage_client.upload_yaml_file(yaml_content, storage_path)
-        
+
+        # データベースにメンバー情報を保存
+        table_name = f'{member_type}_members'
+        db_data = {
+            'member_name': member_name,
+            'yml_file_uri': storage_path
+        }
+
+        db_record = db_manager.insert_record(table_name, db_data)
+
+        # 仮想メンバーの場合はプロフィール情報も保存
+        if member_type == 'virtual' and db_record:
+            profile_data = {
+                'member_id': db_record['member_id'],
+                'member_uuid': db_record['member_uuid'],
+                'llm_model': form_data.get('llm_model', 'Claude'),
+                'custom_prompt': form_data.get('custom_prompt', '')
+            }
+            db_manager.insert_record('virtual_member_profiles', profile_data)
+
         return jsonify({
             'success': True,
-            'message': f'{member_type}メンバー「{member_name}」のYAMLファイルを作成・アップロードしました',
+            'message': f'{member_type}メンバー「{member_name}」を作成し、ストレージとデータベースに保存しました',
             'data': {
                 'member_name': member_name,
                 'member_type': member_type,
                 'storage_path': storage_path,
-                'upload_result': upload_result
+                'upload_result': upload_result,
+                'db_record': db_record
             }
         })
         
