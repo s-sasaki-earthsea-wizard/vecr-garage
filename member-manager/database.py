@@ -137,17 +137,80 @@ class DatabaseManager:
         try:
             if not self.engine:
                 self.test_sqlalchemy_connection()
-            
+
             with self.engine.connect() as conn:
                 count_query = text(f"SELECT COUNT(*) FROM {table_name}")
                 result = conn.execute(count_query)
                 count = result.scalar()
                 logger.info(f"テーブル '{table_name}' のレコード数: {count}")
                 return count
-                
+
         except Exception as e:
             logger.error(f"テーブル '{table_name}' のレコード数取得失敗: {e}")
             return 0
+
+    def insert_record(self, table_name, data):
+        """指定されたテーブルに新規レコードを挿入"""
+        try:
+            if not self.engine:
+                self.test_sqlalchemy_connection()
+
+            with self.engine.begin() as conn:  # トランザクション開始
+                # テーブルの列情報を取得
+                columns_query = text(f"""
+                    SELECT column_name, data_type, column_default
+                    FROM information_schema.columns
+                    WHERE table_name = '{table_name}'
+                    ORDER BY ordinal_position;
+                """)
+                columns_result = conn.execute(columns_query)
+                table_columns = {row[0]: {"type": row[1], "default": row[2]} for row in columns_result}
+
+                # 自動生成される列（ID、UUID、タイムスタンプ）を除外
+                filtered_data = {}
+                for key, value in data.items():
+                    if key in table_columns and not self._is_auto_generated_column(key, table_columns[key]):
+                        filtered_data[key] = value
+
+                if not filtered_data:
+                    raise ValueError("挿入可能なデータがありません")
+
+                # SQL文を動的に生成
+                columns = list(filtered_data.keys())
+                placeholders = [f":{col}" for col in columns]
+
+                insert_query = text(f"""
+                    INSERT INTO {table_name} ({', '.join(columns)})
+                    VALUES ({', '.join(placeholders)})
+                    RETURNING *
+                """)
+
+                result = conn.execute(insert_query, filtered_data)
+                inserted_record = result.fetchone()
+
+                logger.info(f"テーブル '{table_name}' にレコードを挿入: {filtered_data}")
+
+                return dict(inserted_record._mapping) if inserted_record else None
+
+        except Exception as e:
+            logger.error(f"テーブル '{table_name}' へのレコード挿入失敗: {e}")
+            raise e
+
+    def _is_auto_generated_column(self, column_name, column_info):
+        """列が自動生成されるかどうかを判定"""
+        # ID列（自動採番）
+        if column_name.endswith('_id') and 'serial' in column_info['type'].lower():
+            return True
+
+        # UUID列（デフォルト値がある場合）
+        if column_name.endswith('_uuid') and column_info['default']:
+            return True
+
+        # タイムスタンプ列（デフォルト値がある場合）
+        if column_name in ['created_at', 'updated_at'] and column_info['default']:
+            return True
+
+        return False
 
 def test_database_connection():
     """データベース接続テストの実行"""
