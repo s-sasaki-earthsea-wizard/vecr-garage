@@ -4,6 +4,10 @@
 
 人間とAIアシスタントエンジニアが協働する仮想スタートアップオフィス「VECRガレージ」のDockerベース環境です。
 
+## 言語設定
+
+このプロジェクトでは**日本語**での応答を行ってください。コード内のコメント、ログメッセージ、エラーメッセージ、ドキュメンテーション文字列なども日本語で記述してください。
+
 ## アーキテクチャ
 
 ### サービス構成
@@ -44,12 +48,34 @@ backend-*/
 ### テスト
 
 ```bash
-# backend-db-registrationのテスト
-docker exec -it vecr-garage-backend-db-registration pytest tests/
+# backend-db-registrationのテスト（統合Makefileターゲット使用）
+make backend-db-registration-test
 
 # backend-llm-responseのテスト
 docker exec -it vecr-garage-backend-llm-response pytest tests/
 ```
+
+#### テストケース設計
+
+**正常系テスト**:
+- `data/samples/human_members/`: 人間メンバーの正常な登録ファイル
+- `data/samples/virtual_members/`: 仮想メンバーの正常な登録ファイル
+
+**異常系テスト**:
+- `data/test_cases/human_members/`: 人間メンバーの異常系テストケース
+  - `invalid_missing_name.yml`: nameフィールド欠損（ValidationError）
+  - `invalid_empty_file.yml`: 空ファイル（'NoneType' object エラー）
+- `data/test_cases/virtual_members/`: 仮想メンバーの異常系テストケース
+  - `invalid_missing_name.yml`: nameフィールド欠損（ValidationError）
+  - `invalid_missing_model.yml`: llm_modelフィールド欠損（ValidationError）
+
+#### バリデーション処理
+
+**エラーハンドリング設計**:
+- `process_file_event`: 純粋なファイル処理の責任（単一責任の原則）
+- `handle_webhook`: 例外処理とエラーログの統一管理
+- ValidationError、DatabaseError、その他の例外を適切に分離
+- 異常系ファイルは確実にエラーとして検出され、HTTP 400で応答
 
 ### 型チェック・リンター
 
@@ -111,10 +137,25 @@ docker exec -it vecr-garage-db-member psql -U testuser -d member_db
 - コミットメッセージ: 日本語可、動詞から始める
 - PRはmainブランチへ
 
+## 開発ガイドライン
+
+### ドキュメント更新プロセス
+
+機能追加やPhase完了時には、以下のドキュメントを同期更新する：
+
+1. **CLAUDE.md**: プロジェクト全体状況、Phase完了記録、技術仕様
+2. **README.md**: ユーザー向け機能概要、実装状況、使用方法
+3. **Makefile**: コマンドヘルプテキスト（## コメント）の更新
+4. **makefiles/**: コマンドヘルプテキスト（## コメント）の更新
+
 ### コミットメッセージ規約
 
-プレフィックスに応じた絵文字を付ける：
+#### コミット粒度
+- **1コミット = 1つの主要な変更**: 複数の独立した機能や修正を1つのコミットにまとめない
+- **論理的な単位でコミット**: 関連する変更は1つのコミットにまとめる
+- **段階的コミット**: 大きな変更は段階的に分割してコミット
 
+#### プレフィックスと絵文字
 - ✨ feat: 新機能
 - 🐛 fix: バグ修正
 - 📚 docs: ドキュメント
@@ -270,10 +311,214 @@ aws_services:
 - ✅ セキュリティヘッダー設定
 - ✅ 監査ログ記録
 
+## Webhook自動化システム
+
+### MinIO Webhook設定の完全自動化（✅ 実装完了）
+
+**実装目的**: リポジトリクローン時の完全な再現性確保と手動設定の完全排除
+
+#### 🚀 3段階自動化アーキテクチャ
+
+**完全自動化プロセス**: `make docker-build-up` → 手動作業ゼロでWebhookシステム稼働
+
+1. **minio-setup** → MinIO基本設定、サンプルデータコピー、webhook設定適用
+2. **minio-restarter** → MinIO再起動（設定反映のため）
+3. **webhook-configurator** → イベント設定とテスト実行
+
+**docker-compose.ymlサービス依存関係**:
+```yaml
+minio-setup:
+  depends_on: [storage: service_healthy]
+minio-restarter:
+  depends_on: [minio-setup: service_completed_successfully]
+webhook-configurator:
+  depends_on: [minio-restarter: service_completed_successfully]
+```
+
+#### 🔧 主な技術改善
+
+**自動化の実現方法**:
+1. **外部スクリプト分離**: docker-composeエントリーポイントの保守性向上
+2. **Docker-in-Docker**: minio-restarterサービスによるコンテナ間制御
+3. **イベント対応拡張**: `s3:ObjectCreated:Copy`イベントサポート追加
+4. **環境変数制御**: `WEBHOOK_ETAG_CHECK_ENABLED`による重複チェック制御
+
+**影響ファイル**:
+- `scripts/minio-setup.sh`: MinIO初期化（webhook設定のみ、イベント設定は除外）
+- `scripts/webhook-configurator.sh`: イベント設定とリトライロジック（新規作成）
+- `backend-db-registration/src/services/webhook_file_watcher.py`: Copy イベント対応とETag制御
+- `docker-compose.yml`: 3段階サービス依存関係実装
+
+#### 🧪 テスト結果
+
+**完全再現性テスト** (`make docker-down` → `make docker-build-up`):
+- ✅ 人間メンバー: 2件自動登録 (Syota, Rin)
+- ✅ 仮想メンバー: 2件自動登録 (華扇, Darcy)
+- ✅ 異常系ファイル: HTTP 400で適切にエラー処理
+- ✅ 手動作業: 完全にゼロ
+
+**環境変数設定**:
+```bash
+# ETag重複チェック機能の有効/無効制御
+# 本番環境: true (重複処理を防ぐ)
+# 開発環境: false (DBリセット後の再処理を可能にする)
+WEBHOOK_ETAG_CHECK_ENABLED=false
+
+# docker-compose起動時のWebhook自動設定を制御
+WEBHOOK_AUTO_SETUP_ENABLED=true
+```
+
+**現在の動作**:
+- `WEBHOOK_ETAG_CHECK_ENABLED=false`: 同じファイルでも毎回処理実行（開発環境向け）
+- `WEBHOOK_ETAG_CHECK_ENABLED=true`: 重複ファイルはスキップ（本番環境向け）
+- 自動的なMinIOバケット作成、サンプルデータコピー、Webhook設定
+- s3:ObjectCreated:* イベント（Put, Post, CompleteMultipartUpload, Copy）の完全サポート
+
+**技術的改善**:
+- TTY問題の適切な処理とフォールバック機能
+- リトライロジックによる堅牢性向上
+- 詳細なログ出力による運用性向上
+- 設定の外部化による保守性向上
+- Docker-in-Dockerによるコンテナ間操作の実現
+
+#### 🎯 完全自動化の達成
+
+**ユーザー要求**:「手動での設定は一切排除してください。環境の再現性が失われます。docker-compose.ymlやMakefileの更新のみを行い、make docker-build-upで環境が再現されるようにしてください」
+
+✅ **達成状況**: 完全達成 - 手動作業ゼロで環境が完全再現される
+
+## 包括的テストシステム
+
+### backend-db-registrationテスト統合アーキテクチャ（✅ 実装完了）
+
+**実装目的**: ユニットテストからE2Eテストまでを統合した包括的品質保証システム
+
+#### 🏗️ テストシステム構成
+
+**テストファイル構成**:
+- `makefiles/backend-db-registration-tests.mk`: backend-db-registration専用テスト集約
+- `makefiles/yml-file-operations.mk`: YMLファイル操作統合システム
+- `makefiles/integration.mk`: サービス横断統合テスト
+
+**既存のpytestユニットテストを活用**:
+- 25の包括的テストケース（正常・異常系）
+- docker exec による実際のコンテナ内実行
+- 実データベース接続での検証
+
+#### 🧪 テストターゲット体系
+
+**backend-db-registration専用テスト**:
+```makefile
+backend-db-registration-test-unit         # ユニットテストのみ
+backend-db-registration-test-samples      # 正常系E2Eテスト（DB登録確認）
+backend-db-registration-test-cases        # 異常系エラーハンドリング（HTTP 400確認）
+backend-db-registration-test-integration  # 上記すべて統合実行
+```
+
+**システム統合テスト**:
+```makefile
+test-integration  # 全サービス統合（現在はbackend-db-registrationのみ）
+```
+
+#### ✅ テスト結果
+
+**包括的テスト実行結果**:
+- **Unit Tests**: 25 tests passed（pytest container execution）
+- **Sample Processing**: Human & Virtual member DB registration confirmed
+- **Error Handling**: HTTP 400 validation errors properly handled
+- **E2E Integration**: File upload → Webhook → DB registration verified
+
+**自動クリーンアップ**:
+- テストファイル自動削除
+- 副作用なしの隔離されたテスト実行
+
+#### 🎯 実現した価値
+
+**テストカバレッジ**:
+- **Unit Level**: コアロジックの品質保証
+- **Integration Level**: Webhook処理の動作確認
+- **E2E Level**: ファイルからDB登録までの全工程検証
+
+**開発効率向上**:
+- 段階的実行可能（個別テスト対応）
+- 既存pytestリソースの最大活用
+- 統合実行での包括的品質確認
+
+## YMLファイル操作統合システム
+
+### ファイル操作の統一管理（✅ 実装完了）
+
+**実装目的**: samples.mkとtest-cases.mkの重複排除とファイル操作の一元化
+
+#### 📁 統合アーキテクチャ
+
+**統合前の課題**:
+- samples.mkとtest-cases.mkで類似処理の重複
+- ファイル操作ロジックの分散
+- 保守性の低下
+
+**統合後の構成**:
+- `makefiles/yml-file-operations.mk`: 全YMLファイル操作を統合
+- samples.mk, test-cases.mk: 削除済み
+- 完全な後方互換性を保持
+
+#### 🎯 利用可能なコマンド
+
+**Sample Files (正常系)**:
+```makefile
+samples-copy, samples-copy-human, samples-copy-virtual
+samples-copy-single, samples-clean, samples-verify
+```
+
+**Test Cases (異常系)**:
+```makefile
+test-cases-copy, test-cases-copy-human, test-cases-copy-virtual
+test-cases-copy-single, test-cases-clean, test-cases-verify
+```
+
+#### ✨ 統合効果
+
+**重複排除**: AWS S3操作コードの共通化
+**保守性向上**: 1ファイルでの統一管理
+**機能性保持**: 既存コマンドの完全互換
+
+## 一時的な実装事項
+
+### name-based UPSERT処理（暫定実装）
+
+**実装目的**: ETag重複チェック問題の解決とDBリセット後の再登録対応
+
+**実装範囲**:
+- `save_or_update_human_member()`: 人間メンバーのUPSERT処理
+- `save_or_update_virtual_member()`: 仮想メンバーのUPSERT処理
+
+**影響ファイル**:
+- `backend-db-registration/src/db/database.py`: UPSERT関数実装
+- `backend-db-registration/src/operations/member_registration.py`: UPSERT関数使用
+- `backend-db-registration/src/services/webhook_file_watcher.py`: ETag制御ロジック実装
+
+**現在の動作**:
+- 同名メンバーが存在する場合: `updated_at`フィールドを現在時刻で更新
+- 存在しない場合: 新規作成
+- ETag制御によりDBリセット後の再処理が可能
+
+**将来の実装計画**:
+- file_uri（ファイルパス）をプライマリーキーとした本格的なUPSERT
+- PostgreSQLの`ON CONFLICT DO UPDATE`句の活用
+- ファイル単位での厳密な重複管理
+
 ## 今後の開発予定
 
 - [x] member-managerのモックUI実装
 - [x] 認証システム（モックアップ版）実装
+- [x] name-based UPSERT処理（暫定実装）
+- [x] **MinIO Webhook自動化システム完全実装**
+- [x] **ETag重複チェック制御機能実装**
+- [x] **3段階自動化アーキテクチャ実装（完全再現性達成）**
+- [x] **s3:ObjectCreated:Copy イベント対応**
+- [x] **包括的テストシステム実装（ユニット〜E2E統合）**
+- [x] **YMLファイル操作の統合システム実装**
+- [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示
 - [ ] Flask-Login + bcryptによる認証強化

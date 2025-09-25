@@ -13,8 +13,34 @@ VECRガレージのオフィス環境をDockerコンテナで構築するプロ�
 - OS: Ubuntu 24.04.1 LTS
 - Docker: 27.3.1
 - Docker Compose: v2.29.7
+- AWS CLI: 2.27.61
 
 ## インストール方法
+
+### AWS CLI のインストール
+
+AWS CLI は MinIO ストレージとの操作に必要です。以下の手順でインストールしてください：
+
+#### Ubuntu/Debian の場合
+
+```bash
+# AWS CLI v2 のダウンロード
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+# アーカイブの解凍
+unzip awscliv2.zip
+
+# インストール
+sudo ./aws/install
+
+# インストール確認
+aws --version
+
+# 不要ファイルの削除
+rm -rf aws awscliv2.zip
+```
+
+### プロジェクトのセットアップ
 
 1. リポジトリをクローン
 ```bash
@@ -58,16 +84,79 @@ make docker-build-up
 make backend-db-registration-shell
 ```
 
-詳細は`backend-db-operation`サービスの[README](./backend-db-registration/README.md)を参照してください。
+詳細は`backend-db-registration`サービスの[README](./backend-db-registration/README.md)を参照してください。
 
 #### storage サービス
 
 チームメンバーのプロフィールやカスタムプロンプトを配置するサービスです。
-minIOによって
-以下のコマンドでアクセスできます:
+MinIOによって提供されており、以下の方法でアクセスできます:
 
 - `http://localhost:9001`にブラウザでアクセス
 - または`make storage-shell`でターミナルからアクセス
+
+##### AWS CLI を使用したファイル操作
+
+AWS CLIを使用してMinIOストレージにファイルをコピーできます:
+
+```bash
+# AWS CLIプロファイルの設定（初回のみ）
+make s3-setup-profile
+
+# サンプルファイルのコピー
+make s3-cp-sample
+
+# 個別ファイルのコピー
+make s3-cp LOCAL_FILE=./path/to/file.yml S3_KEY=data/human_members/file.yml
+
+# ストレージ内のファイル一覧表示
+make s3-ls
+```
+
+##### テストケース構造
+
+**新しいディレクトリ構造**: 
+
+- `data/samples/`: 正常系テストファイル（実際の登録用データ）
+  - `human_members/`: 人間メンバー（rin.yml, syota.yml）
+  - `virtual_members/`: 仮想メンバー（darcy.yml, kasen.yml）
+
+- `data/test_cases/`: 異常系テストファイル（バリデーション検証用）
+  - `human_members/`: バリデーションエラーテスト
+    - `invalid_missing_name.yml`: nameフィールド欠損
+    - `invalid_empty_file.yml`: 空ファイル
+  - `virtual_members/`: バリデーションエラーテスト
+    - `invalid_missing_name.yml`: nameフィールド欠損  
+    - `invalid_missing_model.yml`: llm_modelフィールド欠損
+
+##### ユニットテスト実行
+
+```bash
+# backend-db-registrationサービスのテスト実行
+$ make backend-db-registration-test
+Running tests for backend-db-registration service...
+============================= test session starts ==============================
+25 passed in 2.94s
+Tests completed!
+```
+
+**テストケース概要**:
+- 正常系: 4つのサンプルファイルからの正常な登録テスト
+- 異常系: 5つの異常系ファイルでのバリデーションエラー検証テスト
+- 合計25テストケース（既存16 + 新規9）が全て成功
+
+##### ストレージ操作結果
+
+```bash
+# ファイル一覧の確認
+$ make s3-ls
+Listing files in MinIO storage bucket...
+                           PRE data/
+2025-09-11 09:22:35        38 data/samples/human_members/rin.yml
+2025-09-11 09:22:35        40 data/samples/human_members/syota.yml
+2025-09-11 09:22:35        72 data/samples/virtual_members/darcy.yml
+2025-09-11 09:22:35        93 data/samples/virtual_members/kasen.yml
+2025-09-11 09:22:35       143 data/test_cases/human_members/invalid_missing_bio.yml
+```
 
 詳細は`storage`サービスの[README](./storage/README.md)を参照してください。
 
@@ -128,6 +217,35 @@ http://localhost:8000/login
 
 各サービスはDocker Composeのネットワーク機能により、プロジェクト名をプレフィックスとしたネットワーク内で通信可能です。
 
+## セキュリティ注意事項
+
+### 本番環境での設定
+
+本番環境で使用する際は、以下の設定を必ず変更してください：
+
+1. **認証情報の変更**
+   ```bash
+   # .envファイルで以下を変更
+   MEMBER_DB_PASSWORD=your-secure-password
+   MINIO_ROOT_USER=your-secure-username
+   MINIO_ROOT_PASSWORD=your-secure-password
+   WEBHOOK_AUTH_TOKEN=your-secure-webhook-token
+   ```
+
+2. **Webhook認証の有効化**
+   - `WEBHOOK_AUTH_TOKEN`を設定してWebhook認証を有効化
+   - 未設定の場合は認証なしで動作（開発環境のみ推奨）
+
+3. **ネットワークセキュリティ**
+   - 本番環境では適切なファイアウォール設定
+   - 必要に応じてVPNやプライベートネットワークの使用
+
+### 開発環境
+
+- 現在の設定は開発環境用です
+- `.env`ファイルはGitにコミットされません
+- 実際の認証情報は環境変数で管理されています
+
 ## その他
 
 - 開発環境のクリーンアップ: `make docker-clean`
@@ -150,8 +268,34 @@ It currently consists of three services: backend, database, and storage. (A user
 - OS: Ubuntu 24.04.1 LTS
 - Docker: 27.3.1
 - Docker Compose: v2.29.7
+- AWS CLI: 2.27.61
 
 ## Installation Instructions
+
+### AWS CLI Installation
+
+AWS CLI is required for operations with MinIO storage. Please install it using the following steps:
+
+#### For Ubuntu/Debian
+
+```bash
+# Download AWS CLI v2
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+# Extract the archive
+unzip awscliv2.zip
+
+# Install
+sudo ./aws/install
+
+# Verify installation
+aws --version
+
+# Clean up
+rm -rf aws awscliv2.zip
+```
+
+### Project Setup
 
 1. Clone the repository
 

@@ -13,18 +13,18 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 from src.operations.member_registration import register_human_member_from_yaml, register_virtual_member_from_yaml
 from src.validation.yaml_validator import YAMLValidator, ValidationError
 from src.db.database import DatabaseError
+from src.utils.logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 def test_human_member_validation():
     """人間メンバーのバリデーションテスト"""
     print("\n=== Testing Human Member Validation ===")
     
     # テストケース: 必須フィールドが欠けている場合（既存の無効なファイル）
-    print("\n1. Testing missing required field (name) using Rin.yml")
+    print("\n1. Testing missing required field (name) using invalid_missing_name.yml")
     try:
-        register_human_member_from_yaml("data/human_members/Rin.yml")
+        register_human_member_from_yaml("data/test_cases/human_members/invalid_missing_name.yml")
         print("❌ Test failed: Should have raised ValidationError")
     except ValidationError as e:
         print(f"✅ Test passed: ValidationError caught - {e.message}")
@@ -38,9 +38,9 @@ def test_virtual_member_validation():
     print("\n=== Testing Virtual Member Validation ===")
     
     # テストケース: 必須フィールドが欠けている場合（既存の無効なファイル）
-    print("\n1. Testing missing required fields (name) using Darcy.yml")
+    print("\n1. Testing missing required fields (name) using invalid_missing_name.yml")
     try:
-        register_virtual_member_from_yaml("data/virtual_members/Darcy.yml")
+        register_virtual_member_from_yaml("data/test_cases/virtual_members/invalid_missing_name.yml")
         print("❌ Test failed: Should have raised ValidationError")
     except ValidationError as e:
         print(f"✅ Test passed: ValidationError caught - {e.message}")
@@ -56,7 +56,7 @@ def test_successful_registration():
     # 人間メンバーの正常な登録
     print("\n1. Testing successful human member registration")
     try:
-        result = register_human_member_from_yaml("data/human_members/Syota.yml")
+        result = register_human_member_from_yaml("data/samples/human_members/syota.yml")
         print(f"✅ Human member registration successful: {result.member_name}")
     except Exception as e:
         print(f"❌ Human member registration failed: {e}")
@@ -64,7 +64,7 @@ def test_successful_registration():
     # 仮想メンバーの正常な登録
     print("\n2. Testing successful virtual member registration")
     try:
-        result = register_virtual_member_from_yaml("data/virtual_members/Kasen.yml")
+        result = register_virtual_member_from_yaml("data/samples/virtual_members/kasen.yml")
         print(f"✅ Virtual member registration successful: {result.member_name}")
     except Exception as e:
         print(f"❌ Virtual member registration failed: {e}")
