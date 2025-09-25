@@ -118,8 +118,9 @@ s3-cp: ## Copy files to MinIO storage using AWS CLI s3 cp command
 
 # モジュール化されたMakefileをinclude
 include makefiles/storage.mk
-include makefiles/samples.mk
-include makefiles/test-cases.mk
+include makefiles/yml-file-operations.mk
+include makefiles/backend-db-registration-tests.mk
+include makefiles/integration.mk
 include makefiles/backend-db-registration.mk
 
 # 便利なエイリアスと後方互換性
