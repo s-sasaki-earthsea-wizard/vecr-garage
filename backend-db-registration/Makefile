@@ -1,4 +1,4 @@
-.PHONY: show_sample_data_in_bucket help register-members register-members-single register-human-members register-virtual-members db-member-connection test
+.PHONY: show_sample_data_in_bucket help register-members register-members-single register-human-members register-virtual-members db-member-connection test start-api test-webhook check-api
 
 default: help
 
@@ -50,3 +50,64 @@ test:  ## Run tests
 
 test-rollback-functionality:  ## Test rollback and validation functionality
 	python -m tests.test_rollback_functionality
+
+start-api:  ## Start FastAPI server with webhook endpoints (for development)
+	@echo "🚀 Starting FastAPI server with webhook endpoints..."
+	@echo "📡 Webhook endpoint: $(API_BASE_URL)/webhook/file-change"
+	@echo "📊 API documentation: $(API_BASE_URL)/docs"
+	@echo "🔍 Health check: $(API_BASE_URL)/health"
+	@echo ""
+	@echo "💡 Note: In production, the API server starts automatically with the Docker container."
+	@echo "   To set up webhook notifications, run in another terminal:"
+	@echo "   python src/scripts/setup_webhook.py setup"
+	@echo ""
+	@echo "🔍 Checking if server is already running..."
+	@if [ -f /proc/1/cmdline ] && grep -q "uvicorn" /proc/1/cmdline 2>/dev/null; then \
+		echo "✅ API server process is already running (container entrypoint)"; \
+		echo ""; \
+		echo "💡 This appears to be running in a Docker container with uvicorn as entrypoint."; \
+		echo "💡 To stop the server, use: docker-compose -p $(PROJECT_NAME) stop backend-db-registration"; \
+		echo "💡 To view logs, use: docker-compose -p $(PROJECT_NAME) logs -f backend-db-registration"; \
+		echo "💡 To start a new server outside container, run from host machine: make start-api"; \
+		exit 0; \
+	elif curl -s $(API_BASE_URL)/health > /dev/null 2>&1; then \
+		echo "✅ API server is already running on port $(API_PORT)"; \
+		echo "📊 Server status: $(API_BASE_URL)/health"; \
+		echo "📡 Webhook endpoint: $(API_BASE_URL)/webhook/file-change"; \
+		echo ""; \
+		echo "💡 To stop the server, use: docker-compose -p $(PROJECT_NAME) stop backend-db-registration"; \
+		echo "💡 To view logs, use: docker-compose -p $(PROJECT_NAME) logs -f backend-db-registration"; \
+		exit 0; \
+	else \
+		echo "🚀 Starting new FastAPI server..."; \
+		uvicorn src.app:app --host $(API_HOST) --port $(API_PORT) --reload; \
+	fi
+
+test-webhook:  ## Test webhook functionality
+	@echo "🧪 Testing webhook functionality..."
+	@echo "Make sure the API server is running with 'make start-api' first."
+	@echo ""
+	python tests/test_webhook.py
+
+check-api:  ## Check API server status
+	@echo "🔍 Checking API server status..."
+	@echo ""
+	@if [ -f /proc/1/cmdline ] && grep -q "uvicorn" /proc/1/cmdline 2>/dev/null; then \
+		echo "✅ API server process is running (container entrypoint)"; \
+		echo ""; \
+		echo "💡 This is running in a Docker container with uvicorn as entrypoint."; \
+		echo "💡 To check from host machine:"; \
+		echo "   curl $(API_BASE_URL)/health"; \
+		echo "💡 To view logs:"; \
+		echo "   docker-compose -p $(PROJECT_NAME) logs -f backend-db-registration"; \
+	elif curl -s $(API_BASE_URL)/health > /dev/null 2>&1; then \
+		echo "✅ API server is running and healthy"; \
+		echo "📊 Health check response:"; \
+		curl -s $(API_BASE_URL)/health; \
+	else \
+		echo "❌ API server is not running or not accessible"; \
+		echo "💡 To start the server:"; \
+		echo "   - Production: docker-compose -p $(PROJECT_NAME) up -d backend-db-registration"; \
+		echo "   - Development: make start-api"; \
+		exit 1; \
+	fi

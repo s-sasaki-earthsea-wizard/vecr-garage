@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 from operations.member_registration import register_human_members_batch, register_virtual_members_batch
-import logging
 import argparse
 from storage.storage_client import StorageClient
+from src.utils.logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 def get_all_yaml_files_from_storage():
     """ストレージからすべてのYAMLファイルのパスを動的に取得する
@@ -30,10 +29,10 @@ def get_all_yaml_files_from_storage():
     storage_client = StorageClient()
     
     # 人間メンバーのYAMLファイルを動的に取得
-    human_files = storage_client.list_yaml_files("data/human_members/")
+    human_files = storage_client.list_yaml_files("data/samples/human_members/")
     
     # 仮想メンバーのYAMLファイルを動的に取得
-    virtual_files = storage_client.list_yaml_files("data/virtual_members/")
+    virtual_files = storage_client.list_yaml_files("data/samples/virtual_members/")
     
     return human_files, virtual_files
 
