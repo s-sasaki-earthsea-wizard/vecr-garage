@@ -1,11 +1,10 @@
-from db.database import SessionLocal, save_human_member, save_virtual_member, get_human_member_by_name, get_virtual_member_by_name, DatabaseError, create_human_member, create_virtual_member
+from db.database import SessionLocal, save_human_member, save_virtual_member, get_human_member_by_name, get_virtual_member_by_name, DatabaseError, create_human_member, create_virtual_member, save_or_update_human_member, save_or_update_virtual_member
 from storage.storage_client import StorageClient
 from validation.yaml_validator import YAMLValidator, ValidationError
 import yaml
-import logging
+from utils.logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 def register_human_member_from_yaml(yaml_path: str):
     """YAMLファイルから人間メンバーを登録する（バリデーション・ロールバック機能付き）
@@ -51,14 +50,12 @@ def register_human_member_from_yaml(yaml_path: str):
         # 人間メンバーの必須フィールドを検証
         YAMLValidator.validate_human_member_yaml(yaml_data)
         
-        # 既存のメンバーをチェック
-        existing_member = get_human_member_by_name(db, name)
-        if existing_member:
-            logger.info(f"Human member {name} already exists.")
-            return existing_member
-        
-        # 新しいメンバーを作成して保存
-        new_member = save_human_member(db, name)
+        # TODO: 将来的にfile_uriベースのUPSERT実装に移行する
+        # Issue: https://github.com/your-org/vecr-garage/issues/xxx
+        # 現在は名前ベースの一時的なUPSERT処理を使用
+
+        # 一時的なUPSERT処理（新規作成または更新）
+        new_member = save_or_update_human_member(db, name)
         logger.info(f"Human member {name} created and committed successfully.")
         return new_member
         
@@ -144,14 +141,12 @@ def register_virtual_member_from_yaml(yaml_path: str):
         # 仮想メンバーの必須フィールドを検証
         YAMLValidator.validate_virtual_member_yaml(yaml_data)
         
-        # 既存のメンバーをチェック
-        existing_member = get_virtual_member_by_name(db, name)
-        if existing_member:
-            logger.info(f"Virtual member {name} already exists.")
-            return existing_member
-        
-        # 新しいメンバーを作成して保存
-        new_member = save_virtual_member(db, name)
+        # TODO: 将来的にfile_uriベースのUPSERT実装に移行する
+        # Issue: https://github.com/your-org/vecr-garage/issues/xxx
+        # 現在は名前ベースの一時的なUPSERT処理を使用
+
+        # 一時的なUPSERT処理（新規作成または更新）
+        new_member = save_or_update_virtual_member(db, name)
         logger.info(f"Virtual member {name} created and committed successfully.")
         return new_member
         

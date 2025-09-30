@@ -5,24 +5,41 @@ services:
       dockerfile: Dockerfile
     container_name: ${CONTAINER_NAME}-backend-db-registration
     ports:
-      - "3000:3000"
+      - "${API_PORT}:${API_PORT}"
     volumes:
       - ./backend-db-registration/src:/app/src
       - ./backend-db-registration/tests:/app/tests
     environment:
       - MEMBER_DB_HOST=db-member
-      - MEMBER_DB_PORT=5432
+      - MEMBER_DB_PORT=${MEMBER_DB_PORT}
       - MEMBER_DB_USER=${MEMBER_DB_USER}
       - MEMBER_DB_PASSWORD=${MEMBER_DB_PASSWORD}
       - MEMBER_DB_NAME=${MEMBER_DB_NAME}
       - STORAGE_HOST=storage
-      - STORAGE_PORT=9000
+      - STORAGE_PORT=${STORAGE_PORT}
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
       - USE_S3=false
       - DYNAMODB_HOST=db-chat-log
-      - DYNAMODB_PORT=4566
+      - DYNAMODB_PORT=${DYNAMODB_PORT}
+      # API設定
+      - API_HOST=${API_HOST}
+      - API_PORT=${API_PORT}
+      - API_BASE_URL=${API_BASE_URL}
+      # Webhook設定
+      - WEBHOOK_ENABLED=true
+      - WEBHOOK_ENDPOINT=/webhook/file-change
+      - WEBHOOK_EVENTS=s3:ObjectCreated:*,s3:ObjectRemoved:*
+      - WEBHOOK_FILTER_PREFIX=data/
+      - WEBHOOK_FILTER_SUFFIX=.yaml,.yml
+      - WEBHOOK_ETAG_CHECK_ENABLED=${WEBHOOK_ETAG_CHECK_ENABLED}
+      # TODO: 将来的にWebhook認証を実装予定（現在は未使用）
+      # - WEBHOOK_AUTH_TOKEN=${WEBHOOK_AUTH_TOKEN:-}
+      - WEBHOOK_FULL_URL=${WEBHOOK_FULL_URL}
+      # サーバー設定
+      - HOST=${API_HOST}
+      - PORT=${API_PORT}
     depends_on:
       db-member:
         condition: service_healthy
@@ -30,12 +47,11 @@ services:
         condition: service_healthy
     networks:
       - network
-    # TODO: Health check is not implemented yet...
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:3000"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${API_PORT}/health/storage-monitor/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   backend-llm-response:
     build:
@@ -43,15 +59,19 @@ services:
       dockerfile: Dockerfile
     container_name: ${CONTAINER_NAME}-backend-llm-response
     ports:
-      - "3001:3001"
+      - "${LLM_PORT}:${LLM_PORT}"
     volumes:
       - ./backend-llm-response/:/app/
     environment:
       - MEMBER_DB_HOST=db-member
-      - MEMBER_DB_PORT=5432
+      - MEMBER_DB_PORT=${MEMBER_DB_PORT}
       - MEMBER_DB_USER=${MEMBER_DB_USER}
       - MEMBER_DB_PASSWORD=${MEMBER_DB_PASSWORD}
       - MEMBER_DB_NAME=${MEMBER_DB_NAME}
+      # LLM設定
+      - LLM_HOST=${LLM_HOST}
+      - LLM_PORT=${LLM_PORT}
+      - LLM_BASE_URL=${LLM_BASE_URL}
     depends_on:
       db-member:
         condition: service_healthy
@@ -68,7 +88,7 @@ services:
     volumes:
       - ./db-member/member_db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
     ports:
-      - "5432:5432"
+      - "${MEMBER_DB_PORT}:${MEMBER_DB_PORT}"
     networks:
       - network
     healthcheck:
@@ -84,16 +104,25 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
-    command: server /data --console-address ":9001"
+      # Webhook設定
+      - MINIO_WEBHOOK_ENABLE=true
+      - MINIO_WEBHOOK_ENDPOINT=${WEBHOOK_FULL_URL}
+      - MINIO_WEBHOOK_EVENTS=s3:ObjectCreated:*,s3:ObjectRemoved:*
+      - MINIO_WEBHOOK_FILTER_PREFIX=data/
+      - MINIO_WEBHOOK_FILTER_SUFFIX=.yaml,.yml
+      # TODO: 将来的にWebhook認証を実装予定（現在は未使用）
+      # - MINIO_WEBHOOK_AUTH_TOKEN=${WEBHOOK_AUTH_TOKEN:-}
+      - MINIO_WEBHOOK_QUEUE_LIMIT=1000
+    command: server /data --console-address ":${STORAGE_CONSOLE_PORT}"
     ports:
-      - "9000:9000"  # API port
-      - "9001:9001"  # Console port
+      - "${STORAGE_PORT}:${STORAGE_PORT}"  # API port
+      - "${STORAGE_CONSOLE_PORT}:${STORAGE_CONSOLE_PORT}"  # Console port
     volumes:
       - ./storage/data:/data
     networks:
       - network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://localhost:${STORAGE_PORT}/minio/health/live"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -104,19 +133,45 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - WEBHOOK_FULL_URL=${WEBHOOK_FULL_URL}
+      - STORAGE_PORT=${STORAGE_PORT}
     depends_on:
       storage:
         condition: service_healthy
-    entrypoint: >
-      /bin/sh -c '
-      sleep 5 &&
-      mc alias set myminio http://storage:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
-      mc mb -p myminio/${MINIO_BUCKET_NAME} &&
-      mc cp --recursive /sample_data/ myminio/${MINIO_BUCKET_NAME}/ &&
-      exit 0
-      '
+      backend-db-registration:
+        condition: service_started
+    entrypoint: /scripts/minio-setup.sh
     volumes:
       - ./storage/sample_data:/sample_data
+      - ./scripts:/scripts
+    networks:
+      - network
+
+  minio-restarter:
+    image: docker:dind
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: docker restart vecr-garage-storage
+    depends_on:
+      minio-setup:
+        condition: service_completed_successfully
+    networks:
+      - network
+
+  webhook-configurator:
+    image: minio/mc
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - STORAGE_PORT=${STORAGE_PORT}
+      - WEBHOOK_FULL_URL=${WEBHOOK_FULL_URL}
+    depends_on:
+      minio-restarter:
+        condition: service_completed_successfully
+    entrypoint: /scripts/webhook-configurator.sh
+    volumes:
+      - ./scripts:/scripts
     networks:
       - network
 
@@ -126,23 +181,27 @@ services:
       dockerfile: Dockerfile
     container_name: ${CONTAINER_NAME}-member-manager
     ports:
-      - "8000:8000"
+      - "${MEMBER_MANAGER_PORT}:${MEMBER_MANAGER_PORT}"
     volumes:
       - ./member-manager:/app
     environment:
       - MEMBER_DB_HOST=db-member
-      - MEMBER_DB_PORT=5432
+      - MEMBER_DB_PORT=${MEMBER_DB_PORT}
       - MEMBER_DB_USER=${MEMBER_DB_USER}
       - MEMBER_DB_PASSWORD=${MEMBER_DB_PASSWORD}
       - MEMBER_DB_NAME=${MEMBER_DB_NAME}
       - STORAGE_HOST=storage
-      - STORAGE_PORT=9000
+      - STORAGE_PORT=${STORAGE_PORT}
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - SECRET_KEY=${SECRET_KEY}
+      # Member Manager設定
+      - MEMBER_MANAGER_HOST=${MEMBER_MANAGER_HOST}
+      - MEMBER_MANAGER_PORT=${MEMBER_MANAGER_PORT}
+      - MEMBER_MANAGER_BASE_URL=${MEMBER_MANAGER_BASE_URL}
     depends_on:
       db-member:
         condition: service_healthy
@@ -152,7 +211,7 @@ services:
       - network
     # TODO: Health check is not implemented yet...
     # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8000"]
+    #   test: ["CMD", "curl", "-f", "http://localhost:${MEMBER_MANAGER_PORT}"]
     #   interval: 30s
     #   timeout: 10s
     #   retries: 5
@@ -161,7 +220,7 @@ services:
     image: localstack/localstack:latest
     container_name: ${CONTAINER_NAME}-db-chat-log
     ports:
-      - "4566:4566"
+      - "${DYNAMODB_PORT}:${DYNAMODB_PORT}"
     environment:
       - SERVICES=dynamodb
       - DEFAULT_REGION=ap-northeast-1
@@ -172,7 +231,7 @@ services:
     networks:
       - network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${DYNAMODB_PORT}/_localstack/health"]
       interval: 30s
       timeout: 10s
       retries: 5
