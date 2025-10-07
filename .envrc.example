@@ -1,0 +1,16 @@
+# Discord Webhooks設定を環境変数に読み込む
+# このファイルを .envrc にコピーして使用してください
+#
+# 使い方:
+# 1. config/discord_webhooks.json を作成（config/discord_webhooks.example.jsonを参考に）
+# 2. このファイルを .envrc にコピー: cp .envrc.example .envrc
+# 3. direnvを使用する場合: direnv allow
+# 4. direnvを使用しない場合: source .envrc
+
+if [ -f "config/discord_webhooks.json" ]; then
+    export DISCORD_WEBHOOKS=$(cat config/discord_webhooks.json | tr -d '\n' | tr -d '  ')
+    echo "✅ Discord Webhooks設定を読み込みました"
+else
+    echo "⚠️  config/discord_webhooks.json が見つかりません"
+    echo "   config/discord_webhooks.example.json をコピーして作成してください"
+fi
