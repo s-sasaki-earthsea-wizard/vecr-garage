@@ -72,6 +72,8 @@ services:
       - LLM_HOST=${LLM_HOST}
       - LLM_PORT=${LLM_PORT}
       - LLM_BASE_URL=${LLM_BASE_URL}
+      # Discord Webhook設定
+      - DISCORD_WEBHOOKS=${DISCORD_WEBHOOKS}
     depends_on:
       db-member:
         condition: service_healthy
