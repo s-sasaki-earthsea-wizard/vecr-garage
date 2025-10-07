@@ -31,7 +31,7 @@ def db_session():
     # テスト前に全テーブルのデータをクリア
     with engine.connect() as conn:
         # 依存関係を考慮して、子テーブルから親テーブルの順でtruncate
-        truncate_sql = text("TRUNCATE TABLE virtual_member_profiles, virtual_members, human_members RESTART IDENTITY CASCADE")
+        truncate_sql = text("TRUNCATE TABLE human_member_profiles, virtual_member_profiles, virtual_members, human_members RESTART IDENTITY CASCADE")
         conn.execute(truncate_sql)
         conn.commit()
     
@@ -57,10 +57,11 @@ def test_create_human_member(db_session):
     
     # テストデータ
     test_name = "テスト太郎"
+    test_uri = "data/test/database/human_test.yml"
     print(f"テストメンバー名: {test_name}")
-    
+
     # メンバーを作成
-    member = save_human_member(db_session, test_name)
+    member = save_human_member(db_session, test_name, test_uri)
     print(f"メンバー作成完了: UUID={member.member_uuid}")
     
     # 検証
@@ -82,10 +83,11 @@ def test_create_virtual_member(db_session):
     
     # テストデータ
     test_name = "AIアシスタント"
+    test_uri = "data/test/database/virtual_test.yml"
     print(f"テストメンバー名: {test_name}")
-    
+
     # メンバーを作成
-    member = save_virtual_member(db_session, test_name)
+    member = save_virtual_member(db_session, test_name, test_uri)
     print(f"メンバー作成完了: UUID={member.member_uuid}")
     
     # 検証

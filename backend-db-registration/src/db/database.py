@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
-from models.members import HumanMember, VirtualMember
+from models.members import HumanMember, VirtualMember, HumanMemberProfile, VirtualMemberProfile
 import uuid
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime
+import datetime
 import os
 import logging
 import psycopg2
@@ -358,5 +358,93 @@ def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
     except Exception as e:
         db.rollback()
         error_msg = f"Failed to upsert virtual member '{name}' for URI '{yml_file_uri}': {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+# プロフィール操作
+def save_human_member_profile(db: Session, member_id: int, member_uuid: str, bio: str = None):
+    """人間メンバープロフィールを新規作成する"""
+    try:
+        profile = HumanMemberProfile(
+            member_id=member_id,
+            member_uuid=member_uuid,
+            bio=bio
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+        return profile
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to create human member profile for member {member_uuid}: {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+def upsert_human_member_profile(db: Session, member_id: int, member_uuid: str, bio: str = None):
+    """人間メンバープロフィールのUPSERT処理"""
+    try:
+        existing_profile = db.query(HumanMemberProfile).filter(
+            HumanMemberProfile.member_uuid == member_uuid
+        ).first()
+
+        if existing_profile:
+            # 更新処理
+            if bio is not None:
+                existing_profile.bio = bio
+            existing_profile.updated_at = datetime.datetime.now(datetime.UTC)
+            db.commit()
+            db.refresh(existing_profile)
+            return existing_profile
+        else:
+            # 新規作成
+            return save_human_member_profile(db, member_id, member_uuid, bio)
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to upsert human member profile for member {member_uuid}: {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+def save_virtual_member_profile(db: Session, member_id: int, member_uuid: str, llm_model: str, custom_prompt: str = None):
+    """仮想メンバープロフィールを新規作成する"""
+    try:
+        profile = VirtualMemberProfile(
+            member_id=member_id,
+            member_uuid=member_uuid,
+            llm_model=llm_model,
+            custom_prompt=custom_prompt
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+        return profile
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to create virtual member profile for member {member_uuid}: {str(e)}"
+        logger.error(error_msg)
+        raise DatabaseError(error_msg, e)
+
+def upsert_virtual_member_profile(db: Session, member_id: int, member_uuid: str, llm_model: str, custom_prompt: str = None):
+    """仮想メンバープロフィールのUPSERT処理"""
+    try:
+        existing_profile = db.query(VirtualMemberProfile).filter(
+            VirtualMemberProfile.member_uuid == member_uuid
+        ).first()
+
+        if existing_profile:
+            # 更新処理
+            if llm_model is not None:
+                existing_profile.llm_model = llm_model
+            if custom_prompt is not None:
+                existing_profile.custom_prompt = custom_prompt
+            existing_profile.updated_at = datetime.datetime.now(datetime.UTC)
+            db.commit()
+            db.refresh(existing_profile)
+            return existing_profile
+        else:
+            # 新規作成
+            return save_virtual_member_profile(db, member_id, member_uuid, llm_model, custom_prompt)
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Failed to upsert virtual member profile for member {member_uuid}: {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
