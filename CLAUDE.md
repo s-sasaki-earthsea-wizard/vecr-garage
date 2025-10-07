@@ -601,6 +601,75 @@ test-integration: ## Run comprehensive integration tests for all services
 make test-integration
 ```
 
+## Claude API連携
+
+### backend-llm-responseサービスによるClaude API統合（✅ 実装完了）
+
+**実装目的**: Anthropic Claude APIを使用してプロンプトを送信し、応答を取得する機能
+
+#### 🏗️ アーキテクチャ設計
+
+**ClaudeClientクラス**:
+- `backend-llm-response/src/services/claude_client.py`
+- 環境変数からAPIキー、モデル、max_tokensを読み込み
+- `send_message(prompt, system_prompt, temperature)`: プロンプト送信と応答取得
+- `send_test_message()`: 動作確認用のテストメッセージ送信
+
+**環境変数設定**:
+```bash
+# .env に追加
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+ANTHROPIC_API_VERSION=2023-06-01
+ANTHROPIC_MAX_TOKENS=4096
+```
+
+#### 📦 依存関係
+
+**requirements.txt**:
+- `anthropic==0.69.0`: Anthropic公式Pythonライブラリ最新版
+
+**docker-compose.yml**:
+- backend-llm-responseサービスにClaude API環境変数を追加
+
+#### 🎯 利用可能なMakeコマンド
+
+**makefiles/claude.mk実装**:
+```makefile
+make claude-help                          # ヘルプ表示
+make claude-test                          # 接続テスト
+make claude-prompt PROMPT="テキスト"      # カスタムプロンプト送信
+```
+
+**実行例**:
+```bash
+# 接続テスト
+$ make claude-test
+🤖 Claude API接続テスト中...
+✅ 接続成功!
+モデル: claude-sonnet-4-5-20250929
+プロンプト: こんにちは！簡単な自己紹介をしてください。
+応答: [Claude APIからの応答]
+
+# カスタムプロンプト送信
+$ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてください"
+🤖 Claude APIにプロンプトを送信中...
+応答: [Claude APIからのコード生成]
+```
+
+#### ✨ 実装の特徴
+
+**セキュリティ**: APIキーは`.env`で管理（.gitignore保護）
+**シンプル**: ホストマシンからmakeコマンドで直接実行
+**拡張性**: 将来的なAPIエンドポイント化の基盤
+
+#### 🧪 テスト結果
+
+- ✅ ClaudeClient初期化成功
+- ✅ テストメッセージ送信成功（自己紹介応答）
+- ✅ カスタムプロンプト送信成功（コード生成応答）
+- ✅ makeターゲットからの呼び出し成功
+
 ## 一時的な実装事項
 
 ### name-based UPSERT処理（暫定実装）
@@ -637,13 +706,14 @@ make test-integration
 - [x] **s3:ObjectCreated:Copy イベント対応**
 - [x] **包括的テストシステム実装（ユニット〜E2E統合）**
 - [x] **YMLファイル操作の統合システム実装**
-- [x] **Discord Webhookテストメッセージ送信機能実装**
+- [x] **Discord Webhook通知システム実装（backend-llm-response）**
+- [x] **Claude API連携実装（backend-llm-response）**
 - [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示
 - [ ] Flask-Login + bcryptによる認証強化
 - [ ] チャットログ機能の実装
-- [ ] LLM連携機能の強化
+- [ ] LLM連携機能の強化（メンバープロフィールとの統合）
 - [ ] Discord通知機能の拡張（定期通知、エラー通知、リッチエンベッド等）
 - [ ] AWS Secrets Managerへの移行
 - [ ] 本番環境用の設定追加

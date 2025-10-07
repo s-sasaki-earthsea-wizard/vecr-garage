@@ -265,6 +265,48 @@ make test-integration
 - HTTP 204レスポンス確認（送信成功）
 - 実際のメッセージ到達は各Discordチャンネルで目視確認推奨
 
+#### Claude API連携
+
+Claude APIを使用してプロンプトを送信し、応答を取得する機能を提供しています。
+
+**セットアップ:**
+```bash
+# 1. .envファイルにAPIキーを設定
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+ANTHROPIC_API_VERSION=2023-06-01
+ANTHROPIC_MAX_TOKENS=4096
+
+# 2. コンテナ起動（自動的にAPIキーが読み込まれる）
+make docker-up
+```
+
+**使用可能なコマンド:**
+```bash
+# 接続テスト
+make claude-test
+
+# カスタムプロンプト送信
+make claude-prompt PROMPT="こんにちは！"
+
+# コマンド一覧表示
+make claude-help
+```
+
+**実行例:**
+```bash
+$ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてください"
+🤖 Claude APIにプロンプトを送信中...
+プロンプト: Pythonで素数判定する関数を書いてください
+
+📝 応答:
+[Claude APIからのコード生成結果が表示されます]
+```
+
+**セキュリティ:**
+- APIキーは`.env`で管理（.gitignore保護）
+- コンテナに環境変数として渡される
+
 #### TBD
 
 - バックエンドサービス(LLM応答): `make backend-llm-response-shell`

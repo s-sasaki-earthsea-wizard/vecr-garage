@@ -126,6 +126,7 @@ include makefiles/backend-db-registration-tests.mk
 include makefiles/integration.mk
 include makefiles/backend-db-registration.mk
 include makefiles/discord.mk
+include makefiles/claude.mk
 
 # 便利なエイリアスと後方互換性
 s3-cp-samples: samples-copy ## Copy normal sample files to MinIO storage
