@@ -75,7 +75,7 @@ discord-send-message: ## Send custom message to specific webhook (Usage: make di
 		-H "Content-Type: application/json" \
 		-d '{"content": "$(MESSAGE)"}' $(FORMAT_JSON)
 
-discord-verify: ## Verify Discord webhook integration (list webhooks and send test message)
+discord-verify: ## Verify Discord webhook integration (list webhooks and send test message to all)
 	@echo "=============================================================="
 	@echo "🔍 Discord Webhook連携 動作確認"
 	@echo "=============================================================="
@@ -84,11 +84,13 @@ discord-verify: ## Verify Discord webhook integration (list webhooks and send te
 	@echo "--------------------------------------------------------------"
 	@curl -s $(DISCORD_API_BASE)/webhooks $(FORMAT_JSON)
 	@echo ""
-	@echo "【ステップ2】テストメッセージ送信"
+	@echo "【ステップ2】全Webhookへテストメッセージ送信"
 	@echo "--------------------------------------------------------------"
-	@curl -s -X POST $(DISCORD_API_BASE)/test/kasen_times $(FORMAT_JSON)
+	@curl -s -X POST $(DISCORD_API_BASE)/broadcast \
+		-H "Content-Type: application/json" \
+		-d '{"content": "🤖 VECR Garage 動作確認テスト"}' $(FORMAT_JSON)
 	@echo ""
 	@echo "=============================================================="
 	@echo "✅ Discord連携の動作確認が完了しました"
-	@echo "   Discordチャンネルにメッセージが届いているか確認してください"
+	@echo "   全Discordチャンネルにメッセージが届いているか確認してください"
 	@echo "=============================================================="

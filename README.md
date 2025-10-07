@@ -249,6 +249,9 @@ make discord-send-message WEBHOOK=kasen_times MESSAGE="Hello from VECR Garage!"
 
 # コマンド一覧表示
 make discord-help
+
+# 統合テスト（Discord Webhook含む）
+make test-integration
 ```
 
 **セキュリティ:**
@@ -256,6 +259,11 @@ make discord-help
 - `.envrc`も`.gitignore`で保護
 - コンテナにはファイルをマウントせず、環境変数として渡す
 - AWS Secrets Managerへの移行準備完了
+
+**統合テスト:**
+- `make test-integration`でDiscord Webhookテストも自動実行
+- HTTP 204レスポンス確認（送信成功）
+- 実際のメッセージ到達は各Discordチャンネルで目視確認推奨
 
 #### TBD
 
