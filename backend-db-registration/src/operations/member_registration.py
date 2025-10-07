@@ -52,6 +52,19 @@ def register_human_member_from_yaml(yaml_path: str):
 
         # UPSERT操作でメンバーを登録または更新
         member = upsert_human_member(db, name, yaml_path)
+
+        # プロフィール情報を登録または更新
+        bio = yaml_data.get('bio', '')
+        if bio:  # bioが存在する場合のみプロフィール登録
+            from db.database import upsert_human_member_profile
+            profile = upsert_human_member_profile(db, member.member_id, member.member_uuid, bio)
+
+        # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
+        member_name = member.member_name
+        member_uuid = member.member_uuid
+        yml_file_uri = member.yml_file_uri
+        member_id = member.member_id
+
         logger.info(f"Human member {name} upserted successfully from {yaml_path}")
         return member
         
@@ -139,6 +152,20 @@ def register_virtual_member_from_yaml(yaml_path: str):
 
         # UPSERT操作でメンバーを登録または更新
         member = upsert_virtual_member(db, name, yaml_path)
+
+        # プロフィール情報を登録または更新
+        llm_model = yaml_data.get('llm_model', '')
+        custom_prompt = yaml_data.get('custom_prompt', '')
+        if llm_model:  # llm_modelが存在する場合のみプロフィール登録
+            from db.database import upsert_virtual_member_profile
+            profile = upsert_virtual_member_profile(db, member.member_id, member.member_uuid, llm_model, custom_prompt)
+
+        # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
+        member_name = member.member_name
+        member_uuid = member.member_uuid
+        yml_file_uri = member.yml_file_uri
+        member_id = member.member_id
+
         logger.info(f"Virtual member {name} upserted successfully from {yaml_path}")
         return member
         
