@@ -1,9 +1,10 @@
-# ------------------------------------------------------------
-# Discord Webhook 関連コマンド
-# ------------------------------------------------------------
+# ============================================================
+# backend-llm-response サービス関連コマンド
+# ============================================================
 
-# Discord Webhook API URL（.envのLLM_BASE_URLを使用）
+# API Base URLs
 DISCORD_API_BASE := $(LLM_BASE_URL)/api/discord
+CLAUDE_API_BASE := $(LLM_BASE_URL)/api/claude
 
 # jqの存在確認
 JQ_EXISTS := $(shell command -v jq 2> /dev/null)
@@ -15,6 +16,10 @@ else
     FORMAT_JSON =
     $(warning jqがインストールされていません。JSON出力が整形されません)
 endif
+
+# ------------------------------------------------------------
+# Discord Webhook 関連コマンド
+# ------------------------------------------------------------
 
 .PHONY: discord-help discord-webhooks-list discord-test-kasen discord-test-karasuno_endo discord-test-rusudan discord-test-all discord-send-message discord-verify
 
@@ -94,3 +99,53 @@ discord-verify: ## Verify Discord webhook integration (list webhooks and send te
 	@echo "✅ Discord連携の動作確認が完了しました"
 	@echo "   全Discordチャンネルにメッセージが届いているか確認してください"
 	@echo "=============================================================="
+
+# ------------------------------------------------------------
+# Claude API 関連コマンド
+# ------------------------------------------------------------
+
+.PHONY: claude-help claude-test claude-prompt
+
+claude-help: ## Display Claude API commands help
+	@echo "=============================================================="
+	@echo "Claude API コマンド"
+	@echo "=============================================================="
+	@echo ""
+	@echo "【基本コマンド】"
+	@echo "  make claude-test              Claude APIの動作確認"
+	@echo "  make claude-help              このヘルプを表示"
+	@echo ""
+	@echo "【プロンプト送信】"
+	@echo "  make claude-prompt PROMPT=\"<テキスト>\""
+	@echo "    例: make claude-prompt PROMPT=\"こんにちは！\""
+	@echo ""
+	@echo "=============================================================="
+
+claude-test: ## Test Claude API connection
+	@echo "🤖 Claude API接続テスト中..."
+	@docker exec vecr-garage-backend-llm-response python3 -c "\
+from services.claude_client import ClaudeClient; \
+result = ClaudeClient().send_test_message(); \
+print('✅ 接続成功!' if result['success'] else '❌ 接続失敗'); \
+print(f\"モデル: {result['model']}\"); \
+print(f\"プロンプト: {result['prompt']}\"); \
+print(f\"応答:\n{result['response']}\" if result['success'] else f\"エラー: {result.get('error')}\"); \
+"
+
+claude-prompt: ## Send custom prompt to Claude API (Usage: make claude-prompt PROMPT="Hello")
+	@if [ -z "$(PROMPT)" ]; then \
+		echo "❌ エラー: PROMPT パラメータが必要です"; \
+		echo ""; \
+		echo "使用例:"; \
+		echo "  make claude-prompt PROMPT=\"こんにちは！\""; \
+		exit 1; \
+	fi
+	@echo "🤖 Claude APIにプロンプトを送信中..."
+	@echo "プロンプト: $(PROMPT)"
+	@echo ""
+	@docker exec vecr-garage-backend-llm-response python3 -c "\
+from services.claude_client import ClaudeClient; \
+response = ClaudeClient().send_message('$(PROMPT)'); \
+print('📝 応答:'); \
+print(response); \
+"
