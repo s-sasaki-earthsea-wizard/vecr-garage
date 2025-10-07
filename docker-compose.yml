@@ -72,6 +72,13 @@ services:
       - LLM_HOST=${LLM_HOST}
       - LLM_PORT=${LLM_PORT}
       - LLM_BASE_URL=${LLM_BASE_URL}
+      # Discord Webhook設定
+      - DISCORD_WEBHOOKS=${DISCORD_WEBHOOKS}
+      # Claude API設定
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL}
+      - ANTHROPIC_API_VERSION=${ANTHROPIC_API_VERSION}
+      - ANTHROPIC_MAX_TOKENS=${ANTHROPIC_MAX_TOKENS}
     depends_on:
       db-member:
         condition: service_healthy
