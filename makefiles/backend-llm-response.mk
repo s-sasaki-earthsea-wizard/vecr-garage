@@ -104,7 +104,7 @@ discord-verify: ## Verify Discord webhook integration (list webhooks and send te
 # Claude API 関連コマンド
 # ------------------------------------------------------------
 
-.PHONY: claude-help claude-test claude-prompt
+.PHONY: claude-help claude-test claude-prompt claude-to-discord
 
 claude-help: ## Display Claude API commands help
 	@echo "=============================================================="
@@ -118,6 +118,10 @@ claude-help: ## Display Claude API commands help
 	@echo "【プロンプト送信】"
 	@echo "  make claude-prompt PROMPT=\"<テキスト>\""
 	@echo "    例: make claude-prompt PROMPT=\"こんにちは！\""
+	@echo ""
+	@echo "【Claude → Discord統合】"
+	@echo "  make claude-to-discord WEBHOOK=<name> PROMPT=\"<テキスト>\""
+	@echo "    例: make claude-to-discord WEBHOOK=kasen_times PROMPT=\"今日の天気は？\""
 	@echo ""
 	@echo "=============================================================="
 
@@ -149,3 +153,17 @@ response = ClaudeClient().send_message('$(PROMPT)'); \
 print('📝 応答:'); \
 print(response); \
 "
+
+claude-to-discord: ## Send Claude API response to Discord (Usage: make claude-to-discord WEBHOOK=kasen_times PROMPT="Hello")
+	@if [ -z "$(WEBHOOK)" ] || [ -z "$(PROMPT)" ]; then \
+		echo "❌ エラー: WEBHOOK と PROMPT パラメータが必要です"; \
+		echo ""; \
+		echo "使用例:"; \
+		echo "  make claude-to-discord WEBHOOK=kasen_times PROMPT=\"今日の天気は？\""; \
+		exit 1; \
+	fi
+	@echo "🤖 Claude APIにプロンプトを送信中..."
+	@echo "Webhook: $(WEBHOOK)"
+	@echo "プロンプト: $(PROMPT)"
+	@echo ""
+	@docker exec vecr-garage-backend-llm-response python3 -c "from services.claude_discord_bridge import ClaudeDiscordBridge; result = ClaudeDiscordBridge().send_prompt_to_discord('$(WEBHOOK)', '''$(PROMPT)'''); print('✅ 成功!' if result['success'] else '❌ 失敗'); print(f\"Claude応答をDiscord（{result['webhook_name']}）に投稿しました\" if result['success'] else f\"エラー: {result.get('error')}\");"
