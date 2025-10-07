@@ -670,6 +670,126 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 - ✅ カスタムプロンプト送信成功（コード生成応答）
 - ✅ makeターゲットからの呼び出し成功
 
+## Discord Bot統合
+
+### backend-llm-responseサービスによるDiscord Bot実装（✅ 実装完了）
+
+**実装目的**: Discordチャンネルで@メンションを検知し、Claude APIで応答するBot機能
+
+#### 🏗️ アーキテクチャ設計
+
+**Discord Botクラス**:
+- `backend-llm-response/src/services/discord_bot.py`
+- discord.py 2.4.0を使用
+- Message Content Intentを有効化（Privileged Intent）
+- 指定チャンネルでの@メンション検知と自動応答
+- Claude APIとの統合（ClaudeClientを使用）
+
+**設定管理**:
+- `config/discord_tokens.json`: Bot TokenとチャンネルID管理
+- JSON直接読み込み（環境変数を経由しない）
+- 複数Bot対応（Bot名ごとに設定を分離）
+
+```json
+{
+    "🤖🍡華扇": {
+        "bot_token": "YOUR_BOT_TOKEN_HERE",
+        "channel_ids": ["1356872662831333452"]
+    }
+}
+```
+
+**モジュール構成**:
+- `config/discord/config_loader.py`: JSON読み込み
+- `config/discord/config_validator.py`: 設定バリデーション
+- `config/discord/config_parser.py`: 公開API（Facade）
+
+#### 🤖 Bot動作仕様
+
+**メッセージ検知**:
+1. 対象チャンネルのメッセージを監視
+2. Botへの@メンションを検知
+3. メンション部分を除去してプロンプトを抽出
+4. Claude APIで応答生成
+5. 2000文字制限対応（超過時は省略表示）
+6. Discordチャンネルに返信
+
+**起動方法**:
+- `src/app.py`: Discord Bot専用起動スクリプト
+- DockerfileのCMDで自動起動
+- 環境変数`DISCORD_BOT_NAME`でBot選択可能（デフォルト: 🤖🍡華扇）
+
+#### 📦 依存関係
+
+**requirements.txt追加**:
+- `discord.py==2.4.0`: Discord Bot公式ライブラリ
+
+**docker-compose.yml設定**:
+```yaml
+backend-llm-response:
+  volumes:
+    - ./config/discord_tokens.json:/app/config/discord_tokens.json:ro
+  environment:
+    - DISCORD_BOT_NAME=${DISCORD_BOT_NAME:-🤖🍡華扇}
+  restart: unless-stopped
+```
+
+#### 🎯 利用可能なMakeコマンド
+
+**makefiles/backend-llm-response.mk実装**:
+```makefile
+make discord-bot-help           # Discord Botコマンドヘルプ
+make discord-bot-logs           # Discord Botログ表示
+make discord-bot-status         # Discord Bot状態確認
+make discord-bot-test-config    # Discord Bot設定テスト
+```
+
+#### ✅ テスト結果
+
+**起動確認**:
+- ✅ Bot設定読み込み成功（discord_tokens.json）
+- ✅ Discord Gatewayへの接続成功
+- ✅ Bot起動完了: `🤖🍡華扇#8670`
+- ✅ 対象チャンネル: 1個 (kasen_times)
+
+**動作確認**:
+- ✅ @メンション検知成功
+- ✅ Claude API連携応答成功
+- ✅ 2000文字制限対応確認
+
+#### 🔧 セットアップ手順
+
+**Discord Developer Portal設定**:
+1. Bot作成とTokenの取得
+2. **Privileged Gateway Intents**で以下を有効化:
+   - ✅ MESSAGE CONTENT INTENT（必須）
+   - ✅ SERVER MEMBERS INTENT（推奨）
+3. BotをDiscordサーバーに招待
+4. Bot Permissions: View Channels, Send Messages, Create Public Threads, Send Messages in Threads
+
+**設定ファイル作成**:
+```bash
+cp config/discord_tokens.example.json config/discord_tokens.json
+# Bot Tokenとチャンネル IDを記入
+```
+
+**起動**:
+```bash
+make docker-build-up
+# Bot起動ログ確認
+make discord-bot-logs
+```
+
+#### 🎯 今後の拡張予定
+
+- [ ] 複数Botの同時起動（Bot名ごとの独立プロセス）
+- [ ] スレッド対応（スレッド内での会話継続）
+- [ ] リアクション機能（絵文字によるコマンド操作）
+- [ ] コンテキスト保持（会話履歴をDynamoDBに保存）
+- [ ] メンバープロフィール連携（db-memberとの統合）
+- [ ] リッチエンベッド対応（構造化された応答表示）
+- [ ] Slash Commands実装（/kasen <prompt>等）
+
 ## 一時的な実装事項
 
 ### name-based UPSERT処理（暫定実装）
@@ -708,11 +828,13 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 - [x] **YMLファイル操作の統合システム実装**
 - [x] **Discord Webhook通知システム実装（backend-llm-response）**
 - [x] **Claude API連携実装（backend-llm-response）**
+- [x] **Discord Bot統合実装（@メンション検知＋Claude API応答）**
 - [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示
 - [ ] Flask-Login + bcryptによる認証強化
-- [ ] チャットログ機能の実装
+- [ ] チャットログ機能の実装（DynamoDB）
+- [ ] Discord Bot機能拡張（複数Bot、スレッド対応、コンテキスト保持）
 - [ ] LLM連携機能の強化（メンバープロフィールとの統合）
 - [ ] Discord通知機能の拡張（定期通知、エラー通知、リッチエンベッド等）
 - [ ] AWS Secrets Managerへの移行
