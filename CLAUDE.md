@@ -552,6 +552,7 @@ make discord-verify
 - ✅ 個別送信: 全Webhook正常動作（HTTP 204）
 - ✅ 同時配信: `make discord-test-all`で3件同時送信成功
 - ✅ カスタムメッセージ: 任意のメッセージ送信可能
+- ✅ 統合テスト: `make test-integration`に組み込み完了
 
 #### 🔒 セキュリティ対策
 
@@ -575,6 +576,30 @@ make discord-verify
 - 環境変数による設定管理
 - コードと設定の分離
 - ポータビリティの確保
+
+#### 🧪 統合テスト組み込み
+
+**makefiles/integration.mk統合**:
+```makefile
+test-integration: ## Run comprehensive integration tests for all services
+  # Backend-DB-Registration統合テスト
+  @make backend-db-registration-test-integration
+
+  # Backend-LLM-Response統合テスト（Discord Webhook）
+  @make discord-verify
+```
+
+**統合テスト内容**:
+- Webhook一覧取得（3件登録確認）
+- 全Webhookへブロードキャスト送信
+- HTTP 204応答確認（送信成功）
+- **目視確認推奨**: Discordチャンネルでメッセージ到達を人間が確認
+
+**実行方法**:
+```bash
+# 全サービスの統合テストを実行（Discord Webhook含む）
+make test-integration
+```
 
 ## 一時的な実装事項
 
