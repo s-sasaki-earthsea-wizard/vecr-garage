@@ -4,6 +4,7 @@ Discord Webhook通知サービス
 Discord Webhookを使用してメッセージを送信するサービスクラス
 複数のWebhookを辞書形式で管理
 """
+import os
 import requests
 import logging
 from typing import Optional, Dict, Any, List
@@ -23,8 +24,8 @@ class DiscordNotifier:
 
         Args:
             webhooks_config: Discord Webhooks設定（JSON文字列、辞書、またはNone）
-                           - None: 環境変数DISCORD_WEBHOOKSから自動取得
-                           - str: JSON形式の文字列
+                           - None: 環境変数DISCORD_WEBHOOKSからJSON文字列を取得
+                           - str: JSON文字列
                            - dict: 設定辞書
 
         Raises:
@@ -32,17 +33,17 @@ class DiscordNotifier:
         """
         # パーサーを使用して設定を取得
         if webhooks_config is None:
-            # 環境変数から取得
+            # 環境変数からJSON文字列を取得
             self.webhooks = WebhookConfigParser.parse_from_env()
         elif isinstance(webhooks_config, str):
-            # JSON文字列からパース
+            # JSON文字列としてパース
             self.webhooks = WebhookConfigParser.parse_from_string(webhooks_config)
         elif isinstance(webhooks_config, dict):
             # 辞書からバリデーション
             self.webhooks = WebhookConfigParser.parse_from_dict(webhooks_config)
         else:
             raise ValueError(
-                f"webhooks_configは文字列、辞書、またはNoneである必要があります "
+                f"webhooks_configはJSON文字列、辞書、またはNoneである必要があります "
                 f"（現在: {type(webhooks_config).__name__}）"
             )
 

@@ -16,7 +16,7 @@ else
     $(warning jqがインストールされていません。JSON出力が整形されません)
 endif
 
-.PHONY: discord-help discord-webhooks-list discord-test-kasen discord-test-all discord-send-message discord-verify
+.PHONY: discord-help discord-webhooks-list discord-test-kasen discord-test-karasuno_endo discord-test-rusudan discord-test-all discord-send-message discord-verify
 
 discord-help: ## Display Discord Webhook commands help
 	@echo "=============================================================="
@@ -28,9 +28,11 @@ discord-help: ## Display Discord Webhook commands help
 	@echo "  make discord-verify           Discord連携の動作確認"
 	@echo "  make discord-help             このヘルプを表示"
 	@echo ""
-	@echo "【テスト送信】"
-	@echo "  make discord-test-kasen       kasen_times Webhookにテスト送信"
-	@echo "  make discord-test-all         全Webhookにテスト送信"
+	@echo "【テスト送信（個別）】"
+	@echo "  make discord-test-kasen          kasen_times Webhookにテスト送信"
+	@echo "  make discord-test-karasuno_endo  karasuno_endo_times Webhookにテスト送信"
+	@echo "  make discord-test-rusudan        rusudan_times Webhookにテスト送信"
+	@echo "  make discord-test-all            全Webhookにテスト送信"
 	@echo ""
 	@echo "【カスタム送信】"
 	@echo "  make discord-send-message WEBHOOK=<name> MESSAGE=<text>"
@@ -45,6 +47,14 @@ discord-webhooks-list: ## List all registered Discord webhooks
 discord-test-kasen: ## Send test message to kasen_times webhook
 	@echo "📤 kasen_times Webhookにテストメッセージを送信中..."
 	@curl -s -X POST $(DISCORD_API_BASE)/test/kasen_times $(FORMAT_JSON)
+
+discord-test-karasuno_endo: ## Send test message to karasuno_endo_times webhook
+	@echo "📤 karasuno_endo_times Webhookにテストメッセージを送信中..."
+	@curl -s -X POST $(DISCORD_API_BASE)/test/karasuno_endo_times $(FORMAT_JSON)
+
+discord-test-rusudan: ## Send test message to rusudan_times webhook
+	@echo "📤 rusudan_times Webhookにテストメッセージを送信中..."
+	@curl -s -X POST $(DISCORD_API_BASE)/test/rusudan_times $(FORMAT_JSON)
 
 discord-test-all: ## Send test message to all registered webhooks
 	@echo "📤 全Webhookにテストメッセージを送信中..."

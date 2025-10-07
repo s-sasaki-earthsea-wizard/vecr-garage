@@ -16,6 +16,43 @@ class WebhookConfigParser:
     """Webhook設定パーサークラス"""
 
     DEFAULT_ENV_VAR = "DISCORD_WEBHOOKS"
+    DEFAULT_FILE_ENV_VAR = "DISCORD_WEBHOOKS_FILE"
+
+    @staticmethod
+    def parse_from_file(file_path: str) -> Dict[str, str]:
+        """
+        JSONファイルからWebhook設定を読み込む
+
+        Args:
+            file_path: JSONファイルのパス
+
+        Returns:
+            Webhook設定辞書
+
+        Raises:
+            FileNotFoundError: ファイルが存在しない
+            ValueError: JSONパースまたはバリデーションエラー
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Webhook設定ファイルが見つかりません: {file_path}\n"
+                f"config/discord_webhooks.example.json をコピーして作成してください"
+            )
+        except json.JSONDecodeError as e:
+            raise ValueError(f"JSONファイルのパースに失敗: {file_path}\n{e}")
+
+        # バリデーション
+        is_valid, error_msg = WebhookValidator.validate_webhook_config(config)
+        if not is_valid:
+            raise ValueError(f"Webhook設定のバリデーションエラー ({file_path}): {error_msg}")
+
+        logger.info(f"Webhook設定ファイル読み込み成功: {file_path} ({len(config)}個)")
+        logger.debug(f"登録Webhook: {list(config.keys())}")
+
+        return config
 
     @staticmethod
     def parse_from_env(env_var: str = DEFAULT_ENV_VAR) -> Dict[str, str]:

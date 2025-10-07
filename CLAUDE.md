@@ -482,6 +482,100 @@ test-cases-copy-single, test-cases-clean, test-cases-verify
 **保守性向上**: 1ファイルでの統一管理
 **機能性保持**: 既存コマンドの完全互換
 
+## Discord Webhook通知システム
+
+### セキュアなWebhook管理（✅ 実装完了）
+
+**実装目的**: Discordへのテストメッセージ送信機能の実装（将来的に各種通知機能を追加予定）
+
+#### 🏗️ アーキテクチャ設計
+
+**セキュリティ重視の設計**:
+1. **JSONファイル管理**: `config/discord_webhooks.json`（視認性・編集性◎）
+2. **.envrc自動変換**: JSONを環境変数に変換
+3. **Makefile統合**: `make docker-up/build-up`で自動読み込み
+4. **環境変数渡し**: コンテナにファイルをマウントせず環境変数のみ（セキュア）
+
+**ファイル構成**:
+```
+config/
+├── discord_webhooks.json          # 実際のWebhook URL（.gitignore対象）
+└── discord_webhooks.example.json  # サンプル（リポジトリ管理）
+
+.envrc                              # 環境変数変換スクリプト（.gitignore対象）
+.envrc.example                      # サンプル（リポジトリ管理）
+```
+
+#### 🎯 実装内容
+
+**コアモジュール**:
+- `backend-llm-response/src/config/webhook_config_parser.py`: JSON/環境変数パーサー
+- `backend-llm-response/src/config/webhook_validator.py`: URL形式・データ構造バリデーター
+- `backend-llm-response/src/services/discord_notifier.py`: メッセージ送信サービス
+- `makefiles/discord.mk`: Discord操作コマンド集約
+
+**REST APIエンドポイント**:
+- `GET /api/discord/webhooks`: Webhook一覧取得
+- `POST /api/discord/test/<webhook_name>`: テストメッセージ送信
+- `POST /api/discord/send/<webhook_name>`: カスタムメッセージ送信
+- `POST /api/discord/broadcast`: 全Webhook同時配信
+
+**Makeターゲット**:
+```bash
+make discord-webhooks-list        # Webhook一覧表示
+make discord-verify               # 動作確認（推奨）
+make discord-test-kasen          # 個別テスト送信
+make discord-test-karasuno_endo  # 個別テスト送信
+make discord-test-rusudan        # 個別テスト送信
+make discord-test-all            # 全Webhook同時送信
+make discord-send-message        # カスタムメッセージ
+make discord-help                # コマンド一覧
+```
+
+#### ✅ 動作確認結果
+
+**環境構築**:
+```bash
+# セットアップ
+cp config/discord_webhooks.example.json config/discord_webhooks.json
+# Webhook URLを記入
+
+# 起動（自動的に.envrcが読み込まれる）
+make docker-build-up
+
+# 動作確認
+make discord-verify
+```
+
+**テスト結果**:
+- ✅ 3つのWebhook登録: `kasen_times`, `karasuno_endo_times`, `rusudan_times`
+- ✅ 個別送信: 全Webhook正常動作（HTTP 204）
+- ✅ 同時配信: `make discord-test-all`で3件同時送信成功
+- ✅ カスタムメッセージ: 任意のメッセージ送信可能
+
+#### 🔒 セキュリティ対策
+
+**ファイル流出防止**:
+- `config/discord_webhooks.json`: .gitignoreで保護
+- `.envrc`: .gitignoreで保護
+- コンテナにファイルをマウントせず、環境変数として渡す
+
+**将来の拡張性**:
+- AWS Secrets Managerへの移行準備完了
+- 環境変数ベースの設計により、CI/CD環境でも同様に動作
+
+#### 🎯 設計原則
+
+**責任分離**:
+- パース/バリデーションロジックの独立（カプセル化）
+- `makefiles/discord.mk`でDiscord操作を集約
+- 既存パターン（storage.mk等）との統一
+
+**12-factor app原則**:
+- 環境変数による設定管理
+- コードと設定の分離
+- ポータビリティの確保
+
 ## 一時的な実装事項
 
 ### name-based UPSERT処理（暫定実装）
@@ -518,10 +612,13 @@ test-cases-copy-single, test-cases-clean, test-cases-verify
 - [x] **s3:ObjectCreated:Copy イベント対応**
 - [x] **包括的テストシステム実装（ユニット〜E2E統合）**
 - [x] **YMLファイル操作の統合システム実装**
+- [x] **Discord Webhookテストメッセージ送信機能実装**
 - [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示
 - [ ] Flask-Login + bcryptによる認証強化
 - [ ] チャットログ機能の実装
 - [ ] LLM連携機能の強化
+- [ ] Discord通知機能の拡張（定期通知、エラー通知、リッチエンベッド等）
+- [ ] AWS Secrets Managerへの移行
 - [ ] 本番環境用の設定追加
