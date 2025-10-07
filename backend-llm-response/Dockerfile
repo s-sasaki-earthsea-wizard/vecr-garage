@@ -16,5 +16,5 @@ RUN pip install -r requirements.txt
 # Set the PYTHONPATH to include the src directory
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
-# Set the entrypoint
-ENTRYPOINT ["python", "src/app.py"]
+# Discord Bot起動コマンド
+CMD ["python", "src/app.py"]

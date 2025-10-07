@@ -1,0 +1,10 @@
+{
+    "🤖🍡華扇": {
+        "bot_token": "YOUR_BOT_TOKEN_HERE",
+        "channel_ids": ["YOUR_CHANNEL_ID_HERE"]
+    },
+    "🤖🫛カラスノエンドウ": {
+        "bot_token": "YOUR_BOT_TOKEN_HERE",
+        "channel_ids": ["YOUR_CHANNEL_ID_HERE"]
+    }
+}

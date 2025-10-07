@@ -167,3 +167,50 @@ claude-to-discord: ## Send Claude API response to Discord (Usage: make claude-to
 	@echo "プロンプト: $(PROMPT)"
 	@echo ""
 	@docker exec vecr-garage-backend-llm-response python3 -c "from services.claude_discord_bridge import ClaudeDiscordBridge; result = ClaudeDiscordBridge().send_prompt_to_discord('$(WEBHOOK)', '''$(PROMPT)'''); print('✅ 成功!' if result['success'] else '❌ 失敗'); print(f\"Claude応答をDiscord（{result['webhook_name']}）に投稿しました\" if result['success'] else f\"エラー: {result.get('error')}\");"
+
+# ------------------------------------------------------------
+# Discord Bot 関連コマンド
+# ------------------------------------------------------------
+
+.PHONY: discord-bot-help discord-bot-logs discord-bot-status discord-bot-test-config
+
+discord-bot-help: ## Display Discord Bot commands help
+	@echo "=============================================================="
+	@echo "Discord Bot コマンド"
+	@echo "=============================================================="
+	@echo ""
+	@echo "【基本コマンド】"
+	@echo "  make discord-bot-logs         Discord Botログを表示"
+	@echo "  make discord-bot-status       Discord Bot状態確認"
+	@echo "  make discord-bot-test-config  Discord Bot設定テスト"
+	@echo "  make discord-bot-help         このヘルプを表示"
+	@echo ""
+	@echo "【使用方法】"
+	@echo "  Discord上で @🤖🍡華扇 質問内容 とメンションすると応答します"
+	@echo ""
+	@echo "【対象チャンネル】"
+	@echo "  config/discord_tokens.json の channel_ids で設定"
+	@echo ""
+	@echo "【注意】"
+	@echo "  Discord BotとFlask APIは同一コンテナ（backend-llm-response）で稼働"
+	@echo "  コンテナ再起動: make docker-restart"
+	@echo ""
+	@echo "=============================================================="
+
+discord-bot-logs: ## Show Discord bot logs
+	@echo "📋 Discord Botログを表示中..."
+	$(COMPOSE) -p $(PROJECT_NAME) logs -f backend-llm-response
+
+discord-bot-status: ## Show Discord bot status
+	@echo "📊 Discord Bot状態確認..."
+	$(COMPOSE) -p $(PROJECT_NAME) ps backend-llm-response
+
+discord-bot-test-config: ## Test Discord bot configuration
+	@echo "🧪 Discord Bot設定をテスト中..."
+	@docker exec vecr-garage-backend-llm-response python3 -c "\
+from config.discord import DiscordConfigParser; \
+config = DiscordConfigParser.load_and_validate(); \
+bots = DiscordConfigParser.list_bots(config); \
+print(f'✅ 設定ファイル読み込み成功: {len(bots)}個のBot'); \
+[print(f'  - {bot}: {len(DiscordConfigParser.get_bot_config(bot, config)[1])}個のチャンネル (IDs: {DiscordConfigParser.get_bot_config(bot, config)[1]})') for bot in bots]; \
+"

@@ -307,6 +307,61 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 - APIキーは`.env`で管理（.gitignore保護）
 - コンテナに環境変数として渡される
 
+#### Discord Bot統合
+
+Discordチャンネルで@メンションを検知し、Claude APIで自動応答するBot機能を提供しています。
+
+**セットアップ:**
+```bash
+# 1. Discord Developer Portalで以下を設定:
+#    - Botの作成とToken取得
+#    - Privileged Gateway Intents > MESSAGE CONTENT INTENT を有効化
+#    - SERVER MEMBERS INTENT を有効化（推奨）
+#    - BotをDiscordサーバーに招待
+
+# 2. Bot設定ファイルを作成
+cp config/discord_tokens.example.json config/discord_tokens.json
+
+# 3. Bot TokenとチャンネルIDを設定
+vim config/discord_tokens.json
+
+# 4. .envファイルでClaude API設定を確認
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+DISCORD_BOT_NAME=🤖🍡華扇  # デフォルト値（オプション）
+
+# 5. コンテナ起動
+make docker-build-up
+```
+
+**使用可能なコマンド:**
+```bash
+# Bot起動ログ確認
+make discord-bot-logs
+
+# Bot状態確認
+make discord-bot-status
+
+# Bot設定テスト
+make discord-bot-test-config
+
+# コマンド一覧表示
+make discord-bot-help
+```
+
+**使い方:**
+1. Discordチャンネルで `@🤖🍡華扇 質問内容` とメンション
+2. BotがClaude APIを使用して自動応答
+3. 2000文字制限に対応（超過時は省略表示）
+
+**動作要件:**
+- Discord Developer PortalでMESSAGE CONTENT INTENTを有効化（必須）
+- Bot Permissions: View Channels, Send Messages, Create Public Threads
+- 対象チャンネルは`config/discord_tokens.json`で設定
+
+**セキュリティ:**
+- Bot Tokenは`config/discord_tokens.json`で管理（.gitignore保護）
+- コンテナにread-onlyでマウント
+
 #### TBD
 
 - バックエンドサービス(LLM応答): `make backend-llm-response-shell`

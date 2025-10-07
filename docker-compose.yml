@@ -62,6 +62,7 @@ services:
       - "${LLM_PORT}:${LLM_PORT}"
     volumes:
       - ./backend-llm-response/:/app/
+      - ./config/discord_tokens.json:/app/config/discord_tokens.json:ro
     environment:
       - MEMBER_DB_HOST=db-member
       - MEMBER_DB_PORT=${MEMBER_DB_PORT}
@@ -74,6 +75,8 @@ services:
       - LLM_BASE_URL=${LLM_BASE_URL}
       # Discord Webhook設定
       - DISCORD_WEBHOOKS=${DISCORD_WEBHOOKS}
+      # Discord Bot設定
+      - DISCORD_BOT_NAME=${DISCORD_BOT_NAME:-🤖🍡華扇}
       # Claude API設定
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - ANTHROPIC_MODEL=${ANTHROPIC_MODEL}
@@ -84,6 +87,7 @@ services:
         condition: service_healthy
     networks:
       - network
+    restart: unless-stopped
 
   db-member:
     image: postgres:16

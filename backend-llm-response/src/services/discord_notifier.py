@@ -9,7 +9,7 @@ import requests
 import logging
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-from config.webhook_config_parser import WebhookConfigParser
+from config.webhook import WebhookConfigParser
 
 # ロガー設定
 logger = logging.getLogger(__name__)
