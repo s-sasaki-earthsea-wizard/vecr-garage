@@ -1,20 +1,20 @@
 """
-Claude-Discord統合サービス
+LLM-Discord統合サービス
 
-Claude APIからの応答をDiscord Webhookに投稿する機能を提供します。
+LLM APIからの応答をDiscord Webhookに投稿する機能を提供します。
 """
 
 from typing import Dict, Any, Optional
-from services.claude_client import ClaudeClient
+from services.llm_client import LLMClient
 from services.discord_notifier import DiscordNotifier
 
 
-class ClaudeDiscordBridge:
-    """Claude APIとDiscord Webhookを統合するブリッジサービス"""
+class LLMDiscordBridge:
+    """LLM APIとDiscord Webhookを統合するブリッジサービス"""
 
     def __init__(self):
-        """ClaudeDiscordBridgeを初期化"""
-        self.claude_client = ClaudeClient()
+        """LLMDiscordBridgeを初期化"""
+        self.llm_client = LLMClient()
         self.discord_notifier = DiscordNotifier()
 
     def send_prompt_to_discord(
@@ -26,11 +26,11 @@ class ClaudeDiscordBridge:
         include_prompt: bool = True,
     ) -> Dict[str, Any]:
         """
-        プロンプトをClaude APIに送信し、応答をDiscordに投稿
+        プロンプトをLLM APIに送信し、応答をDiscordに投稿
 
         Args:
             webhook_name: Discord Webhook名
-            prompt: Claude APIに送信するプロンプト
+            prompt: LLM APIに送信するプロンプト
             system_prompt: システムプロンプト（オプション）
             temperature: 生成温度（0.0-1.0）
             include_prompt: Discordメッセージにプロンプトを含めるか
@@ -39,8 +39,8 @@ class ClaudeDiscordBridge:
             実行結果の辞書
         """
         try:
-            # Step 1: Claude APIにプロンプトを送信
-            claude_response = self.claude_client.send_message(
+            # Step 1: LLM APIにプロンプトを送信
+            llm_response = self.llm_client.send_message(
                 prompt=prompt,
                 system_prompt=system_prompt,
                 temperature=temperature,
@@ -48,9 +48,9 @@ class ClaudeDiscordBridge:
 
             # Step 2: Discord投稿用のメッセージを構築
             if include_prompt:
-                discord_content = f"**プロンプト:**\n{prompt}\n\n**Claude応答:**\n{claude_response}"
+                discord_content = f"**プロンプト:**\n{prompt}\n\n**LLM応答:**\n{llm_response}"
             else:
-                discord_content = claude_response
+                discord_content = llm_response
 
             # メッセージが長すぎる場合は分割（Discord制限: 2000文字）
             if len(discord_content) > 2000:
@@ -66,9 +66,9 @@ class ClaudeDiscordBridge:
                 "success": True,
                 "webhook_name": webhook_name,
                 "prompt": prompt,
-                "claude_response": claude_response,
+                "llm_response": llm_response,
                 "discord_result": discord_result,
-                "message": "Claude応答をDiscordに投稿しました",
+                "message": "LLM応答をDiscordに投稿しました",
             }
 
         except Exception as e:
@@ -77,5 +77,5 @@ class ClaudeDiscordBridge:
                 "webhook_name": webhook_name,
                 "prompt": prompt,
                 "error": str(e),
-                "message": "Claude-Discord統合処理でエラーが発生しました",
+                "message": "LLM-Discord統合処理でエラーが発生しました",
             }

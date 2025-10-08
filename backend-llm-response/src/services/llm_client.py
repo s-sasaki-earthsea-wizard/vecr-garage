@@ -1,7 +1,8 @@
 """
-Claude APIクライアントサービス
+LLMクライアントサービス
 
-Anthropic Claude APIを使用してプロンプトを送信し、応答を取得する機能を提供します。
+LLM（Large Language Model）APIを使用してプロンプトを送信し、応答を取得する機能を提供します。
+現在はAnthropic Claude APIを実装。将来的にHugging Face等の他プロバイダーにも対応予定。
 """
 
 import os
@@ -9,8 +10,8 @@ from typing import Optional, Dict, Any
 from anthropic import Anthropic
 
 
-class ClaudeClient:
-    """Claude APIクライアント"""
+class LLMClient:
+    """LLMクライアント（現在はClaude実装、将来的に複数プロバイダー対応予定）"""
 
     def __init__(
         self,
@@ -19,7 +20,7 @@ class ClaudeClient:
         max_tokens: Optional[int] = None,
     ):
         """
-        ClaudeClientを初期化
+        LLMClientを初期化（現在はClaude API使用）
 
         Args:
             api_key: Anthropic APIキー（未指定の場合は環境変数ANTHROPIC_API_KEYを使用）
@@ -42,7 +43,7 @@ class ClaudeClient:
         temperature: float = 1.0,
     ) -> str:
         """
-        プロンプトをClaude APIに送信し、応答を取得
+        プロンプトをLLM APIに送信し、応答を取得
 
         Args:
             prompt: ユーザープロンプト
@@ -50,7 +51,7 @@ class ClaudeClient:
             temperature: 生成温度（0.0-1.0）
 
         Returns:
-            Claude APIからの応答文字列
+            LLM APIからの応答文字列
 
         Raises:
             Exception: API呼び出しに失敗した場合
@@ -81,7 +82,7 @@ class ClaudeClient:
             return ""
 
         except Exception as e:
-            raise Exception(f"Claude API呼び出しエラー: {str(e)}")
+            raise Exception(f"LLM API呼び出しエラー: {str(e)}")
 
     def send_test_message(self) -> Dict[str, Any]:
         """
@@ -99,7 +100,7 @@ class ClaudeClient:
                 "model": self.model,
                 "prompt": test_prompt,
                 "response": response,
-                "message": "Claude API接続成功",
+                "message": "LLM API接続成功",
             }
 
         except Exception as e:
@@ -107,5 +108,5 @@ class ClaudeClient:
                 "success": False,
                 "model": self.model,
                 "error": str(e),
-                "message": "Claude API接続失敗",
+                "message": "LLM API接続失敗",
             }
