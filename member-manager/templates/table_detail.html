@@ -120,6 +120,7 @@
                                     {% for column in table_data.columns %}
                                     <th>{{ column.name }}</th>
                                     {% endfor %}
+                                    <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -143,6 +144,17 @@
                                         {% endif %}
                                     </td>
                                     {% endfor %}
+                                    <td>
+                                        {% set primary_key = 'member_id' if 'member_id' in row else ('profile_id' if 'profile_id' in row else 'relationship_id') %}
+                                        <button class="btn btn-sm btn-outline-primary me-1"
+                                                onclick="editRecord('{{ table_name }}', {{ row[primary_key] }}, {{ row|tojson|e }})">
+                                            <i class="fas fa-edit"></i> 編集
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                onclick="deleteRecord('{{ table_name }}', {{ row[primary_key] }})">
+                                            <i class="fas fa-trash"></i> 削除
+                                        </button>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -167,6 +179,33 @@
                         </div>
                     </div>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- レコード編集モーダル -->
+<div class="modal fade" id="editRecordModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>レコード編集
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRecordForm">
+                    <div id="editFormFields">
+                        <!-- フィールドは動的に生成 -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="saveRecord()">
+                    <i class="fas fa-save me-1"></i>保存
+                </button>
             </div>
         </div>
     </div>
@@ -202,9 +241,150 @@
 
 {% block scripts %}
 <script>
+let currentEditData = {};
+let currentTableName = '';
+let currentRecordId = null;
+
 // テーブルデータの更新
 function refreshTableData() {
     location.reload();
+}
+
+// レコード編集フォームの表示
+function editRecord(tableName, recordId, rowData) {
+    currentTableName = tableName;
+    currentRecordId = recordId;
+    currentEditData = rowData;
+
+    // フォームフィールドを生成
+    generateEditForm(tableName, rowData);
+
+    // モーダルを表示
+    const modal = new bootstrap.Modal(document.getElementById('editRecordModal'));
+    modal.show();
+}
+
+// 編集フォームの動的生成
+function generateEditForm(tableName, rowData) {
+    const formFields = document.getElementById('editFormFields');
+    formFields.innerHTML = '';
+
+    // テーブル構造に基づいてフィールドを生成
+    const columns = {{ table_data.columns | tojson | safe }};
+
+    columns.forEach(column => {
+        const fieldContainer = document.createElement('div');
+        fieldContainer.className = 'mb-3';
+
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.textContent = column.name;
+
+        let input;
+        const currentValue = rowData[column.name] || '';
+
+        // 編集不可能なフィールド
+        if (['member_id', 'profile_id', 'relationship_id', 'created_at', 'updated_at'].includes(column.name)) {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.readOnly = true;
+            input.value = currentValue;
+        }
+        // UUID フィールド
+        else if (column.name.includes('uuid')) {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.readOnly = true;
+            input.value = currentValue;
+        }
+        // テキストフィールド
+        else if (column.type === 'text') {
+            input = document.createElement('textarea');
+            input.className = 'form-control';
+            input.rows = 3;
+            input.value = currentValue;
+        }
+        // その他のフィールド
+        else {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.value = currentValue;
+        }
+
+        input.name = column.name;
+        input.id = `edit_${column.name}`;
+
+        fieldContainer.appendChild(label);
+        fieldContainer.appendChild(input);
+        formFields.appendChild(fieldContainer);
+    });
+}
+
+// レコードの保存
+async function saveRecord() {
+    try {
+        const formData = new FormData(document.getElementById('editRecordForm'));
+        const data = {};
+
+        // フォームデータを収集
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        // APIを呼び出してレコードを更新
+        const response = await fetch(`/api/table/${currentTableName}/record/${currentRecordId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // 成功メッセージを表示
+            alert('レコードが正常に更新されました');
+
+            // モーダルを閉じる
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editRecordModal'));
+            modal.hide();
+
+            // ページを更新
+            refreshTableData();
+        } else {
+            alert(`更新エラー: ${result.error || '不明なエラーが発生しました'}`);
+        }
+    } catch (error) {
+        console.error('Error updating record:', error);
+        alert(`更新中にエラーが発生しました: ${error.message}`);
+    }
+}
+
+// レコードの削除
+async function deleteRecord(tableName, recordId) {
+    if (confirm('このレコードを削除してもよろしいですか？')) {
+        try {
+            const response = await fetch(`/api/table/${tableName}/record/${recordId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('レコードが正常に削除されました');
+                refreshTableData();
+            } else {
+                alert(`削除エラー: ${result.error || '不明なエラーが発生しました'}`);
+            }
+        } catch (error) {
+            console.error('Error deleting record:', error);
+            alert(`削除中にエラーが発生しました: ${error.message}`);
+        }
+    }
 }
 
 // サンプルデータ追加フォームの表示
@@ -217,11 +397,11 @@ function showAddRecordForm() {
 function addSampleData() {
     // ここでサンプルデータ追加のAPIを呼び出す
     console.log('サンプルデータ追加機能は今後の実装予定です');
-    
+
     // モーダルを閉じる
     const modal = bootstrap.Modal.getInstance(document.getElementById('addSampleDataModal'));
     modal.hide();
-    
+
     // 成功メッセージを表示
     alert('サンプルデータ追加機能は今後の実装予定です');
 }

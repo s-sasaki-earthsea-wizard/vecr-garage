@@ -15,8 +15,11 @@ from flask_cors import CORS
 from functools import wraps
 import uuid
 import os
+import logging
 from datetime import datetime
 from database import DatabaseManager
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
@@ -177,23 +180,142 @@ def get_table_description(table_name):
     }
     return descriptions.get(table_name, 'テーブルの説明')
 
+@app.route('/api/table/<table_name>/record/<int:record_id>', methods=['PUT'])
+@login_required
+def update_record(table_name, record_id):
+    """
+    レコードを更新（UPSERT処理対応・認証が必要）
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'リクエストデータがありません'
+            }), 400
+
+        # メンバーテーブルでYMLファイルURIを持つ場合はUPSERT処理を使用
+        if table_name in ['human_members', 'virtual_members'] and 'yml_file_uri' in data:
+            # backend-db-registrationのUPSERT処理を呼び出し
+            from storage.storage_client import StorageClient
+            from yaml_generator import YAMLGenerator
+            import requests
+
+            member_name = data.get('member_name', '')
+            yml_file_uri = data.get('yml_file_uri', '')
+
+            # YAMLファイルを更新
+            storage_client = StorageClient()
+
+            # 既存のYAMLファイルを読み込んで更新
+            try:
+                existing_yaml_data = storage_client.read_yaml_from_minio(yml_file_uri)
+                existing_yaml_data.update({
+                    'member_name': member_name,
+                    # 他の更新可能フィールドもここで処理
+                })
+
+                # YAMLファイルの再生成とアップロード
+                if table_name == 'human_members':
+                    yaml_content = YAMLGenerator.generate_human_member_yaml(existing_yaml_data)
+                else:  # virtual_members
+                    yaml_content = YAMLGenerator.generate_virtual_member_yaml(existing_yaml_data)
+
+                upload_result = storage_client.upload_yaml_file(yaml_content, yml_file_uri)
+
+                # backend-db-registrationのUPSERT処理を呼び出す
+                if table_name == 'human_members':
+                    # 人間メンバーのUPSERT処理
+                    import sys
+                    import os
+                    sys.path.append('/home/rindguitar/vecr-office/backend-db-registration/src')
+                    from operations.member_registration import register_human_member_from_yaml
+
+                    # UPSERT処理実行
+                    register_human_member_from_yaml(yml_file_uri)
+
+                else:  # virtual_members
+                    # 仮想メンバーのUPSERT処理
+                    import sys
+                    import os
+                    sys.path.append('/home/rindguitar/vecr-office/backend-db-registration/src')
+                    from operations.member_registration import register_virtual_member_from_yaml
+
+                    # UPSERT処理実行
+                    register_virtual_member_from_yaml(yml_file_uri)
+
+                return jsonify({
+                    'success': True,
+                    'message': f'{table_name}テーブルのレコードがUPSERT処理で更新されました',
+                    'data': data
+                })
+
+            except Exception as e:
+                logger.error(f"UPSERT processing error: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'error': f'UPSERT処理中にエラーが発生: {str(e)}'
+                }), 500
+
+        else:
+            # 通常のUPDATE処理
+            try:
+                result = db_manager.update_record(table_name, record_id, data)
+
+                if result:
+                    # 関連テーブルの同期更新
+                    db_manager.sync_related_tables(table_name, record_id, data)
+
+                    return jsonify({
+                        'success': True,
+                        'message': f'{table_name}テーブルのレコードが更新されました',
+                        'data': result
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': 'レコードの更新に失敗しました'
+                    }), 500
+            except Exception as e:
+                logger.error(f"Database update error: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'error': f'データベース更新エラー: {str(e)}'
+                }), 500
+
+    except Exception as e:
+        logger.error(f"Record update error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'レコード更新中にエラーが発生: {str(e)}'
+        }), 500
+
 @app.route('/api/table/<table_name>/record/<int:record_id>', methods=['DELETE'])
 @login_required
 def delete_record(table_name, record_id):
     """
-    レコードを削除（モック・認証が必要）
-    TODO: 実際のデータベースDELETE操作に置き換え
+    レコードを削除（認証が必要）
     """
-    if table_name not in MOCK_DATA:
-        return jsonify({'error': 'Table not found'}), 404
-    
-    # モック実装：IDで検索して削除
-    for i, record in enumerate(MOCK_DATA[table_name]):
-        if record.get('member_id') == record_id or record.get('profile_id') == record_id or record.get('relationship_id') == record_id:
-            deleted_record = MOCK_DATA[table_name].pop(i)
-            return jsonify({'success': True, 'deleted': deleted_record})
-    
-    return jsonify({'error': 'Record not found'}), 404
+    try:
+        result = db_manager.delete_record(table_name, record_id)
+
+        if result:
+            return jsonify({
+                'success': True,
+                'message': f'{table_name}テーブルのレコードが削除されました'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'レコードの削除に失敗しました'
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Record deletion error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'レコード削除中にエラーが発生: {str(e)}'
+        }), 500
 
 # データベース接続テスト用エンドポイント
 @app.route('/api/db/test')
@@ -292,6 +414,65 @@ def get_database_tables():
             'message': f'テーブル一覧取得中にエラーが発生: {str(e)}'
         }), 500
 
+@app.route('/api/table/<table_name>', methods=['GET'])
+@login_required
+def get_table_data_api(table_name):
+    """テーブルデータをJSON形式で返すAPI"""
+    try:
+        table_data = db_manager.get_table_data(table_name)
+
+        if table_data:
+            return jsonify({
+                'success': True,
+                'table_name': table_name,
+                'columns': [col.name for col in table_data.columns],
+                'data': [dict(row._mapping) for row in table_data.data]
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'テーブル "{table_name}" のデータ取得に失敗しました'
+            }), 404
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'テーブルデータ取得中にエラーが発生: {str(e)}'
+        }), 500
+
+@app.route('/api/table/<table_name>/record', methods=['POST'])
+@login_required
+def create_table_record_api(table_name):
+    """テーブルに新規レコードを作成するAPI"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'リクエストデータがありません'
+            }), 400
+
+        # データベースへの直接挿入
+        result = db_manager.insert_record(table_name, data)
+
+        if result:
+            return jsonify({
+                'success': True,
+                'message': f'{table_name}テーブルにレコードが追加されました',
+                'data': result
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'レコードの作成に失敗しました'
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'レコード作成中にエラーが発生: {str(e)}'
+        }), 500
+
 @app.route('/api/member/create', methods=['POST'])
 def create_member():
     """新規メンバー作成API
@@ -351,15 +532,45 @@ def create_member():
         
         # YAMLファイルのアップロード
         upload_result = storage_client.upload_yaml_file(yaml_content, storage_path)
-        
+
+        # データベースにメンバー情報を保存
+        table_name = f'{member_type}_members'
+        db_data = {
+            'member_name': member_name,
+            'yml_file_uri': storage_path
+        }
+
+        db_record = db_manager.insert_record(table_name, db_data)
+
+        # メンバータイプに応じてプロフィール情報も保存
+        if db_record:
+            if member_type == 'virtual':
+                # 仮想メンバーのプロフィール情報
+                profile_data = {
+                    'member_id': db_record['member_id'],
+                    'member_uuid': db_record['member_uuid'],
+                    'llm_model': form_data.get('llm_model', 'Claude'),
+                    'custom_prompt': form_data.get('custom_prompt', '')
+                }
+                db_manager.insert_record('virtual_member_profiles', profile_data)
+            elif member_type == 'human':
+                # 人間メンバーのプロフィール情報
+                profile_data = {
+                    'member_id': db_record['member_id'],
+                    'member_uuid': db_record['member_uuid'],
+                    'bio': form_data.get('bio', '')
+                }
+                db_manager.insert_record('human_member_profiles', profile_data)
+
         return jsonify({
             'success': True,
-            'message': f'{member_type}メンバー「{member_name}」のYAMLファイルを作成・アップロードしました',
+            'message': f'{member_type}メンバー「{member_name}」を作成し、ストレージとデータベースに保存しました',
             'data': {
                 'member_name': member_name,
                 'member_type': member_type,
                 'storage_path': storage_path,
-                'upload_result': upload_result
+                'upload_result': upload_result,
+                'db_record': db_record
             }
         })
         

@@ -316,4 +316,213 @@ def test_virtual_member_kasen_from_samples(db_session, mock_storage_with_real_fi
     # 検証
     assert member is not None
     assert member.member_name == "華扇"
-    assert member.member_uuid is not None 
+    assert member.member_uuid is not None
+
+# yml_file_uriベースのUPSERT処理テスト
+def test_yml_file_uri_based_upsert_human_member(db_session, monkeypatch):
+    """yml_file_uriベースのUPSERT処理: 人間メンバーの新規作成と更新"""
+    # 最初の登録
+    test_uri = "data/test/human_members/test_user.yml"
+
+    # テストファイル内容
+    test_files = {}
+    test_files[test_uri] = {
+        "name": "テストユーザー",
+        "bio": "初回登録のプロフィールです"
+    }
+
+    class MockStorageClient:
+        def read_yaml_from_minio(self, yaml_path):
+            if yaml_path in test_files:
+                content = test_files[yaml_path]
+                if content is None:
+                    return None
+                return content
+            else:
+                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+
+    monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
+
+    # 1. 新規作成
+    member1 = register_human_member_from_yaml(test_uri)
+    assert member1 is not None
+    assert member1.member_name == "テストユーザー"
+    assert member1.yml_file_uri == test_uri
+
+    # プロフィール情報の確認
+    from db.database import SessionLocal
+    session = SessionLocal()
+    try:
+        from models.members import HumanMemberProfile
+        profile = session.query(HumanMemberProfile).filter(
+            HumanMemberProfile.member_uuid == member1.member_uuid
+        ).first()
+        assert profile is not None
+        assert profile.bio == "初回登録のプロフィールです"
+    finally:
+        session.close()
+
+    # 2. 同じURIで更新（内容変更）
+    test_files[test_uri] = {
+        "name": "テストユーザー更新",
+        "bio": "更新されたプロフィールです"
+    }
+
+    member2 = register_human_member_from_yaml(test_uri)
+    assert member2 is not None
+    assert member2.member_name == "テストユーザー更新"
+    assert member2.yml_file_uri == test_uri
+
+    # 同じレコードが更新されることを確認（IDが同じ）
+    assert member1.member_id == member2.member_id
+    assert member1.member_uuid == member2.member_uuid
+
+    # プロフィール情報が更新されることを確認
+    session = SessionLocal()
+    try:
+        profile = session.query(HumanMemberProfile).filter(
+            HumanMemberProfile.member_uuid == member2.member_uuid
+        ).first()
+        assert profile is not None
+        assert profile.bio == "更新されたプロフィールです"
+    finally:
+        session.close()
+
+def test_yml_file_uri_based_upsert_virtual_member(db_session, monkeypatch):
+    """yml_file_uriベースのUPSERT処理: 仮想メンバーの新規作成と更新"""
+    # 最初の登録
+    test_uri = "data/test/virtual_members/test_ai.yml"
+
+    # テストファイル内容
+    test_files = {}
+    test_files[test_uri] = {
+        "name": "テストAI",
+        "llm_model": "gpt-4",
+        "custom_prompt": "初回登録のプロンプトです"
+    }
+
+    class MockStorageClient:
+        def read_yaml_from_minio(self, yaml_path):
+            if yaml_path in test_files:
+                content = test_files[yaml_path]
+                if content is None:
+                    return None
+                return content
+            else:
+                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+
+    monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
+
+    # 1. 新規作成
+    member1 = register_virtual_member_from_yaml(test_uri)
+    assert member1 is not None
+    assert member1.member_name == "テストAI"
+    assert member1.yml_file_uri == test_uri
+
+    # プロフィール情報の確認
+    from db.database import SessionLocal
+    session = SessionLocal()
+    try:
+        from models.members import VirtualMemberProfile
+        profile = session.query(VirtualMemberProfile).filter(
+            VirtualMemberProfile.member_uuid == member1.member_uuid
+        ).first()
+        assert profile is not None
+        assert profile.llm_model == "gpt-4"
+        assert profile.custom_prompt == "初回登録のプロンプトです"
+    finally:
+        session.close()
+
+    # 2. 同じURIで更新（内容変更）
+    test_files[test_uri] = {
+        "name": "テストAI更新版",
+        "llm_model": "gpt-4o",
+        "custom_prompt": "更新されたプロンプトです"
+    }
+
+    member2 = register_virtual_member_from_yaml(test_uri)
+    assert member2 is not None
+    assert member2.member_name == "テストAI更新版"
+    assert member2.yml_file_uri == test_uri
+
+    # 同じレコードが更新されることを確認（IDが同じ）
+    assert member1.member_id == member2.member_id
+    assert member1.member_uuid == member2.member_uuid
+
+    # プロフィール情報が更新されることを確認
+    session = SessionLocal()
+    try:
+        profile = session.query(VirtualMemberProfile).filter(
+            VirtualMemberProfile.member_uuid == member2.member_uuid
+        ).first()
+        assert profile is not None
+        assert profile.llm_model == "gpt-4o"
+        assert profile.custom_prompt == "更新されたプロンプトです"
+    finally:
+        session.close()
+
+def test_profile_information_storage(db_session, monkeypatch):
+    """Profile情報（bio, custom_prompt, llm_model）が正しく登録されることを確認"""
+    # テスト用URIの設定
+    human_uri = "data/test/profile/human_with_bio.yml"
+    virtual_uri = "data/test/profile/virtual_with_prompt.yml"
+
+    # テストファイル内容
+    test_files = {}
+    test_files[human_uri] = {
+        "name": "プロフィールテスト人間",
+        "bio": "詳細なプロフィール情報です。趣味はプログラミングです。"
+    }
+    test_files[virtual_uri] = {
+        "name": "プロフィールテスト仮想",
+        "llm_model": "claude-3-opus",
+        "custom_prompt": "私は詳細なプロンプトを持つAIアシスタントです。質問があれば何でも聞いてください。"
+    }
+
+    class MockStorageClient:
+        def read_yaml_from_minio(self, yaml_path):
+            if yaml_path in test_files:
+                content = test_files[yaml_path]
+                if content is None:
+                    return None
+                return content
+            else:
+                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+
+    monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
+
+    # 人間メンバーの登録とプロフィール確認
+    human_member = register_human_member_from_yaml(human_uri)
+    assert human_member is not None
+
+    from db.database import SessionLocal
+    session = SessionLocal()
+    try:
+        from models.members import HumanMemberProfile
+        human_profile = session.query(HumanMemberProfile).filter(
+            HumanMemberProfile.member_uuid == human_member.member_uuid
+        ).first()
+        assert human_profile is not None
+        assert human_profile.bio == "詳細なプロフィール情報です。趣味はプログラミングです。"
+        assert human_profile.member_id == human_member.member_id
+        assert human_profile.member_uuid == human_member.member_uuid
+    finally:
+        session.close()
+
+    # 仮想メンバーの登録とプロフィール確認
+    virtual_member = register_virtual_member_from_yaml(virtual_uri)
+    assert virtual_member is not None
+
+    session = SessionLocal()
+    try:
+        from models.members import VirtualMemberProfile
+        virtual_profile = session.query(VirtualMemberProfile).filter(
+            VirtualMemberProfile.member_uuid == virtual_member.member_uuid
+        ).first()
+        assert virtual_profile is not None
+        assert virtual_profile.llm_model == "claude-3-opus"
+        assert virtual_profile.custom_prompt == "私は詳細なプロンプトを持つAIアシスタントです。質問があれば何でも聞いてください。"
+        assert virtual_profile.member_id == virtual_member.member_id
+        assert virtual_profile.member_uuid == virtual_member.member_uuid
+    finally:
+        session.close() 

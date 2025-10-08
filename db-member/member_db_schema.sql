@@ -1,8 +1,9 @@
 -- Create human member table
 CREATE TABLE IF NOT EXISTS human_members (
     member_id SERIAL PRIMARY KEY,
-    member_uuid UUID UNIQUE NOT NULL,
+    member_uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     member_name VARCHAR(50) UNIQUE NOT NULL,
+    yml_file_uri VARCHAR(500) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -10,7 +11,7 @@ CREATE TABLE IF NOT EXISTS human_members (
 -- Create human member profiles table
 CREATE TABLE IF NOT EXISTS human_member_profiles (
     profile_id SERIAL PRIMARY KEY,
-    profile_uuid UUID UNIQUE NOT NULL,
+    profile_uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     member_id INTEGER NOT NULL,
     member_uuid UUID NOT NULL,
     bio TEXT,
@@ -23,8 +24,9 @@ CREATE TABLE IF NOT EXISTS human_member_profiles (
 -- Create virtual member table
 CREATE TABLE IF NOT EXISTS virtual_members (
     member_id SERIAL PRIMARY KEY,
-    member_uuid UUID UNIQUE NOT NULL,
+    member_uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     member_name VARCHAR(50) UNIQUE NOT NULL,
+    yml_file_uri VARCHAR(500) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -32,7 +34,7 @@ CREATE TABLE IF NOT EXISTS virtual_members (
 -- Create virtual member profiles table
 CREATE TABLE IF NOT EXISTS virtual_member_profiles (
     profile_id SERIAL PRIMARY KEY,
-    profile_uuid UUID UNIQUE NOT NULL,
+    profile_uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     member_id INTEGER NOT NULL,
     member_uuid UUID NOT NULL,
     llm_model VARCHAR(50) NOT NULL,

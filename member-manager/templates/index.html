@@ -146,6 +146,8 @@
 <script>
 let currentTableName = '';
 let currentTableData = null;
+let currentEditIndex = null;
+let currentEditRecord = null;
 
 // テーブルデータ表示の切り替え
 function showTableData() {
@@ -308,14 +310,18 @@ function showAddRecordModal() {
 // 編集モーダルの表示
 function editRecord(tableName, index) {
     if (!currentTableData || !currentTableData.data[index]) return;
-    
+
+    // 編集対象を保存
+    currentEditIndex = index;
+    currentEditRecord = currentTableData.data[index];
+
     const modal = new bootstrap.Modal(document.getElementById('editModal'));
     const form = document.getElementById('editForm');
     const record = currentTableData.data[index];
-    
+
     // フォームを生成
     form.innerHTML = generateFormFields(currentTableData.columns, record);
-    
+
     modal.show();
 }
 
@@ -599,14 +605,61 @@ function saveRecord() {
 }
 
 // レコード更新
-function updateRecord() {
-    // レコードの更新ロジック
-    console.log('レコード更新機能は今後の実装予定です');
-    alert('レコード更新機能は今後の実装予定です');
-    
-    // モーダルを閉じる
-    const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
-    modal.hide();
+async function updateRecord() {
+    if (!currentEditRecord || !currentTableName) {
+        alert('編集対象のレコード情報がありません');
+        return;
+    }
+
+    try {
+        // フォームデータを取得
+        const formData = new FormData(document.getElementById('editForm'));
+        const data = {};
+
+        // フォームデータを収集
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        // 主キーを取得
+        let recordId = null;
+        if (currentEditRecord.member_id) recordId = currentEditRecord.member_id;
+        else if (currentEditRecord.profile_id) recordId = currentEditRecord.profile_id;
+        else if (currentEditRecord.relationship_id) recordId = currentEditRecord.relationship_id;
+
+        if (!recordId) {
+            alert('レコードIDが見つかりません');
+            return;
+        }
+
+        // APIを呼び出してレコードを更新
+        const response = await fetch(`/api/table/${currentTableName}/record/${recordId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // 成功メッセージを表示
+            alert('レコードが正常に更新されました');
+
+            // モーダルを閉じる
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+            modal.hide();
+
+            // テーブルデータを再読み込み
+            loadTableData();
+        } else {
+            alert(`更新エラー: ${result.error || '不明なエラーが発生しました'}`);
+        }
+    } catch (error) {
+        console.error('Error updating record:', error);
+        alert(`更新中にエラーが発生しました: ${error.message}`);
+    }
 }
 
 // 削除確認

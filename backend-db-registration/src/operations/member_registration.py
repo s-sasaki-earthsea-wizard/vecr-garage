@@ -1,4 +1,4 @@
-from db.database import SessionLocal, save_human_member, save_virtual_member, get_human_member_by_name, get_virtual_member_by_name, DatabaseError, create_human_member, create_virtual_member, save_or_update_human_member, save_or_update_virtual_member
+from db.database import SessionLocal, save_human_member, save_virtual_member, get_human_member_by_name, get_virtual_member_by_name, get_human_member_by_uri, get_virtual_member_by_uri, upsert_human_member, upsert_virtual_member, DatabaseError, create_human_member, create_virtual_member
 from storage.storage_client import StorageClient
 from validation.yaml_validator import YAMLValidator, ValidationError
 import yaml
@@ -49,15 +49,24 @@ def register_human_member_from_yaml(yaml_path: str):
         
         # 人間メンバーの必須フィールドを検証
         YAMLValidator.validate_human_member_yaml(yaml_data)
-        
-        # TODO: 将来的にfile_uriベースのUPSERT実装に移行する
-        # Issue: https://github.com/your-org/vecr-garage/issues/xxx
-        # 現在は名前ベースの一時的なUPSERT処理を使用
 
-        # 一時的なUPSERT処理（新規作成または更新）
-        new_member = save_or_update_human_member(db, name)
-        logger.info(f"Human member {name} created and committed successfully.")
-        return new_member
+        # UPSERT操作でメンバーを登録または更新
+        member = upsert_human_member(db, name, yaml_path)
+
+        # プロフィール情報を登録または更新
+        bio = yaml_data.get('bio', '')
+        if bio:  # bioが存在する場合のみプロフィール登録
+            from db.database import upsert_human_member_profile
+            profile = upsert_human_member_profile(db, member.member_id, member.member_uuid, bio)
+
+        # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
+        member_name = member.member_name
+        member_uuid = member.member_uuid
+        yml_file_uri = member.yml_file_uri
+        member_id = member.member_id
+
+        logger.info(f"Human member {name} upserted successfully from {yaml_path}")
+        return member
         
     except ValidationError as e:
         # バリデーションエラーでもロールバックを実行
@@ -140,15 +149,25 @@ def register_virtual_member_from_yaml(yaml_path: str):
         
         # 仮想メンバーの必須フィールドを検証
         YAMLValidator.validate_virtual_member_yaml(yaml_data)
-        
-        # TODO: 将来的にfile_uriベースのUPSERT実装に移行する
-        # Issue: https://github.com/your-org/vecr-garage/issues/xxx
-        # 現在は名前ベースの一時的なUPSERT処理を使用
 
-        # 一時的なUPSERT処理（新規作成または更新）
-        new_member = save_or_update_virtual_member(db, name)
-        logger.info(f"Virtual member {name} created and committed successfully.")
-        return new_member
+        # UPSERT操作でメンバーを登録または更新
+        member = upsert_virtual_member(db, name, yaml_path)
+
+        # プロフィール情報を登録または更新
+        llm_model = yaml_data.get('llm_model', '')
+        custom_prompt = yaml_data.get('custom_prompt', '')
+        if llm_model:  # llm_modelが存在する場合のみプロフィール登録
+            from db.database import upsert_virtual_member_profile
+            profile = upsert_virtual_member_profile(db, member.member_id, member.member_uuid, llm_model, custom_prompt)
+
+        # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
+        member_name = member.member_name
+        member_uuid = member.member_uuid
+        yml_file_uri = member.yml_file_uri
+        member_id = member.member_id
+
+        logger.info(f"Virtual member {name} upserted successfully from {yaml_path}")
+        return member
         
     except ValidationError as e:
         # バリデーションエラーでもロールバックを実行
@@ -241,18 +260,11 @@ def register_human_members_batch(yaml_paths: list):
         # 全てのバリデーションが成功した場合のみ、データベース操作を実行
         for yaml_path, yaml_data in yaml_data_list:
             name = yaml_data.get('name')
-            
-            # 既存のメンバーをチェック
-            existing_member = get_human_member_by_name(db, name)
-            if existing_member:
-                logger.info(f"Human member {name} already exists.")
-                created_members.append(existing_member)
-                continue
-            
-            # 新しいメンバーを作成（まだコミットしない）
-            new_member = create_human_member(db, name)
-            created_members.append(new_member)
-            logger.info(f"Human member {name} prepared for creation.")
+
+            # UPSERT操作でメンバーを登録または更新（まだコミットしない）
+            member = upsert_human_member(db, name, yaml_path)
+            created_members.append(member)
+            logger.info(f"Human member {name} prepared for upsert.")
         
         # 全ての処理が成功した場合のみコミット
         db.commit()
@@ -327,18 +339,11 @@ def register_virtual_members_batch(yaml_paths: list):
         # 全てのバリデーションが成功した場合のみ、データベース操作を実行
         for yaml_path, yaml_data in yaml_data_list:
             name = yaml_data.get('name')
-            
-            # 既存のメンバーをチェック
-            existing_member = get_virtual_member_by_name(db, name)
-            if existing_member:
-                logger.info(f"Virtual member {name} already exists.")
-                created_members.append(existing_member)
-                continue
-            
-            # 新しいメンバーを作成（まだコミットしない）
-            new_member = create_virtual_member(db, name)
-            created_members.append(new_member)
-            logger.info(f"Virtual member {name} prepared for creation.")
+
+            # UPSERT操作でメンバーを登録または更新（まだコミットしない）
+            member = upsert_virtual_member(db, name, yaml_path)
+            created_members.append(member)
+            logger.info(f"Virtual member {name} prepared for upsert.")
         
         # 全ての処理が成功した場合のみコミット
         db.commit()
