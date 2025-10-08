@@ -353,6 +353,26 @@ make discord-bot-help
 2. BotがClaude APIを使用して自動応答
 3. 2000文字制限に対応（超過時は省略表示）
 
+**カスタムプロンプト設定:**
+```bash
+# 1. プロンプトファイルを作成（Bot名と一致させる）
+vim backend-llm-response/prompts/bot_characters/🤖🍡華扇.txt
+
+# 2. キャラクター設定を記述（口調、性格、専門分野など）
+# サンプル: backend-llm-response/prompts/bot_characters/example.txt
+
+# 3. コンテナ再起動でプロンプト反映
+make docker-restart
+
+# 4. Discordで動作確認
+@🤖🍡華扇 自己紹介してください
+```
+
+**プロンプトファイル構造:**
+- `backend-llm-response/prompts/bot_characters/🤖🍡華扇.txt`: 華扇のキャラクター定義
+- `backend-llm-response/prompts/bot_characters/example.txt`: テンプレート
+- ファイル名はconfig/discord_tokens.jsonのBot名と一致させる
+
 **動作要件:**
 - Discord Developer PortalでMESSAGE CONTENT INTENTを有効化（必須）
 - Bot Permissions: View Channels, Send Messages, Create Public Threads
@@ -360,6 +380,7 @@ make discord-bot-help
 
 **セキュリティ:**
 - Bot Tokenは`config/discord_tokens.json`で管理（.gitignore保護）
+- プロンプトファイルはGit管理対象（チーム共有）
 - コンテナにread-onlyでマウント
 
 #### TBD
