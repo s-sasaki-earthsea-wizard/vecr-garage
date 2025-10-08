@@ -128,8 +128,8 @@ claude-help: ## Display Claude API commands help
 claude-test: ## Test Claude API connection
 	@echo "🤖 Claude API接続テスト中..."
 	@docker exec vecr-garage-backend-llm-response python3 -c "\
-from services.claude_client import ClaudeClient; \
-result = ClaudeClient().send_test_message(); \
+from services.llm_client import LLMClient; \
+result = LLMClient().send_test_message(); \
 print('✅ 接続成功!' if result['success'] else '❌ 接続失敗'); \
 print(f\"モデル: {result['model']}\"); \
 print(f\"プロンプト: {result['prompt']}\"); \
@@ -148,8 +148,8 @@ claude-prompt: ## Send custom prompt to Claude API (Usage: make claude-prompt PR
 	@echo "プロンプト: $(PROMPT)"
 	@echo ""
 	@docker exec vecr-garage-backend-llm-response python3 -c "\
-from services.claude_client import ClaudeClient; \
-response = ClaudeClient().send_message('$(PROMPT)'); \
+from services.llm_client import LLMClient; \
+response = LLMClient().send_message('$(PROMPT)'); \
 print('📝 応答:'); \
 print(response); \
 "
@@ -162,11 +162,11 @@ claude-to-discord: ## Send Claude API response to Discord (Usage: make claude-to
 		echo "  make claude-to-discord WEBHOOK=kasen_times PROMPT=\"今日の天気は？\""; \
 		exit 1; \
 	fi
-	@echo "🤖 Claude APIにプロンプトを送信中..."
+	@echo "🤖 LLM APIにプロンプトを送信中..."
 	@echo "Webhook: $(WEBHOOK)"
 	@echo "プロンプト: $(PROMPT)"
 	@echo ""
-	@docker exec vecr-garage-backend-llm-response python3 -c "from services.claude_discord_bridge import ClaudeDiscordBridge; result = ClaudeDiscordBridge().send_prompt_to_discord('$(WEBHOOK)', '''$(PROMPT)'''); print('✅ 成功!' if result['success'] else '❌ 失敗'); print(f\"Claude応答をDiscord（{result['webhook_name']}）に投稿しました\" if result['success'] else f\"エラー: {result.get('error')}\");"
+	@docker exec vecr-garage-backend-llm-response python3 -c "from services.llm_discord_bridge import LLMDiscordBridge; result = LLMDiscordBridge().send_prompt_to_discord('$(WEBHOOK)', '''$(PROMPT)'''); print('✅ 成功!' if result['success'] else '❌ 失敗'); print(f\"LLM応答をDiscord（{result['webhook_name']}）に投稿しました\" if result['success'] else f\"エラー: {result.get('error')}\");"
 
 # ------------------------------------------------------------
 # Discord Bot 関連コマンド
