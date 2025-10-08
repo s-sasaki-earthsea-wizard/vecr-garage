@@ -1,14 +1,16 @@
 """
 Discord Bot本体
 
-@メンション検知 → Claude API連携 → Discord返信
+@メンション検知 → LLM API連携 → Discord返信
 複数チャンネル対応
+カスタムプロンプト対応
 """
 
 import discord
 import logging
-from typing import List
-from services.claude_client import ClaudeClient
+from typing import List, Optional
+from services.llm_client import LLMClient
+from config.prompt import PromptParser
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,9 @@ class DiscordBot:
         self.bot_token = bot_token
         self.target_channel_ids = set(target_channel_ids)  # 高速検索のためsetに変換
 
+        # システムプロンプトの読み込み
+        self.system_prompt = PromptParser.get_prompt(bot_name, source="file")
+
         # Intents設定（Message Content Intent必須）
         intents = discord.Intents.default()
         intents.message_content = True
@@ -36,7 +41,7 @@ class DiscordBot:
         intents.messages = True
 
         self.client = discord.Client(intents=intents)
-        self.claude_client = ClaudeClient()
+        self.llm_client = LLMClient()
 
         # イベントハンドラー登録
         self._setup_events()
@@ -80,9 +85,12 @@ class DiscordBot:
                 f"in {message.channel.name} - {prompt[:50]}..."
             )
 
-            # 5. Claude API呼び出し
+            # 5. LLM API呼び出し
             try:
-                response = self.claude_client.send_message(prompt)
+                # システムプロンプトを使用してLLM APIを呼び出し
+                response = self.llm_client.send_message(
+                    prompt=prompt, system_prompt=self.system_prompt
+                )
 
                 # 6. Discord文字数制限対応（2000文字）
                 if len(response) > 2000:
@@ -93,7 +101,7 @@ class DiscordBot:
                 logger.info(f"✅ 応答送信完了: {len(response)}文字")
 
             except Exception as e:
-                logger.error(f"❌ Claude API呼び出しエラー: {e}", exc_info=True)
+                logger.error(f"❌ LLM API呼び出しエラー: {e}", exc_info=True)
                 await message.channel.send(
                     "⚠️ エラーが発生しました。後ほど再試行してください。"
                 )

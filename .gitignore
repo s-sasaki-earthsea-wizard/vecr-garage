@@ -205,6 +205,9 @@ config/discord_webhooks.json
 config/discord_tokens.json
 config/discord_channel_ids.json
 
+# Discord Bot character prompts (version controlled for team collaboration)
+# backend-llm-response/prompts/bot_characters/*.txt は Git 管理対象
+
 # direnv configuration (may contain sensitive environment variables)
 .envrc
 
