@@ -55,11 +55,25 @@ cp .env.example .env
 
 - 環境変数は実際のものに書き換えてください
 
-3. コンテナのビルドと起動
+3. Discord Webhook設定（オプション）
+```bash
+# Webhook設定ファイルを作成
+cp config/discord_webhooks.example.json config/discord_webhooks.json
+
+# Webhook URLを実際のものに書き換える
+# config/discord_webhooks.json を編集
+
+# .envrcファイルをコピー（自動読み込み用）
+cp .envrc.example .envrc
+```
+
+4. コンテナのビルドと起動
 
 ```bash
 make docker-build-up
 ```
+
+**Note**: `.envrc`が存在する場合、`make docker-up`/`docker-build-up`実行時に自動的にDiscord Webhook設定が読み込まれます。
 
 ## 使い方
 
@@ -194,6 +208,104 @@ http://localhost:8000/login
 - レコードの追加・更新・削除
 - 認証システム（ログイン/ログアウト）
 - パスワード表示切り替え機能
+
+#### Discord Webhook通知
+
+Discord Webhookを使用してメッセージを送信する機能を提供しています。
+
+**セットアップ:**
+```bash
+# 1. Webhook設定ファイルを作成
+cp config/discord_webhooks.example.json config/discord_webhooks.json
+
+# 2. 実際のWebhook URLを設定
+vim config/discord_webhooks.json
+
+# 3. .envrcをコピー（自動読み込み用）
+cp .envrc.example .envrc
+
+# 4. コンテナ起動（自動的にWebhookが読み込まれる）
+make docker-up
+```
+
+**使用可能なコマンド:**
+```bash
+# Webhook一覧表示
+make discord-webhooks-list
+
+# 動作確認（推奨）
+make discord-verify
+
+# 個別テスト送信
+make discord-test-kasen
+make discord-test-karasuno_endo
+make discord-test-rusudan
+
+# 全Webhookへ同時送信
+make discord-test-all
+
+# カスタムメッセージ送信
+make discord-send-message WEBHOOK=kasen_times MESSAGE="Hello from VECR Garage!"
+
+# コマンド一覧表示
+make discord-help
+
+# 統合テスト（Discord Webhook含む）
+make test-integration
+```
+
+**セキュリティ:**
+- `config/discord_webhooks.json`は`.gitignore`で保護
+- `.envrc`も`.gitignore`で保護
+- コンテナにはファイルをマウントせず、環境変数として渡す
+- AWS Secrets Managerへの移行準備完了
+
+**統合テスト:**
+- `make test-integration`でDiscord Webhookテストも自動実行
+- HTTP 204レスポンス確認（送信成功）
+- 実際のメッセージ到達は各Discordチャンネルで目視確認推奨
+
+#### Claude API連携
+
+Claude APIを使用してプロンプトを送信し、応答を取得する機能を提供しています。
+
+**セットアップ:**
+```bash
+# 1. .envファイルにAPIキーを設定
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+ANTHROPIC_API_VERSION=2023-06-01
+ANTHROPIC_MAX_TOKENS=4096
+
+# 2. コンテナ起動（自動的にAPIキーが読み込まれる）
+make docker-up
+```
+
+**使用可能なコマンド:**
+```bash
+# 接続テスト
+make claude-test
+
+# カスタムプロンプト送信
+make claude-prompt PROMPT="こんにちは！"
+
+# コマンド一覧表示
+make claude-help
+```
+
+**実行例:**
+```bash
+$ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてください"
+🤖 Claude APIにプロンプトを送信中...
+プロンプト: Pythonで素数判定する関数を書いてください
+
+📝 応答:
+[Claude APIからのコード生成結果が表示されます]
+```
+
+**セキュリティ:**
+- APIキーは`.env`で管理（.gitignore保護）
+- コンテナに環境変数として渡される
 
 #### TBD
 

@@ -200,3 +200,9 @@ storage/data/*
 awscliv2.zip
 aws/
 
+# Discord Webhooks configuration (contains sensitive URLs)
+config/discord_webhooks.json
+
+# direnv configuration (may contain sensitive environment variables)
+.envrc
+
