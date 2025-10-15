@@ -9,12 +9,12 @@ CLAUDE_API_BASE := $(LLM_BASE_URL)/api/claude
 # jqの存在確認
 JQ_EXISTS := $(shell command -v jq 2> /dev/null)
 
-# JSON整形ヘルパー（jqが無い場合はそのまま表示）
+# JSON整形ヘルパー（jqが無い場合は公式ドキュメントのリンクを表示）
 ifdef JQ_EXISTS
     FORMAT_JSON = | jq .
 else
     FORMAT_JSON =
-    $(warning jqがインストールされていません。JSON出力が整形されません)
+    $(warning jqがインストールされていません。JSON出力が整形されません。公式ドキュメント https://jqlang.org/download/ を確認してください)
 endif
 
 # ------------------------------------------------------------
