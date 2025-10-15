@@ -58,18 +58,32 @@ class DiscordConfigValidator:
         if not isinstance(bot_config["bot_token"], str):
             return False, f"Bot '{bot_name}' の bot_token は文字列である必要があります"
 
-        # channel_idsチェック
-        if "channel_ids" not in bot_config:
-            return False, f"Bot '{bot_name}' に channel_ids フィールドが必要です"
+        # channelsチェック
+        if "channels" not in bot_config:
+            return False, f"Bot '{bot_name}' に channels フィールドが必要です"
 
-        if not isinstance(bot_config["channel_ids"], list):
-            return False, f"Bot '{bot_name}' の channel_ids は配列である必要があります"
+        channels = bot_config["channels"]
+        if not isinstance(channels, dict):
+            return False, f"Bot '{bot_name}' の channels は辞書である必要があります"
 
-        # チャンネルIDの型チェック
-        for idx, channel_id in enumerate(bot_config["channel_ids"]):
-            if not isinstance(channel_id, (str, int)):
-                return False, (
-                    f"Bot '{bot_name}' の channel_ids[{idx}] は文字列または数値である必要があります"
-                )
+        # mention_modeのチェック
+        if "mention_mode" in channels:
+            if not isinstance(channels["mention_mode"], list):
+                return False, f"Bot '{bot_name}' の channels.mention_mode は配列である必要があります"
+            for idx, channel_id in enumerate(channels["mention_mode"]):
+                if not isinstance(channel_id, (str, int)):
+                    return False, (
+                        f"Bot '{bot_name}' の channels.mention_mode[{idx}] は文字列または数値である必要があります"
+                    )
+
+        # auto_thread_modeのチェック
+        if "auto_thread_mode" in channels:
+            if not isinstance(channels["auto_thread_mode"], list):
+                return False, f"Bot '{bot_name}' の channels.auto_thread_mode は配列である必要があります"
+            for idx, channel_id in enumerate(channels["auto_thread_mode"]):
+                if not isinstance(channel_id, (str, int)):
+                    return False, (
+                        f"Bot '{bot_name}' の channels.auto_thread_mode[{idx}] は文字列または数値である必要があります"
+                    )
 
         return True, ""
