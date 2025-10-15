@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from models.members import HumanMember, VirtualMember, HumanMemberProfile, VirtualMemberProfile
 import uuid
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 import datetime
@@ -151,10 +151,10 @@ def get_human_member_by_uri(db: Session, yml_file_uri: str):
         raise DatabaseError(error_msg, e)
 
 def upsert_human_member(db: Session, name: str, yml_file_uri: str):
-    """人間メンバーをUPSERT（存在すれば更新、存在しなければ挿入）する
+    """人間メンバーをUPSERT（ON CONFLICT DO UPDATE使用）
 
-    指定されたYAMLファイルURIの人間メンバーが存在する場合は更新し、
-    存在しない場合は新規作成します。
+    PostgreSQLのON CONFLICT DO UPDATE機能を使用して、
+    単一のSQL文でINSERT/UPDATEを統一処理します。
 
     Args:
         db (Session): SQLAlchemyのデータベースセッション
@@ -168,28 +168,36 @@ def upsert_human_member(db: Session, name: str, yml_file_uri: str):
         DatabaseError: UPSERT処理時にエラーが発生した場合
     """
     try:
-        # URIで既存メンバーを検索
-        existing_member = get_human_member_by_uri(db, yml_file_uri)
+        from sqlalchemy import text
 
-        if existing_member:
-            # 既存メンバーを更新
-            existing_member.member_name = name
-            existing_member.updated_at = db.query(func.current_timestamp()).scalar()
-            db.commit()
-            db.refresh(existing_member)
-            logger.info(f"Human member '{name}' updated for URI: {yml_file_uri}")
-            return existing_member
-        else:
-            # 新規メンバーを作成
-            member = create_human_member(db, name, yml_file_uri)
-            db.add(member)
-            db.commit()
-            db.refresh(member)
-            logger.info(f"Human member '{name}' created for URI: {yml_file_uri}")
-            return member
+        # ON CONFLICT DO UPDATEでINSERT/UPDATEを一元化
+        sql = text("""
+            INSERT INTO human_members (member_name, yml_file_uri, member_uuid, created_at, updated_at)
+            VALUES (:name, :yml_file_uri, gen_random_uuid(), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (yml_file_uri)
+            DO UPDATE SET
+                member_name = EXCLUDED.member_name,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING member_id, member_uuid, member_name, yml_file_uri, created_at, updated_at
+        """)
+
+        result = db.execute(sql, {"name": name, "yml_file_uri": yml_file_uri})
+        row = result.fetchone()
+
+        # 結果からHumanMemberオブジェクトを構築
+        member = HumanMember(
+            member_id=row.member_id,
+            member_uuid=row.member_uuid,
+            member_name=row.member_name,
+            yml_file_uri=row.yml_file_uri,
+            created_at=row.created_at,
+            updated_at=row.updated_at
+        )
+
+        logger.info(f"Human member '{name}' upserted for URI: {yml_file_uri}")
+        return member
 
     except Exception as e:
-        db.rollback()
         error_msg = f"Failed to upsert human member '{name}' for URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
@@ -318,10 +326,10 @@ def get_virtual_member_by_uri(db: Session, yml_file_uri: str):
         raise DatabaseError(error_msg, e)
 
 def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
-    """仮想メンバーをUPSERT（存在すれば更新、存在しなければ挿入）する
+    """仮想メンバーをUPSERT（ON CONFLICT DO UPDATE使用）
 
-    指定されたYAMLファイルURIの仮想メンバーが存在する場合は更新し、
-    存在しない場合は新規作成します。
+    PostgreSQLのON CONFLICT DO UPDATE機能を使用して、
+    単一のSQL文でINSERT/UPDATEを統一処理します。
 
     Args:
         db (Session): SQLAlchemyのデータベースセッション
@@ -335,116 +343,122 @@ def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
         DatabaseError: UPSERT処理時にエラーが発生した場合
     """
     try:
-        # URIで既存メンバーを検索
-        existing_member = get_virtual_member_by_uri(db, yml_file_uri)
+        from sqlalchemy import text
 
-        if existing_member:
-            # 既存メンバーを更新
-            existing_member.member_name = name
-            existing_member.updated_at = db.query(func.current_timestamp()).scalar()
-            db.commit()
-            db.refresh(existing_member)
-            logger.info(f"Virtual member '{name}' updated for URI: {yml_file_uri}")
-            return existing_member
-        else:
-            # 新規メンバーを作成
-            member = create_virtual_member(db, name, yml_file_uri)
-            db.add(member)
-            db.commit()
-            db.refresh(member)
-            logger.info(f"Virtual member '{name}' created for URI: {yml_file_uri}")
-            return member
+        # ON CONFLICT DO UPDATEでINSERT/UPDATEを一元化
+        sql = text("""
+            INSERT INTO virtual_members (member_name, yml_file_uri, member_uuid, created_at, updated_at)
+            VALUES (:name, :yml_file_uri, gen_random_uuid(), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (yml_file_uri)
+            DO UPDATE SET
+                member_name = EXCLUDED.member_name,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING member_id, member_uuid, member_name, yml_file_uri, created_at, updated_at
+        """)
+
+        result = db.execute(sql, {"name": name, "yml_file_uri": yml_file_uri})
+        row = result.fetchone()
+
+        # 結果からVirtualMemberオブジェクトを構築
+        member = VirtualMember(
+            member_id=row.member_id,
+            member_uuid=row.member_uuid,
+            member_name=row.member_name,
+            yml_file_uri=row.yml_file_uri,
+            created_at=row.created_at,
+            updated_at=row.updated_at
+        )
+
+        logger.info(f"Virtual member '{name}' upserted for URI: {yml_file_uri}")
+        return member
 
     except Exception as e:
-        db.rollback()
         error_msg = f"Failed to upsert virtual member '{name}' for URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
 # プロフィール操作
-def save_human_member_profile(db: Session, member_id: int, member_uuid: str, bio: str = None):
-    """人間メンバープロフィールを新規作成する"""
-    try:
-        profile = HumanMemberProfile(
-            member_id=member_id,
-            member_uuid=member_uuid,
-            bio=bio
-        )
-        db.add(profile)
-        db.commit()
-        db.refresh(profile)
-        return profile
-    except Exception as e:
-        db.rollback()
-        error_msg = f"Failed to create human member profile for member {member_uuid}: {str(e)}"
-        logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
-
 def upsert_human_member_profile(db: Session, member_id: int, member_uuid: str, bio: str = None):
-    """人間メンバープロフィールのUPSERT処理"""
+    """人間メンバープロフィールのUPSERT処理（ON CONFLICT DO UPDATE使用）"""
     try:
-        existing_profile = db.query(HumanMemberProfile).filter(
-            HumanMemberProfile.member_uuid == member_uuid
-        ).first()
+        sql = text("""
+            INSERT INTO human_member_profiles (member_id, member_uuid, bio, profile_uuid, created_at, updated_at)
+            VALUES (:member_id, :member_uuid, :bio, gen_random_uuid(), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (member_uuid)
+            DO UPDATE SET
+                member_id = EXCLUDED.member_id,
+                bio = EXCLUDED.bio,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING profile_id, member_id, member_uuid, bio, profile_uuid, created_at, updated_at
+        """)
 
-        if existing_profile:
-            # 更新処理
-            if bio is not None:
-                existing_profile.bio = bio
-            existing_profile.updated_at = datetime.datetime.now(datetime.UTC)
-            db.commit()
-            db.refresh(existing_profile)
-            return existing_profile
-        else:
-            # 新規作成
-            return save_human_member_profile(db, member_id, member_uuid, bio)
+        result = db.execute(sql, {
+            "member_id": member_id,
+            "member_uuid": member_uuid,
+            "bio": bio
+        })
+        row = result.fetchone()
+
+        # 結果からHumanMemberProfileオブジェクトを構築
+        profile = HumanMemberProfile(
+            profile_id=row.profile_id,
+            profile_uuid=row.profile_uuid,
+            member_id=row.member_id,
+            member_uuid=row.member_uuid,
+            bio=row.bio,
+            created_at=row.created_at,
+            updated_at=row.updated_at
+        )
+
+        logger.info(f"Human member profile upserted for member {member_uuid}")
+        return profile
+
     except Exception as e:
-        db.rollback()
+        # NOTE: ロールバックは呼び出し元で実行
         error_msg = f"Failed to upsert human member profile for member {member_uuid}: {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
-def save_virtual_member_profile(db: Session, member_id: int, member_uuid: str, llm_model: str, custom_prompt: str = None):
-    """仮想メンバープロフィールを新規作成する"""
-    try:
-        profile = VirtualMemberProfile(
-            member_id=member_id,
-            member_uuid=member_uuid,
-            llm_model=llm_model,
-            custom_prompt=custom_prompt
-        )
-        db.add(profile)
-        db.commit()
-        db.refresh(profile)
-        return profile
-    except Exception as e:
-        db.rollback()
-        error_msg = f"Failed to create virtual member profile for member {member_uuid}: {str(e)}"
-        logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
-
 def upsert_virtual_member_profile(db: Session, member_id: int, member_uuid: str, llm_model: str, custom_prompt: str = None):
-    """仮想メンバープロフィールのUPSERT処理"""
+    """仮想メンバープロフィールのUPSERT処理（ON CONFLICT DO UPDATE使用）"""
     try:
-        existing_profile = db.query(VirtualMemberProfile).filter(
-            VirtualMemberProfile.member_uuid == member_uuid
-        ).first()
+        sql = text("""
+            INSERT INTO virtual_member_profiles (member_id, member_uuid, llm_model, custom_prompt, profile_uuid, created_at, updated_at)
+            VALUES (:member_id, :member_uuid, :llm_model, :custom_prompt, gen_random_uuid(), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (member_uuid)
+            DO UPDATE SET
+                member_id = EXCLUDED.member_id,
+                llm_model = EXCLUDED.llm_model,
+                custom_prompt = EXCLUDED.custom_prompt,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING profile_id, member_id, member_uuid, llm_model, custom_prompt, profile_uuid, created_at, updated_at
+        """)
 
-        if existing_profile:
-            # 更新処理
-            if llm_model is not None:
-                existing_profile.llm_model = llm_model
-            if custom_prompt is not None:
-                existing_profile.custom_prompt = custom_prompt
-            existing_profile.updated_at = datetime.datetime.now(datetime.UTC)
-            db.commit()
-            db.refresh(existing_profile)
-            return existing_profile
-        else:
-            # 新規作成
-            return save_virtual_member_profile(db, member_id, member_uuid, llm_model, custom_prompt)
+        result = db.execute(sql, {
+            "member_id": member_id,
+            "member_uuid": member_uuid,
+            "llm_model": llm_model,
+            "custom_prompt": custom_prompt
+        })
+        row = result.fetchone()
+
+        # 結果からVirtualMemberProfileオブジェクトを構築
+        profile = VirtualMemberProfile(
+            profile_id=row.profile_id,
+            profile_uuid=row.profile_uuid,
+            member_id=row.member_id,
+            member_uuid=row.member_uuid,
+            llm_model=row.llm_model,
+            custom_prompt=row.custom_prompt,
+            created_at=row.created_at,
+            updated_at=row.updated_at
+        )
+
+        logger.info(f"Virtual member profile upserted for member {member_uuid}")
+        return profile
+
     except Exception as e:
-        db.rollback()
+        # NOTE: ロールバックは呼び出し元で実行
         error_msg = f"Failed to upsert virtual member profile for member {member_uuid}: {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)

@@ -55,9 +55,18 @@ def register_human_member_from_yaml(yaml_path: str):
 
         # プロフィール情報を登録または更新
         bio = yaml_data.get('bio', '')
-        if bio:  # bioが存在する場合のみプロフィール登録
-            from db.database import upsert_human_member_profile
-            profile = upsert_human_member_profile(db, member.member_id, member.member_uuid, bio)
+        if not bio:  # bioが存在しない場合はロールバック
+            db.rollback()
+            error_msg = f"Bio field is required for human member registration from {yaml_path}"
+            logger.error(error_msg)
+            print(f"❌ {error_msg}")
+            raise ValidationError(error_msg, ["bio"])
+
+        from db.database import upsert_human_member_profile
+        profile = upsert_human_member_profile(db, member.member_id, member.member_uuid, bio)
+
+        # 全ての処理が成功した場合のみコミット
+        db.commit()
 
         # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
         member_name = member.member_name
@@ -156,9 +165,27 @@ def register_virtual_member_from_yaml(yaml_path: str):
         # プロフィール情報を登録または更新
         llm_model = yaml_data.get('llm_model', '')
         custom_prompt = yaml_data.get('custom_prompt', '')
-        if llm_model:  # llm_modelが存在する場合のみプロフィール登録
-            from db.database import upsert_virtual_member_profile
-            profile = upsert_virtual_member_profile(db, member.member_id, member.member_uuid, llm_model, custom_prompt)
+
+        # llm_modelは必須、custom_promptも必須
+        if not llm_model:
+            db.rollback()
+            error_msg = f"LLM model field is required for virtual member registration from {yaml_path}"
+            logger.error(error_msg)
+            print(f"❌ {error_msg}")
+            raise ValidationError(error_msg, ["llm_model"])
+
+        if not custom_prompt:
+            db.rollback()
+            error_msg = f"Custom prompt field is required for virtual member registration from {yaml_path}"
+            logger.error(error_msg)
+            print(f"❌ {error_msg}")
+            raise ValidationError(error_msg, ["custom_prompt"])
+
+        from db.database import upsert_virtual_member_profile
+        profile = upsert_virtual_member_profile(db, member.member_id, member.member_uuid, llm_model, custom_prompt)
+
+        # 全ての処理が成功した場合のみコミット
+        db.commit()
 
         # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
         member_name = member.member_name

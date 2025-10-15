@@ -68,7 +68,8 @@ def test_yaml_files(tmp_path):
     virtual_yaml = {
         "name": "AIアシスタント",
         "bio": "テスト用の仮想メンバーです",
-        "llm_model": "gpt-4"
+        "llm_model": "gpt-4",
+        "custom_prompt": "テスト用のカスタムプロンプトです"
     }
     virtual_yaml_path = tmp_path / "virtual_test.yaml"
     with open(virtual_yaml_path, "w", encoding="utf-8") as f:
