@@ -686,15 +686,19 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 - Claude APIとの統合（ClaudeClientを使用）
 
 **設定管理**:
-- `config/discord_tokens.json`: Bot TokenとチャンネルID管理
+- `config/discord_tokens.json`: Bot TokenとチャンネルID管理（モード別）
 - JSON直接読み込み（環境変数を経由しない）
 - 複数Bot対応（Bot名ごとに設定を分離）
 
+**設定フォーマット**:
 ```json
 {
     "🤖🍡華扇": {
         "bot_token": "YOUR_BOT_TOKEN_HERE",
-        "channel_ids": ["1356872662831333452"]
+        "channels": {
+            "mention_mode": ["1356872662831333452"],
+            "auto_thread_mode": ["1356872551019577395"]
+        }
     }
 }
 ```
@@ -706,13 +710,21 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 
 #### 🤖 Bot動作仕様
 
-**メッセージ検知**:
-1. 対象チャンネルのメッセージを監視
-2. Botへの@メンションを検知
-3. メンション部分を除去してプロンプトを抽出
-4. Claude APIで応答生成
-5. 2000文字制限対応（超過時は省略表示）
-6. Discordチャンネルに返信
+**2つの動作モード**:
+
+1. **Mention Mode（@メンション対応）**:
+   - Botへの@メンションを検知
+   - メンション部分を除去してプロンプトを抽出
+   - Claude APIで応答生成
+   - 2000文字制限対応（超過時は省略表示）
+   - Discordチャンネルに返信
+
+2. **AutoThread Mode（新着投稿自動応答）** ✅ 実装完了:
+   - Bot自身以外の新着投稿を検知
+   - チャンネルの過去20件の会話履歴を取得
+   - 会話の文脈を含めてClaude APIに送信
+   - @メンション付きで自動返信（`message.reply()`使用）
+   - 無限ループ防止（Bot自身のメッセージは無視）
 
 **起動方法**:
 - `src/app.py`: Discord Bot専用起動スクリプト
@@ -750,10 +762,13 @@ make discord-bot-test-config    # Discord Bot設定テスト
 - ✅ Bot設定読み込み成功（discord_tokens.json）
 - ✅ Discord Gatewayへの接続成功
 - ✅ Bot起動完了: `🤖🍡華扇#8670`
-- ✅ 対象チャンネル: 1個 (kasen_times)
+- ✅ Mentionモード対象チャンネル: 1個 (1356872662831333452)
+- ✅ AutoThreadモード対象チャンネル: 1個 (1356872551019577395)
 
 **動作確認**:
-- ✅ @メンション検知成功
+- ✅ @メンション検知成功（Mention Mode）
+- ✅ 新着投稿自動応答成功（AutoThread Mode）
+- ✅ 会話履歴の文脈理解確認
 - ✅ Claude API連携応答成功
 - ✅ 2000文字制限対応確認
 
@@ -782,10 +797,16 @@ make discord-bot-logs
 
 #### 🎯 今後の拡張予定
 
+- [ ] **会話履歴管理の改善**（優先度: 高）
+  - **現在の課題**: 過去20件の履歴を一律取得するため、終わった話題が繰り返される
+  - **解決策の選択肢**:
+    1. **DynamoDB統合**: ユーザーごとに会話セッションを管理（最も推奨）
+    2. **トピック検出**: LLMで会話の区切りを判定し、関連する履歴のみ取得
+    3. **時間ベースフィルタリング**: 直近N分間の会話のみを対象
+    4. **スレッド活用**: 話題ごとにスレッドを分け、スレッド単位で履歴管理
 - [ ] 複数Botの同時起動（Bot名ごとの独立プロセス）
 - [ ] スレッド対応（スレッド内での会話継続）
 - [ ] リアクション機能（絵文字によるコマンド操作）
-- [ ] コンテキスト保持（会話履歴をDynamoDBに保存）
 - [ ] メンバープロフィール連携（db-memberとの統合）
 - [ ] リッチエンベッド対応（構造化された応答表示）
 - [ ] Slash Commands実装（/kasen <prompt>等）
@@ -829,6 +850,8 @@ make discord-bot-logs
 - [x] **Discord Webhook通知システム実装（backend-llm-response）**
 - [x] **Claude API連携実装（backend-llm-response）**
 - [x] **Discord Bot統合実装（@メンション検知＋Claude API応答）**
+- [x] **Discord Bot AutoThreadモード実装（新着投稿自動応答＋会話履歴管理）**
+- [ ] Discord Bot会話履歴管理の改善（DynamoDB統合、トピック検出等）
 - [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示

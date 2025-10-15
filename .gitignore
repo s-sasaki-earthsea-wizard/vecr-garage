@@ -201,13 +201,15 @@ awscliv2.zip
 aws/
 
 # Discord Webhooks configuration, tokens and channel IDs (contains sensitive URLs)
-config/discord_webhooks.json
-config/discord_tokens.json
-config/discord_channel_ids.json
+config/*
+!config/*.example.json
 
 # Discord Bot character prompts (version controlled for team collaboration)
 # backend-llm-response/prompts/bot_characters/*.txt は Git 管理対象
 
 # direnv configuration (may contain sensitive environment variables)
 .envrc
+
+# Docker runtime artifacts (created when containers mount volumes)
+backend-llm-response/config/
 
