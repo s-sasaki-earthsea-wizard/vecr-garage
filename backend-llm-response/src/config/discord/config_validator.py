@@ -86,4 +86,14 @@ class DiscordConfigValidator:
                         f"Bot '{bot_name}' の channels.auto_thread_mode[{idx}] は文字列または数値である必要があります"
                     )
 
+        # times_modeのチェック
+        if "times_mode" in channels:
+            if not isinstance(channels["times_mode"], list):
+                return False, f"Bot '{bot_name}' の channels.times_mode は配列である必要があります"
+            for idx, channel_id in enumerate(channels["times_mode"]):
+                if not isinstance(channel_id, (str, int)):
+                    return False, (
+                        f"Bot '{bot_name}' の channels.times_mode[{idx}] は文字列または数値である必要があります"
+                    )
+
         return True, ""

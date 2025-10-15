@@ -3,14 +3,16 @@
         "bot_token": "YOUR_BOT_TOKEN_HERE",
         "channels": {
             "mention_mode": ["YOUR_CHANNEL_ID_HERE"],
-            "auto_thread_mode": []
+            "auto_thread_mode": [],
+            "times_mode": []
         }
     },
     "🤖🫛カラスノエンドウ": {
         "bot_token": "YOUR_BOT_TOKEN_HERE",
         "channels": {
             "mention_mode": ["YOUR_CHANNEL_ID_HERE"],
-            "auto_thread_mode": []
+            "auto_thread_mode": [],
+            "times_mode": []
         }
     }
 }

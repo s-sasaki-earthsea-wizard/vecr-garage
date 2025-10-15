@@ -66,7 +66,7 @@ class DiscordConfigParser:
         return config[bot_name]["bot_token"]
 
     @staticmethod
-    def get_bot_config(bot_name: str, config: Optional[Dict] = None) -> Tuple[str, List[int], List[int]]:
+    def get_bot_config(bot_name: str, config: Optional[Dict] = None) -> Tuple[str, List[int], List[int], List[int]]:
         """
         Bot名からTokenとモード別チャンネルIDリストを取得
 
@@ -75,7 +75,7 @@ class DiscordConfigParser:
             config: Bot設定（未指定時はファイルから読み込み）
 
         Returns:
-            (Bot Token, mention_modeチャンネルIDリスト, auto_thread_modeチャンネルIDリスト) のタプル
+            (Bot Token, mention_modeチャンネルIDリスト, auto_thread_modeチャンネルIDリスト, times_modeチャンネルIDリスト) のタプル
 
         Raises:
             ValueError: Bot名が見つからない
@@ -96,8 +96,9 @@ class DiscordConfigParser:
 
         mention_channels = [int(ch) for ch in channels.get('mention_mode', [])]
         auto_thread_channels = [int(ch) for ch in channels.get('auto_thread_mode', [])]
+        times_channels = [int(ch) for ch in channels.get('times_mode', [])]
 
-        return token, mention_channels, auto_thread_channels
+        return token, mention_channels, auto_thread_channels, times_channels
 
     @staticmethod
     def list_bots(config: Optional[Dict] = None) -> List[str]:

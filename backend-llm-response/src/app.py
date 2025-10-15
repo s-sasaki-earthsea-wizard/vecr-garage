@@ -30,16 +30,17 @@ def main():
 
     try:
         # Bot設定取得（モード別チャンネル取得）
-        token, mention_channels, auto_thread_channels = DiscordConfigParser.get_bot_config(bot_name)
+        token, mention_channels, auto_thread_channels, times_channels = DiscordConfigParser.get_bot_config(bot_name)
 
         logger.info(
             f"📝 Bot設定取得成功: "
             f"Mentionモード {len(mention_channels)}ch, "
-            f"AutoThreadモード {len(auto_thread_channels)}ch"
+            f"AutoThreadモード {len(auto_thread_channels)}ch, "
+            f"Timesモード {len(times_channels)}ch"
         )
 
         # Bot起動
-        bot = DiscordBot(bot_name, token, mention_channels, auto_thread_channels)
+        bot = DiscordBot(bot_name, token, mention_channels, auto_thread_channels, times_channels)
         bot.run()
 
     except FileNotFoundError as e:

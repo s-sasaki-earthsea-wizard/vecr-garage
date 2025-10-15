@@ -726,6 +726,15 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
    - @メンション付きで自動返信（`message.reply()`使用）
    - 無限ループ防止（Bot自身のメッセージは無視）
 
+3. **Times Mode（1日1回自動投稿）** ✅ 実装完了:
+   - JST 9:00-18:00の間に1日1回ランダムな話題で投稿
+   - APScheduler + pytzによるJST対応スケジューラー
+   - jitterによるランダム投稿時刻（9時間幅）
+   - 話題リスト管理（`prompts/times_topics.json`）
+   - 1日1回フラグ管理（日付ベース）
+   - Claude APIで応答生成→Discord投稿
+   - 2000文字制限対応（超過時は省略表示）
+
 **起動方法**:
 - `src/app.py`: Discord Bot専用起動スクリプト
 - DockerfileのCMDで自動起動
@@ -735,6 +744,8 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 
 **requirements.txt追加**:
 - `discord.py==2.4.0`: Discord Bot公式ライブラリ
+- `APScheduler==3.10.4`: Python用ジョブスケジューリングライブラリ
+- `pytz==2024.1`: タイムゾーン処理ライブラリ
 
 **docker-compose.yml設定**:
 ```yaml
@@ -764,11 +775,15 @@ make discord-bot-test-config    # Discord Bot設定テスト
 - ✅ Bot起動完了: `🤖🍡華扇#8670`
 - ✅ Mentionモード対象チャンネル: 1個 (1356872662831333452)
 - ✅ AutoThreadモード対象チャンネル: 1個 (1356872551019577395)
+- ✅ Timesモード対象チャンネル: 1個 (1356872662831333452)
+- ✅ TimesSchedulerスケジューラー起動完了
 
 **動作確認**:
 - ✅ @メンション検知成功（Mention Mode）
 - ✅ 新着投稿自動応答成功（AutoThread Mode）
 - ✅ 会話履歴の文脈理解確認
+- ✅ 1日1回自動投稿スケジュール設定完了（Times Mode）
+- ✅ 話題リスト読み込み成功（20件）
 - ✅ Claude API連携応答成功
 - ✅ 2000文字制限対応確認
 
@@ -797,6 +812,7 @@ make discord-bot-logs
 
 #### 🎯 今後の拡張予定
 
+**AutoThread Mode改善**:
 - [ ] **会話履歴管理の改善**（優先度: 高）
   - **現在の課題**: 過去20件の履歴を一律取得するため、終わった話題が繰り返される
   - **解決策の選択肢**:
@@ -804,6 +820,18 @@ make discord-bot-logs
     2. **トピック検出**: LLMで会話の区切りを判定し、関連する履歴のみ取得
     3. **時間ベースフィルタリング**: 直近N分間の会話のみを対象
     4. **スレッド活用**: 話題ごとにスレッドを分け、スレッド単位で履歴管理
+
+**Times Mode改善**:
+- [ ] **話題管理の改善**（優先度: 中）
+  - **現在の実装**: JSONファイルにベタ書き（テスト用暫定処置）
+  - **改善案**:
+    1. **データベース管理**: PostgreSQLに話題テーブルを作成
+    2. **動的更新**: 管理画面から話題の追加・編集・削除
+    3. **カテゴリ分類**: 技術/趣味/日常などのカテゴリ別管理
+    4. **重み付け**: 話題ごとに出現頻度を制御
+    5. **履歴管理**: 過去に投稿した話題を記録し、重複を避ける
+
+**共通機能**:
 - [ ] 複数Botの同時起動（Bot名ごとの独立プロセス）
 - [ ] スレッド対応（スレッド内での会話継続）
 - [ ] リアクション機能（絵文字によるコマンド操作）
@@ -851,6 +879,8 @@ make discord-bot-logs
 - [x] **Claude API連携実装（backend-llm-response）**
 - [x] **Discord Bot統合実装（@メンション検知＋Claude API応答）**
 - [x] **Discord Bot AutoThreadモード実装（新着投稿自動応答＋会話履歴管理）**
+- [x] **Discord Bot Timesモード実装（1日1回自動投稿＋APScheduler統合）**
+- [ ] Discord Bot Times Mode話題管理の改善（データベース化、カテゴリ分類等）
 - [ ] Discord Bot会話履歴管理の改善（DynamoDB統合、トピック検出等）
 - [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携

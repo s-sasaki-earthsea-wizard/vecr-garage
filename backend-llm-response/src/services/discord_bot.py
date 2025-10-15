@@ -10,6 +10,7 @@ import discord
 import logging
 from typing import List, Optional
 from services.llm_client import LLMClient
+from services.times_scheduler import TimesScheduler
 from config.prompt import PromptParser
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ class DiscordBot:
         bot_token: str,
         mention_channels: List[int],
         auto_thread_channels: List[int],
+        times_channels: List[int],
     ):
         """
         初期化
@@ -33,11 +35,13 @@ class DiscordBot:
             bot_token: Bot Token
             mention_channels: @メンション対応チャンネルIDのリスト
             auto_thread_channels: 新着投稿自動スレッド作成チャンネルIDのリスト
+            times_channels: Times Mode（1日1回自動投稿）チャンネルIDのリスト
         """
         self.bot_name = bot_name
         self.bot_token = bot_token
         self.mention_mode_channels = set(mention_channels)  # 高速検索のためsetに変換
         self.auto_thread_mode_channels = set(auto_thread_channels)
+        self.times_mode_channels = set(times_channels)
 
         # システムプロンプトの読み込み
         self.system_prompt = PromptParser.get_prompt(bot_name, source="file")
@@ -50,6 +54,14 @@ class DiscordBot:
 
         self.client = discord.Client(intents=intents)
         self.llm_client = LLMClient()
+
+        # Times Mode スケジューラー初期化
+        self.times_scheduler = TimesScheduler(
+            bot_name=self.bot_name,
+            system_prompt=self.system_prompt,
+            discord_client=self.client,
+            times_channels=list(times_channels)
+        )
 
         # イベントハンドラー登録
         self._setup_events()
@@ -69,6 +81,13 @@ class DiscordBot:
                 f"📍 AutoThreadモード対象チャンネル数: {len(self.auto_thread_mode_channels)} "
                 f"(IDs: {', '.join(str(ch) for ch in self.auto_thread_mode_channels)})"
             )
+            logger.info(
+                f"📍 Timesモード対象チャンネル数: {len(self.times_mode_channels)} "
+                f"(IDs: {', '.join(str(ch) for ch in self.times_mode_channels)})"
+            )
+
+            # Times Mode スケジューラー起動
+            self.times_scheduler.start()
 
         @self.client.event
         async def on_message(message):
