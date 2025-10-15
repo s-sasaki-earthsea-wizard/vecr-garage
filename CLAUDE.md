@@ -482,6 +482,194 @@ test-cases-copy-single, test-cases-clean, test-cases-verify
 **保守性向上**: 1ファイルでの統一管理
 **機能性保持**: 既存コマンドの完全互換
 
+## Discord Webhook通知システム
+
+### セキュアなWebhook管理（✅ 実装完了）
+
+**実装目的**: Discordへのテストメッセージ送信機能の実装（将来的に各種通知機能を追加予定）
+
+#### 🏗️ アーキテクチャ設計
+
+**セキュリティ重視の設計**:
+1. **JSONファイル管理**: `config/discord_webhooks.json`（視認性・編集性◎）
+2. **.envrc自動変換**: JSONを環境変数に変換
+3. **Makefile統合**: `make docker-up/build-up`で自動読み込み
+4. **環境変数渡し**: コンテナにファイルをマウントせず環境変数のみ（セキュア）
+
+**ファイル構成**:
+```
+config/
+├── discord_webhooks.json          # 実際のWebhook URL（.gitignore対象）
+└── discord_webhooks.example.json  # サンプル（リポジトリ管理）
+
+.envrc                              # 環境変数変換スクリプト（.gitignore対象）
+.envrc.example                      # サンプル（リポジトリ管理）
+```
+
+#### 🎯 実装内容
+
+**コアモジュール**:
+- `backend-llm-response/src/config/webhook_config_parser.py`: JSON/環境変数パーサー
+- `backend-llm-response/src/config/webhook_validator.py`: URL形式・データ構造バリデーター
+- `backend-llm-response/src/services/discord_notifier.py`: メッセージ送信サービス
+- `makefiles/discord.mk`: Discord操作コマンド集約
+
+**REST APIエンドポイント**:
+- `GET /api/discord/webhooks`: Webhook一覧取得
+- `POST /api/discord/test/<webhook_name>`: テストメッセージ送信
+- `POST /api/discord/send/<webhook_name>`: カスタムメッセージ送信
+- `POST /api/discord/broadcast`: 全Webhook同時配信
+
+**Makeターゲット**:
+```bash
+make discord-webhooks-list        # Webhook一覧表示
+make discord-verify               # 動作確認（推奨）
+make discord-test-kasen          # 個別テスト送信
+make discord-test-karasuno_endo  # 個別テスト送信
+make discord-test-rusudan        # 個別テスト送信
+make discord-test-all            # 全Webhook同時送信
+make discord-send-message        # カスタムメッセージ
+make discord-help                # コマンド一覧
+```
+
+#### ✅ 動作確認結果
+
+**環境構築**:
+```bash
+# セットアップ
+cp config/discord_webhooks.example.json config/discord_webhooks.json
+# Webhook URLを記入
+
+# 起動（自動的に.envrcが読み込まれる）
+make docker-build-up
+
+# 動作確認
+make discord-verify
+```
+
+**テスト結果**:
+- ✅ 3つのWebhook登録: `kasen_times`, `karasuno_endo_times`, `rusudan_times`
+- ✅ 個別送信: 全Webhook正常動作（HTTP 204）
+- ✅ 同時配信: `make discord-test-all`で3件同時送信成功
+- ✅ カスタムメッセージ: 任意のメッセージ送信可能
+- ✅ 統合テスト: `make test-integration`に組み込み完了
+
+#### 🔒 セキュリティ対策
+
+**ファイル流出防止**:
+- `config/discord_webhooks.json`: .gitignoreで保護
+- `.envrc`: .gitignoreで保護
+- コンテナにファイルをマウントせず、環境変数として渡す
+
+**将来の拡張性**:
+- AWS Secrets Managerへの移行準備完了
+- 環境変数ベースの設計により、CI/CD環境でも同様に動作
+
+#### 🎯 設計原則
+
+**責任分離**:
+- パース/バリデーションロジックの独立（カプセル化）
+- `makefiles/discord.mk`でDiscord操作を集約
+- 既存パターン（storage.mk等）との統一
+
+**12-factor app原則**:
+- 環境変数による設定管理
+- コードと設定の分離
+- ポータビリティの確保
+
+#### 🧪 統合テスト組み込み
+
+**makefiles/integration.mk統合**:
+```makefile
+test-integration: ## Run comprehensive integration tests for all services
+  # Backend-DB-Registration統合テスト
+  @make backend-db-registration-test-integration
+
+  # Backend-LLM-Response統合テスト（Discord Webhook）
+  @make discord-verify
+```
+
+**統合テスト内容**:
+- Webhook一覧取得（3件登録確認）
+- 全Webhookへブロードキャスト送信
+- HTTP 204応答確認（送信成功）
+- **目視確認推奨**: Discordチャンネルでメッセージ到達を人間が確認
+
+**実行方法**:
+```bash
+# 全サービスの統合テストを実行（Discord Webhook含む）
+make test-integration
+```
+
+## Claude API連携
+
+### backend-llm-responseサービスによるClaude API統合（✅ 実装完了）
+
+**実装目的**: Anthropic Claude APIを使用してプロンプトを送信し、応答を取得する機能
+
+#### 🏗️ アーキテクチャ設計
+
+**ClaudeClientクラス**:
+- `backend-llm-response/src/services/claude_client.py`
+- 環境変数からAPIキー、モデル、max_tokensを読み込み
+- `send_message(prompt, system_prompt, temperature)`: プロンプト送信と応答取得
+- `send_test_message()`: 動作確認用のテストメッセージ送信
+
+**環境変数設定**:
+```bash
+# .env に追加
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+ANTHROPIC_API_VERSION=2023-06-01
+ANTHROPIC_MAX_TOKENS=4096
+```
+
+#### 📦 依存関係
+
+**requirements.txt**:
+- `anthropic==0.69.0`: Anthropic公式Pythonライブラリ最新版
+
+**docker-compose.yml**:
+- backend-llm-responseサービスにClaude API環境変数を追加
+
+#### 🎯 利用可能なMakeコマンド
+
+**makefiles/claude.mk実装**:
+```makefile
+make claude-help                          # ヘルプ表示
+make claude-test                          # 接続テスト
+make claude-prompt PROMPT="テキスト"      # カスタムプロンプト送信
+```
+
+**実行例**:
+```bash
+# 接続テスト
+$ make claude-test
+🤖 Claude API接続テスト中...
+✅ 接続成功!
+モデル: claude-sonnet-4-5-20250929
+プロンプト: こんにちは！簡単な自己紹介をしてください。
+応答: [Claude APIからの応答]
+
+# カスタムプロンプト送信
+$ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてください"
+🤖 Claude APIにプロンプトを送信中...
+応答: [Claude APIからのコード生成]
+```
+
+#### ✨ 実装の特徴
+
+**セキュリティ**: APIキーは`.env`で管理（.gitignore保護）
+**シンプル**: ホストマシンからmakeコマンドで直接実行
+**拡張性**: 将来的なAPIエンドポイント化の基盤
+
+#### 🧪 テスト結果
+
+- ✅ ClaudeClient初期化成功
+- ✅ テストメッセージ送信成功（自己紹介応答）
+- ✅ カスタムプロンプト送信成功（コード生成応答）
+- ✅ makeターゲットからの呼び出し成功
+
 ## 一時的な実装事項
 
 ### name-based UPSERT処理（暫定実装）
@@ -518,10 +706,14 @@ test-cases-copy-single, test-cases-clean, test-cases-verify
 - [x] **s3:ObjectCreated:Copy イベント対応**
 - [x] **包括的テストシステム実装（ユニット〜E2E統合）**
 - [x] **YMLファイル操作の統合システム実装**
+- [x] **Discord Webhook通知システム実装（backend-llm-response）**
+- [x] **Claude API連携実装（backend-llm-response）**
 - [ ] file_uri-based UPSERT処理（本格実装）
 - [ ] member-managerとデータベースの実連携
 - [ ] Jinjaテンプレートによる動的表示
 - [ ] Flask-Login + bcryptによる認証強化
 - [ ] チャットログ機能の実装
-- [ ] LLM連携機能の強化
+- [ ] LLM連携機能の強化（メンバープロフィールとの統合）
+- [ ] Discord通知機能の拡張（定期通知、エラー通知、リッチエンベッド等）
+- [ ] AWS Secrets Managerへの移行
 - [ ] 本番環境用の設定追加

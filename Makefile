@@ -2,6 +2,9 @@
 include .env
 export
 
+# Use bash for shell commands (required for 'source' command)
+SHELL := /bin/bash
+
 # Define the Phony targets
 .PHONY: docker-build docker-up docker-down docker-build-up docker-restart docker-logs docker-ps docker-clean member-manager-shell member-manager-start member-manager-stop member-manager-restart member-database-shell member-database-start member-database-stop member-database-restart storage-shell storage-start storage-stop storage-restart member-manager-shell s3-cp s3-cp-sample s3-ls s3-setup-profile
 
@@ -21,20 +24,20 @@ MEMBER_DB_NAME := $(MEMBER_DB_NAME)
 # ------------------------------------------------------------
 
 docker-build: ## Build the services
-	$(COMPOSE) -p $(PROJECT_NAME) build
+	@if [ -f .envrc ]; then source .envrc; fi && $(COMPOSE) -p $(PROJECT_NAME) build
 
 docker-up: ## Start the services
-	$(COMPOSE) -p $(PROJECT_NAME) up -d
+	@if [ -f .envrc ]; then source .envrc; fi && $(COMPOSE) -p $(PROJECT_NAME) up -d
 
 docker-down: ## Stop the services
 	$(COMPOSE) -p $(PROJECT_NAME) down --volumes
 
 docker-build-up: ## Build and start the services
-	$(COMPOSE) -p $(PROJECT_NAME) up --build -d
+	@if [ -f .envrc ]; then source .envrc; fi && $(COMPOSE) -p $(PROJECT_NAME) up --build -d
 
 docker-restart: ## Restart the services
 	$(COMPOSE) -p $(PROJECT_NAME) down --volumes
-	$(COMPOSE) -p $(PROJECT_NAME) up --build -d
+	@if [ -f .envrc ]; then source .envrc; fi && $(COMPOSE) -p $(PROJECT_NAME) up --build -d
 
 docker-logs: ## Show the logs of the services
 	$(COMPOSE) -p $(PROJECT_NAME) logs -f
@@ -122,6 +125,7 @@ include makefiles/yml-file-operations.mk
 include makefiles/backend-db-registration-tests.mk
 include makefiles/integration.mk
 include makefiles/backend-db-registration.mk
+include makefiles/backend-llm-response.mk
 
 # 便利なエイリアスと後方互換性
 s3-cp-samples: samples-copy ## Copy normal sample files to MinIO storage
