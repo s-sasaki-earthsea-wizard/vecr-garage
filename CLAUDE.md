@@ -727,11 +727,12 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
    - 無限ループ防止（Bot自身のメッセージは無視）
 
 3. **Times Mode（1日1回自動投稿）** ✅ 実装完了:
-   - JST 9:00-18:00の間に1日1回ランダムな話題で投稿
+   - **本番モード**: JST 9:00-18:00の間に1日1回ランダムな話題で投稿
+   - **テストモード**: 短いインターバルで繰り返し投稿（機能テスト用）
    - APScheduler + pytzによるJST対応スケジューラー
-   - jitterによるランダム投稿時刻（9時間幅）
+   - jitterによるランダム投稿時刻（9時間幅、本番モードのみ）
    - 話題リスト管理（`prompts/times_topics.json`）
-   - 1日1回フラグ管理（日付ベース）
+   - 1日1回フラグ管理（日付ベース、本番モードのみ）
    - Claude APIで応答生成→Discord投稿
    - 2000文字制限対応（超過時は省略表示）
 
@@ -810,6 +811,72 @@ make docker-build-up
 make discord-bot-logs
 ```
 
+#### 🧪 Times Mode テスト機能
+
+**実装目的**: 1日1回の投稿機能を24時間待たずにテストできる仕組み
+
+**2つの動作モード**:
+
+1. **本番モード（デフォルト）**:
+   - 毎日JST 9:00に起動、jitterで0-9時間のランダム遅延
+   - 実際の投稿時刻: 9:00-18:00の間にランダム
+   - 1日1回制御: 有効（日付ベースのフラグ管理）
+   - 用途: 本番運用
+
+2. **テストモード**:
+   - 指定した短いインターバル（例: 60秒）で繰り返し投稿
+   - 1日1回制御: 無効（何度でも投稿可能）
+   - 用途: 機能テスト、動作確認
+
+**環境変数設定（.env）**:
+```bash
+# ============================================================
+# Discord Times Mode テスト設定
+# ============================================================
+# 【本番モード】 TIMES_TEST_MODE=false (またはコメントアウト)
+#   - 動作: 毎日JST 9:00-18:00の間に1回ランダム投稿
+#   - 1日1回制御: 有効
+#
+# 【テストモード】 TIMES_TEST_MODE=true
+#   - 動作: 指定インターバルで繰り返し投稿
+#   - 1日1回制御: 無効（何度でも投稿可能）
+#   - 用途: 機能テスト、動作確認
+#
+# ⚠️ 警告: 本番環境では必ずfalseにするか削除すること！
+# ============================================================
+TIMES_TEST_MODE=false              # テストモード有効化
+TIMES_TEST_INTERVAL=60            # テスト時の投稿間隔（秒）
+```
+
+**テスト実行方法**:
+```bash
+# 1. .envファイルでテストモードを有効化
+sed -i 's/TIMES_TEST_MODE=false/TIMES_TEST_MODE=true/' .env
+
+# 2. コンテナ再起動
+make docker-restart
+
+# 3. ログで動作確認（60秒ごとに投稿されることを確認）
+make discord-bot-logs
+
+# 4. テスト完了後、本番モードに戻す
+sed -i 's/TIMES_TEST_MODE=true/TIMES_TEST_MODE=false/' .env
+make docker-restart
+```
+
+**実装設計**:
+- コンストラクタ引数による制御（`test_mode`, `test_interval_seconds`）
+- 本番優先の条件分岐（`if not self.test_mode:`）
+- トリガー生成の関数化（`_create_production_trigger()`, `_create_test_trigger()`）
+- 環境変数は app.py レベルでのみ読み込み
+
+**影響ファイル**:
+- `backend-llm-response/src/services/times_scheduler.py`: デュアルモード実装
+- `backend-llm-response/src/services/discord_bot.py`: テストモード引数渡し
+- `backend-llm-response/src/app.py`: 環境変数読み込み
+- `docker-compose.yml`: 環境変数設定
+- `.env`, `.env.example`: テストモード設定と警告
+
 #### 🎯 今後の拡張予定
 
 **AutoThread Mode改善**:
@@ -880,6 +947,7 @@ make discord-bot-logs
 - [x] **Discord Bot統合実装（@メンション検知＋Claude API応答）**
 - [x] **Discord Bot AutoThreadモード実装（新着投稿自動応答＋会話履歴管理）**
 - [x] **Discord Bot Timesモード実装（1日1回自動投稿＋APScheduler統合）**
+- [x] **Discord Bot Times Modeテスト機能実装（本番/テストモード切り替え）**
 - [ ] Discord Bot Times Mode話題管理の改善（データベース化、カテゴリ分類等）
 - [ ] Discord Bot会話履歴管理の改善（DynamoDB統合、トピック検出等）
 - [ ] file_uri-based UPSERT処理（本格実装）

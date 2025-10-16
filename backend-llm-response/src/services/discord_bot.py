@@ -26,6 +26,8 @@ class DiscordBot:
         mention_channels: List[int],
         auto_thread_channels: List[int],
         times_channels: List[int],
+        times_test_mode: bool = False,
+        times_test_interval: int = 60,
     ):
         """
         初期化
@@ -36,6 +38,8 @@ class DiscordBot:
             mention_channels: @メンション対応チャンネルIDのリスト
             auto_thread_channels: 新着投稿自動スレッド作成チャンネルIDのリスト
             times_channels: Times Mode（1日1回自動投稿）チャンネルIDのリスト
+            times_test_mode: Times Modeテストモード（True: 短いインターバル、False: 1日1回）
+            times_test_interval: テストモード時のインターバル秒数（デフォルト: 60秒）
         """
         self.bot_name = bot_name
         self.bot_token = bot_token
@@ -60,7 +64,9 @@ class DiscordBot:
             bot_name=self.bot_name,
             system_prompt=self.system_prompt,
             discord_client=self.client,
-            times_channels=list(times_channels)
+            times_channels=list(times_channels),
+            test_mode=times_test_mode,
+            test_interval_seconds=times_test_interval
         )
 
         # イベントハンドラー登録
