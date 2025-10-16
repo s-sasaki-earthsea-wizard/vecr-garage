@@ -24,8 +24,14 @@ def main():
     # デフォルトBot名（環境変数で上書き可能）
     bot_name = os.getenv("DISCORD_BOT_NAME", "🤖🍡華扇")
 
+    # Times Modeテスト設定（環境変数で制御）
+    times_test_mode = os.getenv("TIMES_TEST_MODE", "false").lower() == "true"
+    times_test_interval = int(os.getenv("TIMES_TEST_INTERVAL", "60"))
+
     logger.info("=" * 60)
     logger.info(f"🚀 Discord Bot '{bot_name}' を起動します")
+    if times_test_mode:
+        logger.info(f"🧪 Times Mode テストモード有効 (インターバル: {times_test_interval}秒)")
     logger.info("=" * 60)
 
     try:
@@ -40,7 +46,15 @@ def main():
         )
 
         # Bot起動
-        bot = DiscordBot(bot_name, token, mention_channels, auto_thread_channels, times_channels)
+        bot = DiscordBot(
+            bot_name,
+            token,
+            mention_channels,
+            auto_thread_channels,
+            times_channels,
+            times_test_mode=times_test_mode,
+            times_test_interval=times_test_interval
+        )
         bot.run()
 
     except FileNotFoundError as e:

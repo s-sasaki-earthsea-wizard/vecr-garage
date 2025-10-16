@@ -30,6 +30,8 @@ class TimesScheduler:
         system_prompt: str,
         discord_client,
         times_channels: List[int],
+        test_mode: bool = False,
+        test_interval_seconds: int = 60,
     ):
         """
         初期化
@@ -39,12 +41,18 @@ class TimesScheduler:
             system_prompt: システムプロンプト
             discord_client: discord.Clientインスタンス
             times_channels: Times Mode対象チャンネルIDリスト
+            test_mode: テストモード（True: 即座実行＋短いインターバル、False: 本番モード）
+            test_interval_seconds: テストモード時のインターバル秒数（デフォルト: 60秒）
         """
         self.bot_name = bot_name
         self.system_prompt = system_prompt
         self.discord_client = discord_client
         self.times_channels = times_channels
         self.llm_client = LLMClient()
+
+        # テストモード設定
+        self.test_mode = test_mode
+        self.test_interval_seconds = test_interval_seconds
 
         # JST設定
         self.jst = pytz.timezone('Asia/Tokyo')
@@ -58,8 +66,9 @@ class TimesScheduler:
         # 話題リスト読み込み
         self.topics = self._load_topics()
 
+        mode_str = "テストモード" if test_mode else "本番モード"
         logger.info(
-            f"📅 TimesScheduler初期化完了: Bot '{self.bot_name}', "
+            f"📅 TimesScheduler初期化完了 ({mode_str}): Bot '{self.bot_name}', "
             f"対象チャンネル数: {len(self.times_channels)}, "
             f"話題数: {len(self.topics)}"
         )
@@ -100,9 +109,32 @@ class TimesScheduler:
             logger.warning(f"⚠️ Times Mode対象チャンネルが0件のためスケジューラーを起動しません")
             return
 
-        # 毎日9:00に実行、jitterで0-32400秒（9時間）のランダム遅延
-        # → 実際の投稿時刻は9:00-18:00の間のどこか
-        trigger = CronTrigger(
+        # トリガー設定（本番モード or テストモード）
+        if not self.test_mode:
+            # 本番モード: 毎日9:00に実行、jitterで0-32400秒（9時間）のランダム遅延
+            trigger = self._create_production_trigger()
+            job_name = "Times Mode 1日1回投稿"
+            log_msg = "毎日JST 9:00-18:00の間にランダム投稿"
+        else:
+            # テストモード: 短いインターバルで繰り返し実行
+            trigger = self._create_test_trigger()
+            job_name = f"Times Mode テスト投稿 ({self.test_interval_seconds}秒間隔)"
+            log_msg = f"{self.test_interval_seconds}秒ごとに投稿 (1日1回制御は無効)"
+            logger.info(f"🧪 テストモード有効: {log_msg}")
+
+        self.scheduler.add_job(
+            self._post_random_topic,
+            trigger=trigger,
+            id="times_mode_daily_post",
+            name=job_name
+        )
+
+        self.scheduler.start()
+        logger.info(f"🚀 TimesSchedulerスケジューラー起動完了: {log_msg}")
+
+    def _create_production_trigger(self):
+        """本番モード用のトリガーを作成（毎日9:00、jitter 9時間）"""
+        return CronTrigger(
             hour=9,
             minute=0,
             second=0,
@@ -110,17 +142,12 @@ class TimesScheduler:
             jitter=32400  # 9時間 = 9 * 60 * 60 = 32400秒
         )
 
-        self.scheduler.add_job(
-            self._post_random_topic,
-            trigger=trigger,
-            id="times_mode_daily_post",
-            name="Times Mode 1日1回投稿"
-        )
-
-        self.scheduler.start()
-        logger.info(
-            f"🚀 TimesSchedulerスケジューラー起動完了: "
-            f"毎日JST 9:00-18:00の間にランダム投稿"
+    def _create_test_trigger(self):
+        """テストモード用のトリガーを作成（短いインターバル）"""
+        from apscheduler.triggers.interval import IntervalTrigger
+        return IntervalTrigger(
+            seconds=self.test_interval_seconds,
+            timezone=self.jst
         )
 
     async def _post_random_topic(self):
@@ -130,10 +157,12 @@ class TimesScheduler:
         # 今日の日付取得（JST）
         today = datetime.now(self.jst).strftime("%Y-%m-%d")
 
-        # 今日既に投稿済みならスキップ
-        if self.last_posted_date == today:
-            logger.info(f"⏭️ 本日({today})は既に投稿済みのためスキップ")
-            return
+        # 本番モードのみ1日1回制御を実施
+        if not self.test_mode:
+            # 今日既に投稿済みならスキップ
+            if self.last_posted_date == today:
+                logger.info(f"⏭️ 本日({today})は既に投稿済みのためスキップ")
+                return
 
         logger.info(f"📝 Times Mode投稿開始: {today}")
 

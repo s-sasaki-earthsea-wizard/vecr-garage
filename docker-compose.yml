@@ -77,6 +77,9 @@ services:
       - DISCORD_WEBHOOKS=${DISCORD_WEBHOOKS}
       # Discord Bot設定
       - DISCORD_BOT_NAME=${DISCORD_BOT_NAME:-🤖🍡華扇}
+      # Times Mode テスト設定（テスト時のみ有効化）
+      - TIMES_TEST_MODE=${TIMES_TEST_MODE:-false}
+      - TIMES_TEST_INTERVAL=${TIMES_TEST_INTERVAL:-60}
       # Claude API設定
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - ANTHROPIC_MODEL=${ANTHROPIC_MODEL}
