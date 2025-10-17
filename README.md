@@ -383,6 +383,83 @@ make docker-restart
 - プロンプトファイルはGit管理対象（チーム共有）
 - コンテナにread-onlyでマウント
 
+### CI/CD（コード品質管理）
+
+Docker化されたCI/CDツールで全Pythonサービスのコード品質チェックを実行できます。
+
+**利用可能なコマンド:**
+```bash
+# CI/CDコンテナのビルド（初回のみ）
+make ci-build
+
+# コードの自動フォーマット
+make format
+
+# Lintチェック
+make lint
+
+# Lint問題の自動修正
+make lint-fix
+
+# 型チェック
+make typecheck
+
+# フォーマットチェック（修正なし）
+make format-check
+
+# 全チェック実行（PR前推奨）
+make ci-all
+
+# CI/CDコンテナのシェル起動（デバッグ用）
+make ci-shell
+
+# コマンド一覧表示
+make ci-help
+```
+
+**推奨ワークフロー:**
+```bash
+# 1. コードを自動整形
+make format
+
+# 2. Lint問題を自動修正
+make lint-fix
+
+# 3. 全チェック実行
+make ci-all
+
+# 4. 問題なければコミット
+git commit
+```
+
+**チェック内容:**
+- **Black**: Pythonコードの自動フォーマット（PEP 8準拠）
+- **Ruff**: 高速リンター（import整列、命名規則、バグ検出等）
+- **mypy**: 型チェック（backend-db-registration、backend-llm-response）
+- **Pre-commit Hooks（オプション）**: ローカル環境でのコミット前自動チェック
+
+**Pre-commit Hooks（任意）:**
+
+Docker経由の実行を推奨していますが、ローカル環境でコミット前に自動チェックしたい場合:
+
+```bash
+# ホスト環境にインストール（任意）
+pip install pre-commit
+pre-commit install
+
+# 以降はgit commit時に自動実行される
+```
+
+**対象サービス:**
+- backend-db-registration
+- backend-llm-response
+- member-manager
+
+**設定ファイル:**
+- `.pre-commit-config.yaml`: Pre-commit hooks設定
+- `backend-*/pyproject.toml`: Black/Ruff/mypy設定
+- `ci-cd/Dockerfile`: CI/CDツールコンテナ定義
+
 #### TBD
 
 - バックエンドサービス(LLM応答): `make backend-llm-response-shell`

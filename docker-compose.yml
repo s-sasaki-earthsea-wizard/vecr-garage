@@ -250,6 +250,20 @@ services:
       timeout: 10s
       retries: 5
 
+  ci-runner:
+    build:
+      context: ./ci-cd
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME}-ci-runner
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    networks:
+      - network
+    profiles:
+      - ci
+    command: /bin/bash
+
 networks:
   network:
     name: ${NETWORK_NAME}

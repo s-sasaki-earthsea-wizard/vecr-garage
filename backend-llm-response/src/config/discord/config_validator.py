@@ -28,9 +28,7 @@ class DiscordConfigValidator:
             return False, f"設定のルートは辞書である必要があります（現在: {type(config).__name__}）"
 
         for bot_name, bot_config in config.items():
-            is_valid, error_msg = DiscordConfigValidator.validate_bot_config(
-                bot_name, bot_config
-            )
+            is_valid, error_msg = DiscordConfigValidator.validate_bot_config(bot_name, bot_config)
             if not is_valid:
                 return False, error_msg
 
@@ -69,7 +67,10 @@ class DiscordConfigValidator:
         # mention_modeのチェック
         if "mention_mode" in channels:
             if not isinstance(channels["mention_mode"], list):
-                return False, f"Bot '{bot_name}' の channels.mention_mode は配列である必要があります"
+                return (
+                    False,
+                    f"Bot '{bot_name}' の channels.mention_mode は配列である必要があります",
+                )
             for idx, channel_id in enumerate(channels["mention_mode"]):
                 if not isinstance(channel_id, (str, int)):
                     return False, (
@@ -79,7 +80,10 @@ class DiscordConfigValidator:
         # auto_thread_modeのチェック
         if "auto_thread_mode" in channels:
             if not isinstance(channels["auto_thread_mode"], list):
-                return False, f"Bot '{bot_name}' の channels.auto_thread_mode は配列である必要があります"
+                return (
+                    False,
+                    f"Bot '{bot_name}' の channels.auto_thread_mode は配列である必要があります",
+                )
             for idx, channel_id in enumerate(channels["auto_thread_mode"]):
                 if not isinstance(channel_id, (str, int)):
                     return False, (

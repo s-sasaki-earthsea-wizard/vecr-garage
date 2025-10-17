@@ -5,16 +5,17 @@ Discord Bot起動スクリプト（メインエントリーポイント）
 Discord Botを起動し、@メンションに対してClaude APIで応答します。
 """
 
-import sys
-import os
 import logging
+import os
+import sys
+
 from services.discord_bot import DiscordBot
+
 from config.discord import DiscordConfigParser
 
 # ロギング設定
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,9 @@ def main():
 
     try:
         # Bot設定取得（モード別チャンネル取得）
-        token, mention_channels, auto_thread_channels, times_channels = DiscordConfigParser.get_bot_config(bot_name)
+        token, mention_channels, auto_thread_channels, times_channels = (
+            DiscordConfigParser.get_bot_config(bot_name)
+        )
 
         logger.info(
             f"📝 Bot設定取得成功: "
@@ -53,7 +56,7 @@ def main():
             auto_thread_channels,
             times_channels,
             times_test_mode=times_test_mode,
-            times_test_interval=times_test_interval
+            times_test_interval=times_test_interval,
         )
         bot.run()
 

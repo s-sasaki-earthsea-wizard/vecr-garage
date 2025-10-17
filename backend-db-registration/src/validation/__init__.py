@@ -1,3 +1,3 @@
-from .yaml_validator import YAMLValidator, ValidationError
+from .yaml_validator import ValidationError, YAMLValidator
 
-__all__ = ['YAMLValidator', 'ValidationError'] 
+__all__ = ["YAMLValidator", "ValidationError"]

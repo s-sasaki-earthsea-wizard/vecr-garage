@@ -59,14 +59,15 @@ class DiscordConfigParser:
         if bot_name not in config:
             available_bots = ", ".join(config.keys())
             raise ValueError(
-                f"Bot '{bot_name}' が見つかりません。\n"
-                f"利用可能なBot: {available_bots}"
+                f"Bot '{bot_name}' が見つかりません。\n" f"利用可能なBot: {available_bots}"
             )
 
         return config[bot_name]["bot_token"]
 
     @staticmethod
-    def get_bot_config(bot_name: str, config: Optional[Dict] = None) -> Tuple[str, List[int], List[int], List[int]]:
+    def get_bot_config(
+        bot_name: str, config: Optional[Dict] = None
+    ) -> Tuple[str, List[int], List[int], List[int]]:
         """
         Bot名からTokenとモード別チャンネルIDリストを取得
 
@@ -86,17 +87,16 @@ class DiscordConfigParser:
         if bot_name not in config:
             available_bots = ", ".join(config.keys())
             raise ValueError(
-                f"Bot '{bot_name}' が見つかりません。\n"
-                f"利用可能なBot: {available_bots}"
+                f"Bot '{bot_name}' が見つかりません。\n" f"利用可能なBot: {available_bots}"
             )
 
         bot_config = config[bot_name]
         token = bot_config["bot_token"]
-        channels = bot_config['channels']
+        channels = bot_config["channels"]
 
-        mention_channels = [int(ch) for ch in channels.get('mention_mode', [])]
-        auto_thread_channels = [int(ch) for ch in channels.get('auto_thread_mode', [])]
-        times_channels = [int(ch) for ch in channels.get('times_mode', [])]
+        mention_channels = [int(ch) for ch in channels.get("mention_mode", [])]
+        auto_thread_channels = [int(ch) for ch in channels.get("auto_thread_mode", [])]
+        times_channels = [int(ch) for ch in channels.get("times_mode", [])]
 
         return token, mention_channels, auto_thread_channels, times_channels
 

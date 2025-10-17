@@ -3,6 +3,7 @@ Webhook設定バリデーター
 
 Webhook URLとデータ構造の妥当性を検証
 """
+
 import re
 from typing import Dict, Tuple
 from urllib.parse import urlparse
@@ -12,9 +13,7 @@ class WebhookValidator:
     """Webhook設定バリデーションクラス"""
 
     # Discord Webhook URLの正規表現パターン
-    DISCORD_WEBHOOK_PATTERN = re.compile(
-        r'^https://discord\.com/api/webhooks/\d+/[\w-]+$'
-    )
+    DISCORD_WEBHOOK_PATTERN = re.compile(r"^https://discord\.com/api/webhooks/\d+/[\w-]+$")
 
     @staticmethod
     def validate_discord_url(url: str) -> bool:
@@ -94,8 +93,7 @@ class WebhookValidator:
         if webhook_name not in config:
             available = ", ".join(config.keys())
             return False, (
-                f"Webhook '{webhook_name}' が見つかりません。\n"
-                f"利用可能なWebhook: {available}"
+                f"Webhook '{webhook_name}' が見つかりません。\n" f"利用可能なWebhook: {available}"
             )
 
         return True, ""
