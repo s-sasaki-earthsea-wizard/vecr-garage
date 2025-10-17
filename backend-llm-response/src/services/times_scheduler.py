@@ -7,15 +7,13 @@ JST 9:00-18:00の間に1日1回、ランダムな話題で投稿する機能
 import json
 import logging
 import random
-from datetime import datetime, time
+from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
-import asyncio
+from typing import Optional
 
+import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-import pytz
-
 from services.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
@@ -29,7 +27,7 @@ class TimesScheduler:
         bot_name: str,
         system_prompt: str,
         discord_client,
-        times_channels: List[int],
+        times_channels: list[int],
         test_mode: bool = False,
         test_interval_seconds: int = 60,
     ):
@@ -55,7 +53,7 @@ class TimesScheduler:
         self.test_interval_seconds = test_interval_seconds
 
         # JST設定
-        self.jst = pytz.timezone('Asia/Tokyo')
+        self.jst = pytz.timezone("Asia/Tokyo")
 
         # スケジューラー初期化（非同期対応）
         self.scheduler = AsyncIOScheduler(timezone=self.jst)
@@ -73,7 +71,7 @@ class TimesScheduler:
             f"話題数: {len(self.topics)}"
         )
 
-    def _load_topics(self) -> List[str]:
+    def _load_topics(self) -> list[str]:
         """
         話題リストをJSONファイルから読み込み
 
@@ -90,7 +88,7 @@ class TimesScheduler:
             raise FileNotFoundError(f"話題リストファイルが見つかりません: {topics_file}")
 
         try:
-            with open(topics_file, 'r', encoding='utf-8') as f:
+            with open(topics_file, encoding="utf-8") as f:
                 data = json.load(f)
                 topics = data.get("topics", [])
 
@@ -106,7 +104,7 @@ class TimesScheduler:
     def start(self):
         """スケジューラー起動"""
         if not self.times_channels:
-            logger.warning(f"⚠️ Times Mode対象チャンネルが0件のためスケジューラーを起動しません")
+            logger.warning("⚠️ Times Mode対象チャンネルが0件のためスケジューラーを起動しません")
             return
 
         # トリガー設定（本番モード or テストモード）
@@ -123,10 +121,7 @@ class TimesScheduler:
             logger.info(f"🧪 テストモード有効: {log_msg}")
 
         self.scheduler.add_job(
-            self._post_random_topic,
-            trigger=trigger,
-            id="times_mode_daily_post",
-            name=job_name
+            self._post_random_topic, trigger=trigger, id="times_mode_daily_post", name=job_name
         )
 
         self.scheduler.start()
@@ -139,16 +134,14 @@ class TimesScheduler:
             minute=0,
             second=0,
             timezone=self.jst,
-            jitter=32400  # 9時間 = 9 * 60 * 60 = 32400秒
+            jitter=32400,  # 9時間 = 9 * 60 * 60 = 32400秒
         )
 
     def _create_test_trigger(self):
         """テストモード用のトリガーを作成（短いインターバル）"""
         from apscheduler.triggers.interval import IntervalTrigger
-        return IntervalTrigger(
-            seconds=self.test_interval_seconds,
-            timezone=self.jst
-        )
+
+        return IntervalTrigger(seconds=self.test_interval_seconds, timezone=self.jst)
 
     async def _post_random_topic(self):
         """
@@ -172,10 +165,7 @@ class TimesScheduler:
 
         # LLM API呼び出し
         try:
-            response = self.llm_client.send_message(
-                prompt=topic,
-                system_prompt=self.system_prompt
-            )
+            response = self.llm_client.send_message(prompt=topic, system_prompt=self.system_prompt)
 
             # Discord文字数制限対応（2000文字）
             if len(response) > 2000:
@@ -197,8 +187,7 @@ class TimesScheduler:
 
                 except Exception as e:
                     logger.error(
-                        f"❌ Times Mode投稿エラー (チャンネルID: {channel_id}): {e}",
-                        exc_info=True
+                        f"❌ Times Mode投稿エラー (チャンネルID: {channel_id}): {e}", exc_info=True
                     )
 
             # 投稿済みフラグ更新

@@ -5,22 +5,26 @@
 全体のトランザクションが正しくロールバックされることを検証します。
 """
 
-import pytest
 import tempfile
-import yaml
 from unittest.mock import patch
 
-from db.database import SessionLocal, DatabaseError
-from models.members import HumanMember, VirtualMember, HumanMemberProfile, VirtualMemberProfile
-from operations.member_registration import register_human_member_from_yaml, register_virtual_member_from_yaml
+import pytest
+import yaml
+from db.database import DatabaseError, SessionLocal
+from models.members import HumanMember, HumanMemberProfile, VirtualMember, VirtualMemberProfile
+from operations.member_registration import (
+    register_human_member_from_yaml,
+    register_virtual_member_from_yaml,
+)
 
 
 @pytest.fixture
 def db_session():
     """テスト用データベースセッション"""
     # テーブルが確実に存在するようにする
-    from models.members import Base
     from db.database import engine
+    from models.members import Base
+
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
@@ -37,12 +41,9 @@ def db_session():
 @pytest.fixture
 def human_test_yaml():
     """人間メンバー用のテストYAMLファイル（プロフィール失敗用）"""
-    yaml_data = {
-        "name": "テスト人間メンバー",
-        "bio": "テスト用のbio情報"
-    }
+    yaml_data = {"name": "テスト人間メンバー", "bio": "テスト用のbio情報"}
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8') as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
         yaml.dump(yaml_data, f, allow_unicode=True)
         return f.name
 
@@ -53,10 +54,10 @@ def virtual_test_yaml():
     yaml_data = {
         "name": "テスト仮想メンバー",
         "llm_model": "gpt-4",
-        "custom_prompt": "テスト用のカスタムプロンプト"
+        "custom_prompt": "テスト用のカスタムプロンプト",
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8') as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
         yaml.dump(yaml_data, f, allow_unicode=True)
         return f.name
 
@@ -64,8 +65,9 @@ def virtual_test_yaml():
 @pytest.fixture
 def mock_storage_client(monkeypatch):
     """ストレージクライアントのモック"""
+
     def mock_read_yaml(yaml_path):
-        with open(yaml_path, "r", encoding="utf-8") as f:
+        with open(yaml_path, encoding="utf-8") as f:
             return yaml.safe_load(f)
 
     class MockStorageClient:
@@ -89,8 +91,10 @@ def test_human_member_profile_failure_rollback(db_session, human_test_yaml, mock
     initial_profile_count = db_session.query(HumanMemberProfile).count()
 
     # プロフィール登録で失敗するようにupsert_human_member_profileをモック
-    with patch('db.database.upsert_human_member_profile') as mock_upsert:
-        mock_upsert.side_effect = DatabaseError("プロフィール登録時のデータベースエラー", Exception("DB接続失敗"))
+    with patch("db.database.upsert_human_member_profile") as mock_upsert:
+        mock_upsert.side_effect = DatabaseError(
+            "プロフィール登録時のデータベースエラー", Exception("DB接続失敗")
+        )
 
         # 登録処理を実行し、DatabaseErrorが発生することを確認
         with pytest.raises(DatabaseError) as exc_info:
@@ -103,15 +107,21 @@ def test_human_member_profile_failure_rollback(db_session, human_test_yaml, mock
     final_profile_count = db_session.query(HumanMemberProfile).count()
 
     # 全体がロールバックされ、初期状態と同じであることを確認
-    assert final_human_count == initial_human_count, f"human_membersテーブルのロールバックが失敗: 初期{initial_human_count} → 最終{final_human_count}"
-    assert final_profile_count == initial_profile_count, f"human_member_profilesテーブルのロールバックが失敗: 初期{initial_profile_count} → 最終{final_profile_count}"
+    assert (
+        final_human_count == initial_human_count
+    ), f"human_membersテーブルのロールバックが失敗: 初期{initial_human_count} → 最終{final_human_count}"
+    assert (
+        final_profile_count == initial_profile_count
+    ), f"human_member_profilesテーブルのロールバックが失敗: 初期{initial_profile_count} → 最終{final_profile_count}"
 
-    print(f"✅ 人間メンバーロールバックテスト成功")
+    print("✅ 人間メンバーロールバックテスト成功")
     print(f"   - メンバー数: {initial_human_count} → {final_human_count}")
     print(f"   - プロフィール数: {initial_profile_count} → {final_profile_count}")
 
 
-def test_virtual_member_profile_failure_rollback(db_session, virtual_test_yaml, mock_storage_client):
+def test_virtual_member_profile_failure_rollback(
+    db_session, virtual_test_yaml, mock_storage_client
+):
     """
     仮想メンバー登録でプロフィール失敗時の全体ロールバックテスト
 
@@ -125,8 +135,10 @@ def test_virtual_member_profile_failure_rollback(db_session, virtual_test_yaml, 
     initial_profile_count = db_session.query(VirtualMemberProfile).count()
 
     # プロフィール登録で失敗するようにupsert_virtual_member_profileをモック
-    with patch('db.database.upsert_virtual_member_profile') as mock_upsert:
-        mock_upsert.side_effect = DatabaseError("仮想メンバープロフィール登録エラー", Exception("制約違反"))
+    with patch("db.database.upsert_virtual_member_profile") as mock_upsert:
+        mock_upsert.side_effect = DatabaseError(
+            "仮想メンバープロフィール登録エラー", Exception("制約違反")
+        )
 
         # 登録処理を実行し、DatabaseErrorが発生することを確認
         with pytest.raises(DatabaseError) as exc_info:
@@ -139,10 +151,14 @@ def test_virtual_member_profile_failure_rollback(db_session, virtual_test_yaml, 
     final_profile_count = db_session.query(VirtualMemberProfile).count()
 
     # 全体がロールバックされ、初期状態と同じであることを確認
-    assert final_virtual_count == initial_virtual_count, f"virtual_membersテーブルのロールバックが失敗: 初期{initial_virtual_count} → 最終{final_virtual_count}"
-    assert final_profile_count == initial_profile_count, f"virtual_member_profilesテーブルのロールバックが失敗: 初期{initial_profile_count} → 最終{final_profile_count}"
+    assert (
+        final_virtual_count == initial_virtual_count
+    ), f"virtual_membersテーブルのロールバックが失敗: 初期{initial_virtual_count} → 最終{final_virtual_count}"
+    assert (
+        final_profile_count == initial_profile_count
+    ), f"virtual_member_profilesテーブルのロールバックが失敗: 初期{initial_profile_count} → 最終{final_profile_count}"
 
-    print(f"✅ 仮想メンバーロールバックテスト成功")
+    print("✅ 仮想メンバーロールバックテスト成功")
     print(f"   - メンバー数: {initial_virtual_count} → {final_virtual_count}")
     print(f"   - プロフィール数: {initial_profile_count} → {final_profile_count}")
 
@@ -182,7 +198,7 @@ def test_database_constraint_violation_rollback(db_session, human_test_yaml, moc
     assert final_human_count == intermediate_human_count  # 更新のため増加なし
     assert final_profile_count == intermediate_profile_count  # 更新のため増加なし
 
-    print(f"✅ UPSERT動作確認テスト成功")
+    print("✅ UPSERT動作確認テスト成功")
     print(f"   - 初期メンバー数: {initial_human_count}")
     print(f"   - 1回目登録後: {intermediate_human_count}")
     print(f"   - 2回目登録後: {final_human_count} (UPSERT動作)")
@@ -201,7 +217,7 @@ def test_transaction_isolation_verification(db_session, human_test_yaml, mock_st
         initial_count = external_session.query(HumanMember).count()
 
         # プロフィール登録失敗をモック
-        with patch('db.database.upsert_human_member_profile') as mock_upsert:
+        with patch("db.database.upsert_human_member_profile") as mock_upsert:
             mock_upsert.side_effect = DatabaseError("テスト用失敗", Exception())
 
             # 失敗する登録処理を実行
@@ -212,8 +228,8 @@ def test_transaction_isolation_verification(db_session, human_test_yaml, mock_st
         external_count = external_session.query(HumanMember).count()
         assert external_count == initial_count, "未コミットの変更が外部セッションから見えています"
 
-        print(f"✅ トランザクション分離確認テスト成功")
-        print(f"   - 外部セッションからの変更は不可視")
+        print("✅ トランザクション分離確認テスト成功")
+        print("   - 外部セッションからの変更は不可視")
 
     finally:
         external_session.close()

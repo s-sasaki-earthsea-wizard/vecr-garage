@@ -1,0 +1,90 @@
+# VECR Garage Pre-commit Hooks Configuration
+# ============================================================
+# このファイルはコミット前に自動的にコード品質チェックを実行します
+#
+# ⚠️  Pre-commit Hooks はオプション機能です
+# Docker経由のCI/CD実行を推奨（make lint, make format等）
+#
+# ローカル環境での自動チェックを希望する場合のみセットアップ:
+#   pip install pre-commit && pre-commit install
+# ============================================================
+
+repos:
+  # 基本的なファイルチェック
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: 末尾の空白を削除
+        description: ファイル末尾の不要な空白を自動削除
+        exclude: ^(.*\.md|.*\.txt)$
+
+      - id: end-of-file-fixer
+        name: ファイル末尾に改行を追加
+        description: ファイルの最後に改行を追加（POSIX標準）
+
+      - id: check-yaml
+        name: YAML構文チェック
+        description: YAMLファイルの構文エラーを検出
+        args: [--allow-multiple-documents]
+
+      - id: check-json
+        name: JSON構文チェック
+        description: JSONファイルの構文エラーを検出
+        exclude: ^config/discord.*\.json$  # サンプルファイルは除外
+
+      - id: check-added-large-files
+        name: 大きなファイルの検知
+        description: 1MB以上のファイルがコミットされるのを防止
+        args: ['--maxkb=1000']
+
+      - id: check-merge-conflict
+        name: マージコンフリクトの検知
+        description: マージコンフリクトマーカーの残存を検出
+
+      - id: detect-private-key
+        name: 秘密鍵の検知
+        description: SSH秘密鍵などの誤コミットを防止
+
+  # Python: Black (コードフォーマッター)
+  - repo: https://github.com/psf/black
+    rev: 24.1.1
+    hooks:
+      - id: black
+        name: Black (Python フォーマッター)
+        description: Python コードを自動整形（PEP 8準拠）
+        language_version: python3.11
+        files: ^(backend-.*|member-manager)/.*\.py$
+        exclude: ^.*/tests/.*$
+
+  # Python: Ruff (高速リンター)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.14
+    hooks:
+      - id: ruff
+        name: Ruff (Python リンター)
+        description: Python コードの品質チェック（高速）
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^(backend-.*|member-manager)/.*\.py$
+
+  # Secrets検知（強化版）
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Secrets検知
+        description: API キー、パスワード等の機密情報を検出
+        args: ['--baseline', '.secrets.baseline']
+        exclude: |
+          (?x)^(
+            .*\.example\..*|
+            .*\.md|
+            .*\.txt|
+            .*/tests/.*
+          )$
+
+# ============================================================
+# 実行設定
+# ============================================================
+default_stages: [commit]
+fail_fast: false  # エラーがあっても全てのhookを実行

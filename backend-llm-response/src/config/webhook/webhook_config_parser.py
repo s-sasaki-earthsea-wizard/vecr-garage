@@ -3,6 +3,7 @@ Webhook設定パーサー
 
 環境変数からWebhook設定を読み込み、パース、バリデーションを実行
 """
+
 import os
 import json
 import logging
@@ -34,7 +35,7 @@ class WebhookConfigParser:
             ValueError: JSONパースまたはバリデーションエラー
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
         except FileNotFoundError:
             raise FileNotFoundError(
@@ -164,8 +165,7 @@ class WebhookConfigParser:
 
         except json.JSONDecodeError as e:
             raise ValueError(
-                f"Webhook設定のJSONパースに失敗しました: {e}\n"
-                f"入力値: {cleaned_str[:100]}..."
+                f"Webhook設定のJSONパースに失敗しました: {e}\n" f"入力値: {cleaned_str[:100]}..."
             )
 
     @staticmethod
@@ -183,9 +183,7 @@ class WebhookConfigParser:
         Raises:
             KeyError: Webhook名が存在しない場合
         """
-        is_valid, error_msg = WebhookValidator.validate_webhook_name(
-            config, webhook_name
-        )
+        is_valid, error_msg = WebhookValidator.validate_webhook_name(config, webhook_name)
 
         if not is_valid:
             raise KeyError(error_msg)

@@ -1,0 +1,150 @@
+# ============================================================
+# VECR Garage - Member Manager Service
+# Python プロジェクト設定ファイル
+# ============================================================
+
+[project]
+name = "member-manager"
+version = "0.1.0"
+description = "Django Webインターフェース（メンバー管理）"
+requires-python = ">=3.11"
+
+# ============================================================
+# Black (コードフォーマッター)
+# ============================================================
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.ruff_cache
+  | __pycache__
+  | venv
+  | env
+  | build
+  | dist
+  | static
+  | templates
+)/
+'''
+
+# ============================================================
+# Ruff (高速リンター)
+# ============================================================
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+# 除外するディレクトリ
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "__pycache__",
+    "venv",
+    "env",
+    "build",
+    "dist",
+    "static",
+    "templates",
+]
+
+[tool.ruff.lint]
+# 有効化するルール
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort (import整列)
+    "N",      # pep8-naming (命名規則)
+    "UP",     # pyupgrade (Python構文の最新化)
+    "B",      # flake8-bugbear (バグ検出)
+    "C4",     # flake8-comprehensions (内包表記)
+    "SIM",    # flake8-simplify (シンプル化)
+    "RET",    # flake8-return (return文)
+    "ARG",    # flake8-unused-arguments (未使用引数)
+    "PTH",    # flake8-use-pathlib (pathlibの推奨)
+]
+
+# 無視するルール
+ignore = [
+    "E501",   # line-too-long (Blackが処理するため)
+    "B008",   # function-call-in-default-argument (Flask依存)
+    "ARG001", # unused-function-argument (Flaskルート用)
+    "ARG002", # unused-method-argument (Flaskルート用)
+]
+
+# ファイル単位でのルール無視設定
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ARG", "PTH"]  # テストコードは引数チェック緩和
+
+# import文の整列設定（isort互換）
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+# ============================================================
+# mypy (型チェック)
+# ============================================================
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # 段階的に有効化
+ignore_missing_imports = true
+
+# 特定モジュールの設定
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "flask.*"
+ignore_missing_imports = true
+
+# ============================================================
+# pytest (テストフレームワーク)
+# ============================================================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",                    # 詳細表示
+    "--strict-markers",      # 未定義のマーカーを禁止
+    "--tb=short",           # トレースバックを短く表示
+]
+
+# テストマーカー定義
+markers = [
+    "unit: ユニットテスト",
+    "integration: 統合テスト",
+    "slow: 実行に時間がかかるテスト",
+]
+
+# ============================================================
+# Coverage (カバレッジ測定)
+# ============================================================
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

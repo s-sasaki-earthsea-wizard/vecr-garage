@@ -4,11 +4,13 @@ Discord Webhook通知サービス
 Discord Webhookを使用してメッセージを送信するサービスクラス
 複数のWebhookを辞書形式で管理
 """
-import os
-import requests
+
 import logging
-from typing import Optional, Dict, Any, List
 from datetime import datetime
+from typing import Any, Optional
+
+import requests
+
 from config.webhook import WebhookConfigParser
 
 # ロガー設定
@@ -65,7 +67,7 @@ class DiscordNotifier:
         """
         return WebhookConfigParser.get_webhook_url(self.webhooks, webhook_name)
 
-    def list_webhooks(self) -> List[str]:
+    def list_webhooks(self) -> list[str]:
         """
         登録されているWebhook名のリストを取得
 
@@ -79,8 +81,8 @@ class DiscordNotifier:
         webhook_name: str,
         content: str,
         username: Optional[str] = None,
-        avatar_url: Optional[str] = None
-    ) -> Dict[str, Any]:
+        avatar_url: Optional[str] = None,
+    ) -> dict[str, Any]:
         """
         指定されたWebhookにメッセージを送信
 
@@ -105,7 +107,7 @@ class DiscordNotifier:
                 "success": False,
                 "webhook_name": webhook_name,
                 "status_code": 404,
-                "message": str(e)
+                "message": str(e),
             }
 
         payload = {"content": content}
@@ -116,23 +118,16 @@ class DiscordNotifier:
             payload["avatar_url"] = avatar_url
 
         try:
-            response = requests.post(
-                webhook_url,
-                json=payload,
-                timeout=10
-            )
+            response = requests.post(webhook_url, json=payload, timeout=10)
             response.raise_for_status()
 
-            logger.info(
-                f"Discordへのメッセージ送信成功 "
-                f"[{webhook_name}]: {content[:50]}..."
-            )
+            logger.info(f"Discordへのメッセージ送信成功 " f"[{webhook_name}]: {content[:50]}...")
 
             return {
                 "success": True,
                 "webhook_name": webhook_name,
                 "status_code": response.status_code,
-                "message": "メッセージ送信成功"
+                "message": "メッセージ送信成功",
             }
 
         except requests.exceptions.Timeout:
@@ -142,20 +137,17 @@ class DiscordNotifier:
                 "success": False,
                 "webhook_name": webhook_name,
                 "status_code": 408,
-                "message": error_msg
+                "message": error_msg,
             }
 
         except requests.exceptions.HTTPError as e:
-            error_msg = (
-                f"Discord Webhook HTTPエラー [{webhook_name}]: "
-                f"{e.response.status_code}"
-            )
+            error_msg = f"Discord Webhook HTTPエラー [{webhook_name}]: " f"{e.response.status_code}"
             logger.error(f"{error_msg} - {e.response.text}")
             return {
                 "success": False,
                 "webhook_name": webhook_name,
                 "status_code": e.response.status_code,
-                "message": error_msg
+                "message": error_msg,
             }
 
         except requests.exceptions.RequestException as e:
@@ -165,7 +157,7 @@ class DiscordNotifier:
                 "success": False,
                 "webhook_name": webhook_name,
                 "status_code": 500,
-                "message": error_msg
+                "message": error_msg,
             }
 
     def broadcast_message(
@@ -173,8 +165,8 @@ class DiscordNotifier:
         content: str,
         username: Optional[str] = None,
         avatar_url: Optional[str] = None,
-        webhook_names: Optional[List[str]] = None
-    ) -> Dict[str, List[Dict[str, Any]]]:
+        webhook_names: Optional[list[str]] = None,
+    ) -> dict[str, list[dict[str, Any]]]:
         """
         複数のWebhookに同時配信
 
@@ -193,21 +185,16 @@ class DiscordNotifier:
 
         for webhook_name in target_webhooks:
             result = self.send_message(
-                webhook_name=webhook_name,
-                content=content,
-                username=username,
-                avatar_url=avatar_url
+                webhook_name=webhook_name, content=content, username=username, avatar_url=avatar_url
             )
             results.append(result)
 
         success_count = sum(1 for r in results if r["success"])
-        logger.info(
-            f"ブロードキャスト完了: {success_count}/{len(results)}件成功"
-        )
+        logger.info(f"ブロードキャスト完了: {success_count}/{len(results)}件成功")
 
         return {"results": results}
 
-    def send_test_message(self, webhook_name: str) -> Dict[str, Any]:
+    def send_test_message(self, webhook_name: str) -> dict[str, Any]:
         """
         指定されたWebhookにテストメッセージを送信
 
@@ -225,17 +212,12 @@ class DiscordNotifier:
         )
 
         return self.send_message(
-            webhook_name=webhook_name,
-            content=test_message,
-            username="VECR Garage Bot"
+            webhook_name=webhook_name, content=test_message, username="VECR Garage Bot"
         )
 
     def send_member_notification(
-        self,
-        webhook_name: str,
-        member_name: str,
-        message: str
-    ) -> Dict[str, Any]:
+        self, webhook_name: str, member_name: str, message: str
+    ) -> dict[str, Any]:
         """
         メンバー通知を送信
 
@@ -250,7 +232,5 @@ class DiscordNotifier:
         notification = f"📢 **{member_name}** からのメッセージ:\n{message}"
 
         return self.send_message(
-            webhook_name=webhook_name,
-            content=notification,
-            username=member_name
+            webhook_name=webhook_name, content=notification, username=member_name
         )

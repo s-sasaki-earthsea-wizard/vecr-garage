@@ -6,11 +6,12 @@ Discord Bot本体
 カスタムプロンプト対応
 """
 
-import discord
 import logging
-from typing import List, Optional
+
+import discord
 from services.llm_client import LLMClient
 from services.times_scheduler import TimesScheduler
+
 from config.prompt import PromptParser
 
 logger = logging.getLogger(__name__)
@@ -23,9 +24,9 @@ class DiscordBot:
         self,
         bot_name: str,
         bot_token: str,
-        mention_channels: List[int],
-        auto_thread_channels: List[int],
-        times_channels: List[int],
+        mention_channels: list[int],
+        auto_thread_channels: list[int],
+        times_channels: list[int],
         times_test_mode: bool = False,
         times_test_interval: int = 60,
     ):
@@ -66,7 +67,7 @@ class DiscordBot:
             discord_client=self.client,
             times_channels=list(times_channels),
             test_mode=times_test_mode,
-            test_interval_seconds=times_test_interval
+            test_interval_seconds=times_test_interval,
         )
 
         # イベントハンドラー登録
@@ -138,9 +139,7 @@ class DiscordBot:
         # 3. LLM API呼び出し
         try:
             # システムプロンプトを使用してLLM APIを呼び出し
-            response = self.llm_client.send_message(
-                prompt=prompt, system_prompt=self.system_prompt
-            )
+            response = self.llm_client.send_message(prompt=prompt, system_prompt=self.system_prompt)
 
             # 4. Discord文字数制限対応（2000文字）
             if len(response) > 2000:
@@ -152,9 +151,7 @@ class DiscordBot:
 
         except Exception as e:
             logger.error(f"❌ LLM API呼び出しエラー: {e}", exc_info=True)
-            await message.channel.send(
-                "⚠️ エラーが発生しました。後ほど再試行してください。"
-            )
+            await message.channel.send("⚠️ エラーが発生しました。後ほど再試行してください。")
 
     async def _handle_auto_thread_mode(self, message):
         """
@@ -178,8 +175,7 @@ class DiscordBot:
 
             # 3. LLM API呼び出し
             response = self.llm_client.send_message(
-                prompt=conversation_history,
-                system_prompt=self.system_prompt
+                prompt=conversation_history, system_prompt=self.system_prompt
             )
 
             # 4. Discord文字数制限対応（2000文字）
@@ -218,11 +214,15 @@ class DiscordBot:
         # 会話履歴を整形
         conversation_lines = []
         for msg in history_messages:
-            author_name = self.bot_name if msg.author == self.client.user else msg.author.display_name
+            author_name = (
+                self.bot_name if msg.author == self.client.user else msg.author.display_name
+            )
             conversation_lines.append(f"{author_name}: {msg.content}")
 
         # 最新メッセージを追加
-        conversation_lines.append(f"{current_message.author.display_name}: {current_message.content}")
+        conversation_lines.append(
+            f"{current_message.author.display_name}: {current_message.content}"
+        )
 
         # 改行で結合
         conversation_context = "\n".join(conversation_lines)

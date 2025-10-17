@@ -1,6 +1,8 @@
 import os
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
+
 
 class DBMemberConnection:
     def __init__(self):
@@ -14,7 +16,7 @@ class DBMemberConnection:
             "password": os.getenv("MEMBER_DB_PASSWORD"),
             "db_name": os.getenv("MEMBER_DB_NAME"),
         }
-    
+
     def _get_db_url(self) -> str:
         db_config = self._get_db_config()
         return (
@@ -34,9 +36,11 @@ class DBMemberConnection:
         except Exception as e:
             raise Exception(f"❌ Error establishing database connection: {e}")
 
+
 def main():
     db_member_connection = DBMemberConnection()
     db_member_connection.db_member_connection_check()
+
 
 if __name__ == "__main__":
     main()

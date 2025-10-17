@@ -6,7 +6,8 @@ LLM（Large Language Model）APIを使用してプロンプトを送信し、応
 """
 
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Optional
+
 from anthropic import Anthropic
 
 
@@ -61,7 +62,7 @@ class LLMClient:
             messages = [{"role": "user", "content": prompt}]
 
             # API呼び出しパラメータ
-            params: Dict[str, Any] = {
+            params: dict[str, Any] = {
                 "model": self.model,
                 "max_tokens": self.max_tokens,
                 "messages": messages,
@@ -84,7 +85,7 @@ class LLMClient:
         except Exception as e:
             raise Exception(f"LLM API呼び出しエラー: {str(e)}")
 
-    def send_test_message(self) -> Dict[str, Any]:
+    def send_test_message(self) -> dict[str, Any]:
         """
         テストメッセージを送信して動作確認
 
