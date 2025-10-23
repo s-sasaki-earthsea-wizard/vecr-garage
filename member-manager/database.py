@@ -117,8 +117,7 @@ class DatabaseManager:
                 )
                 columns_result = conn.execute(columns_query)
                 columns = [
-                    {"name": row[0], "type": row[1], "nullable": row[2]}
-                    for row in columns_result
+                    {"name": row[0], "type": row[1], "nullable": row[2]} for row in columns_result
                 ]
 
                 # テーブルのデータを取得
@@ -126,9 +125,7 @@ class DatabaseManager:
                 data_result = conn.execute(data_query)
                 data = [dict(row._mapping) for row in data_result]
 
-                logger.info(
-                    f"テーブル '{table_name}' から {len(data)} 件のデータを取得"
-                )
+                logger.info(f"テーブル '{table_name}' から {len(data)} 件のデータを取得")
 
                 return {
                     "table_name": table_name,
@@ -176,8 +173,7 @@ class DatabaseManager:
                 )
                 columns_result = conn.execute(columns_query)
                 table_columns = {
-                    row[0]: {"type": row[1], "default": row[2]}
-                    for row in columns_result
+                    row[0]: {"type": row[1], "default": row[2]} for row in columns_result
                 }
 
                 # 自動生成される列（ID、UUID、タイムスタンプ）を除外
@@ -206,9 +202,7 @@ class DatabaseManager:
                 result = conn.execute(insert_query, filtered_data)
                 inserted_record = result.fetchone()
 
-                logger.info(
-                    f"テーブル '{table_name}' にレコードを挿入: {filtered_data}"
-                )
+                logger.info(f"テーブル '{table_name}' にレコードを挿入: {filtered_data}")
 
                 return dict(inserted_record._mapping) if inserted_record else None
 
@@ -250,8 +244,7 @@ class DatabaseManager:
                 )
                 columns_result = conn.execute(columns_query)
                 table_columns = {
-                    row[0]: {"type": row[1], "default": row[2]}
-                    for row in columns_result
+                    row[0]: {"type": row[1], "default": row[2]} for row in columns_result
                 }
 
                 # 主キー列を特定
@@ -390,9 +383,7 @@ class DatabaseManager:
             with self.engine.begin() as conn:
                 # メンバーテーブルが更新された場合、関連するプロファイルテーブルも更新
                 if table_name in ["human_members", "virtual_members"]:
-                    profile_table = (
-                        f"{table_name.replace('_members', '_member_profiles')}"
-                    )
+                    profile_table = f"{table_name.replace('_members', '_member_profiles')}"
 
                     # 対象のmember_uuidを取得
                     member_query = text(
@@ -412,9 +403,7 @@ class DatabaseManager:
                             if "llm_model" in updated_data:
                                 profile_updates["llm_model"] = updated_data["llm_model"]
                             if "custom_prompt" in updated_data:
-                                profile_updates["custom_prompt"] = updated_data[
-                                    "custom_prompt"
-                                ]
+                                profile_updates["custom_prompt"] = updated_data["custom_prompt"]
 
                         # プロファイルテーブルを更新
                         if profile_updates:

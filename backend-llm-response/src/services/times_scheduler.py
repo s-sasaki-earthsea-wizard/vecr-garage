@@ -82,14 +82,10 @@ class TimesScheduler:
             FileNotFoundError: ファイルが存在しない
             ValueError: JSON形式が不正
         """
-        topics_file = (
-            Path(__file__).parent.parent.parent / "prompts" / "times_topics.json"
-        )
+        topics_file = Path(__file__).parent.parent.parent / "prompts" / "times_topics.json"
 
         if not topics_file.exists():
-            raise FileNotFoundError(
-                f"話題リストファイルが見つかりません: {topics_file}"
-            )
+            raise FileNotFoundError(f"話題リストファイルが見つかりません: {topics_file}")
 
         try:
             with open(topics_file, encoding="utf-8") as f:
@@ -108,9 +104,7 @@ class TimesScheduler:
     def start(self):
         """スケジューラー起動"""
         if not self.times_channels:
-            logger.warning(
-                "⚠️ Times Mode対象チャンネルが0件のためスケジューラーを起動しません"
-            )
+            logger.warning("⚠️ Times Mode対象チャンネルが0件のためスケジューラーを起動しません")
             return
 
         # トリガー設定（本番モード or テストモード）
@@ -175,9 +169,7 @@ class TimesScheduler:
 
         # LLM API呼び出し
         try:
-            response = self.llm_client.send_message(
-                prompt=topic, system_prompt=self.system_prompt
-            )
+            response = self.llm_client.send_message(prompt=topic, system_prompt=self.system_prompt)
 
             # Discord文字数制限対応（2000文字）
             if len(response) > 2000:

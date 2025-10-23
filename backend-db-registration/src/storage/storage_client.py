@@ -114,14 +114,10 @@ class StorageClient:
         """
         try:
             yaml_files = []
-            objects = self.client.list_objects(
-                self.bucket_name, prefix=prefix, recursive=True
-            )
+            objects = self.client.list_objects(self.bucket_name, prefix=prefix, recursive=True)
 
             for obj in objects:
-                if obj.object_name.endswith(".yml") or obj.object_name.endswith(
-                    ".yaml"
-                ):
+                if obj.object_name.endswith(".yml") or obj.object_name.endswith(".yaml"):
                     yaml_files.append(obj.object_name)
 
             return yaml_files
@@ -171,9 +167,7 @@ class StorageClient:
 
             return data
         except Exception as e:
-            raise Exception(
-                f"❌ Error reading {object_name} from {self.bucket_name}: {e}"
-            )
+            raise Exception(f"❌ Error reading {object_name} from {self.bucket_name}: {e}")
 
 
 def main():
@@ -221,12 +215,8 @@ def main():
             print(f"  {file}")
 
         # Read specific files
-        syota_data = storage_client.read_yaml_from_minio(
-            "data/samples/human_members/syota.yml"
-        )
-        kasen_data = storage_client.read_yaml_from_minio(
-            "data/samples/virtual_members/kasen.yml"
-        )
+        syota_data = storage_client.read_yaml_from_minio("data/samples/human_members/syota.yml")
+        kasen_data = storage_client.read_yaml_from_minio("data/samples/virtual_members/kasen.yml")
 
         print(f"\nSyota data: {syota_data}")
         print(f"Kasen data: {kasen_data}")

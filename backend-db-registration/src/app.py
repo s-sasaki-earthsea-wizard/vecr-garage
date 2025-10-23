@@ -189,9 +189,7 @@ async def test_webhook():
                     "eventName": "s3:ObjectCreated:Put",
                     "eventTime": "2024-01-01T00:00:00.000Z",
                     "s3": {
-                        "bucket": {
-                            "name": os.getenv("MINIO_BUCKET_NAME", "vecr-storage")
-                        },
+                        "bucket": {"name": os.getenv("MINIO_BUCKET_NAME", "vecr-storage")},
                         "object": {
                             "key": "data/samples/human_members/test_human_member.yaml",
                             "eTag": "test-etag-123",

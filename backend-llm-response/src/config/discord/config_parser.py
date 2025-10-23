@@ -60,8 +60,7 @@ class DiscordConfigParser:
         if bot_name not in config:
             available_bots = ", ".join(config.keys())
             raise ValueError(
-                f"Bot '{bot_name}' が見つかりません。\n"
-                f"利用可能なBot: {available_bots}"
+                f"Bot '{bot_name}' が見つかりません。\n" f"利用可能なBot: {available_bots}"
             )
 
         return config[bot_name]["bot_token"]
@@ -89,8 +88,7 @@ class DiscordConfigParser:
         if bot_name not in config:
             available_bots = ", ".join(config.keys())
             raise ValueError(
-                f"Bot '{bot_name}' が見つかりません。\n"
-                f"利用可能なBot: {available_bots}"
+                f"Bot '{bot_name}' が見つかりません。\n" f"利用可能なBot: {available_bots}"
             )
 
         bot_config = config[bot_name]

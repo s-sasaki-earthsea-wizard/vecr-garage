@@ -154,11 +154,7 @@ def get_human_member_by_uri(db: Session, yml_file_uri: str):
         DatabaseError: データベース検索時にエラーが発生した場合
     """
     try:
-        return (
-            db.query(HumanMember)
-            .filter(HumanMember.yml_file_uri == yml_file_uri)
-            .first()
-        )
+        return db.query(HumanMember).filter(HumanMember.yml_file_uri == yml_file_uri).first()
     except Exception as e:
         error_msg = f"Failed to get human member by URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
@@ -215,9 +211,7 @@ def upsert_human_member(db: Session, name: str, yml_file_uri: str):
         return member
 
     except Exception as e:
-        error_msg = (
-            f"Failed to upsert human member '{name}' for URI '{yml_file_uri}': {str(e)}"
-        )
+        error_msg = f"Failed to upsert human member '{name}' for URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 
@@ -340,11 +334,7 @@ def get_virtual_member_by_uri(db: Session, yml_file_uri: str):
         DatabaseError: データベース検索時にエラーが発生した場合
     """
     try:
-        return (
-            db.query(VirtualMember)
-            .filter(VirtualMember.yml_file_uri == yml_file_uri)
-            .first()
-        )
+        return db.query(VirtualMember).filter(VirtualMember.yml_file_uri == yml_file_uri).first()
     except Exception as e:
         error_msg = f"Failed to get virtual member by URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
@@ -407,9 +397,7 @@ def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
 
 
 # プロフィール操作
-def upsert_human_member_profile(
-    db: Session, member_id: int, member_uuid: str, bio: str = None
-):
+def upsert_human_member_profile(db: Session, member_id: int, member_uuid: str, bio: str = None):
     """人間メンバープロフィールのUPSERT処理（ON CONFLICT DO UPDATE使用）"""
     try:
         sql = text(
@@ -425,9 +413,7 @@ def upsert_human_member_profile(
         """
         )
 
-        result = db.execute(
-            sql, {"member_id": member_id, "member_uuid": member_uuid, "bio": bio}
-        )
+        result = db.execute(sql, {"member_id": member_id, "member_uuid": member_uuid, "bio": bio})
         row = result.fetchone()
 
         # 結果からHumanMemberProfileオブジェクトを構築
@@ -446,9 +432,7 @@ def upsert_human_member_profile(
 
     except Exception as e:
         # NOTE: ロールバックは呼び出し元で実行
-        error_msg = (
-            f"Failed to upsert human member profile for member {member_uuid}: {str(e)}"
-        )
+        error_msg = f"Failed to upsert human member profile for member {member_uuid}: {str(e)}"
         logger.error(error_msg)
         raise DatabaseError(error_msg, e)
 

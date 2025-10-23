@@ -49,17 +49,13 @@ class LLMDiscordBridge:
 
             # Step 2: Discord投稿用のメッセージを構築
             if include_prompt:
-                discord_content = (
-                    f"**プロンプト:**\n{prompt}\n\n**LLM応答:**\n{llm_response}"
-                )
+                discord_content = f"**プロンプト:**\n{prompt}\n\n**LLM応答:**\n{llm_response}"
             else:
                 discord_content = llm_response
 
             # メッセージが長すぎる場合は分割（Discord制限: 2000文字）
             if len(discord_content) > 2000:
-                discord_content = (
-                    discord_content[:1900] + "\n\n...(応答が長すぎるため省略)"
-                )
+                discord_content = discord_content[:1900] + "\n\n...(応答が長すぎるため省略)"
 
             # Step 3: Discordに投稿
             discord_result = self.discord_notifier.send_message(

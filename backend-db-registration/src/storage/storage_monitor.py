@@ -26,9 +26,7 @@ class StorageMonitor:
         """ストレージ監視を初期化"""
         self.webhook_enabled = os.getenv("WEBHOOK_ENABLED", "true").lower() == "true"
         self.webhook_endpoint = os.getenv("WEBHOOK_ENDPOINT", "/webhook/file-change")
-        self.webhook_events = os.getenv(
-            "WEBHOOK_EVENTS", "s3:ObjectCreated:*,s3:ObjectRemoved:*"
-        )
+        self.webhook_events = os.getenv("WEBHOOK_EVENTS", "s3:ObjectCreated:*,s3:ObjectRemoved:*")
         self.webhook_filter_prefix = os.getenv("WEBHOOK_FILTER_PREFIX", "data/")
         self.webhook_filter_suffix = os.getenv("WEBHOOK_FILTER_SUFFIX", ".yaml,.yml")
 

@@ -79,9 +79,7 @@ class DiscordBot:
         @self.client.event
         async def on_ready():
             """Bot起動時"""
-            logger.info(
-                f"✅ Discord Bot起動完了: {self.client.user} (Bot名: {self.bot_name})"
-            )
+            logger.info(f"✅ Discord Bot起動完了: {self.client.user} (Bot名: {self.bot_name})")
             logger.info(
                 f"📍 Mentionモード対象チャンネル数: {len(self.mention_mode_channels)} "
                 f"(IDs: {', '.join(str(ch) for ch in self.mention_mode_channels)})"
@@ -141,9 +139,7 @@ class DiscordBot:
         # 3. LLM API呼び出し
         try:
             # システムプロンプトを使用してLLM APIを呼び出し
-            response = self.llm_client.send_message(
-                prompt=prompt, system_prompt=self.system_prompt
-            )
+            response = self.llm_client.send_message(prompt=prompt, system_prompt=self.system_prompt)
 
             # 4. Discord文字数制限対応（2000文字）
             if len(response) > 2000:
@@ -155,9 +151,7 @@ class DiscordBot:
 
         except Exception as e:
             logger.error(f"❌ LLM API呼び出しエラー: {e}", exc_info=True)
-            await message.channel.send(
-                "⚠️ エラーが発生しました。後ほど再試行してください。"
-            )
+            await message.channel.send("⚠️ エラーが発生しました。後ほど再試行してください。")
 
     async def _handle_auto_thread_mode(self, message):
         """
@@ -212,9 +206,7 @@ class DiscordBot:
         history_messages = []
 
         # Discord APIで履歴を取得（最新メッセージの前まで）
-        async for msg in current_message.channel.history(
-            limit=limit, before=current_message
-        ):
+        async for msg in current_message.channel.history(limit=limit, before=current_message):
             # システムメッセージやピン留めメッセージは除外
             if msg.type == discord.MessageType.default:
                 history_messages.insert(0, msg)  # 古い順に並べる
@@ -223,9 +215,7 @@ class DiscordBot:
         conversation_lines = []
         for msg in history_messages:
             author_name = (
-                self.bot_name
-                if msg.author == self.client.user
-                else msg.author.display_name
+                self.bot_name if msg.author == self.client.user else msg.author.display_name
             )
             conversation_lines.append(f"{author_name}: {msg.content}")
 

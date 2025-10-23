@@ -1,4 +1,3 @@
-
 import pytest
 from storage.storage_client import StorageClient
 
