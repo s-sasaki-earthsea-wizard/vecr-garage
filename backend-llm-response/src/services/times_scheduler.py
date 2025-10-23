@@ -1,7 +1,7 @@
 """
 Discord Bot Times Mode スケジューラー
 
-JST 9:00-18:00の間に1日1回、ランダムな話題で投稿する機能
+平日（月〜金）のJST 9:00-18:00の間に1日1回、ランダムな話題で投稿する機能
 """
 
 import json
@@ -109,10 +109,10 @@ class TimesScheduler:
 
         # トリガー設定（本番モード or テストモード）
         if not self.test_mode:
-            # 本番モード: 毎日9:00に実行、jitterで0-32400秒（9時間）のランダム遅延
+            # 本番モード: 平日9:00に実行、jitterで0-32400秒（9時間）のランダム遅延
             trigger = self._create_production_trigger()
-            job_name = "Times Mode 1日1回投稿"
-            log_msg = "毎日JST 9:00-18:00の間にランダム投稿"
+            job_name = "Times Mode 1日1回投稿（平日のみ）"
+            log_msg = "平日（月〜金）JST 9:00-18:00の間にランダム投稿"
         else:
             # テストモード: 短いインターバルで繰り返し実行
             trigger = self._create_test_trigger()
@@ -128,8 +128,9 @@ class TimesScheduler:
         logger.info(f"🚀 TimesSchedulerスケジューラー起動完了: {log_msg}")
 
     def _create_production_trigger(self):
-        """本番モード用のトリガーを作成（毎日9:00、jitter 9時間）"""
+        """本番モード用のトリガーを作成（平日のみ9:00、jitter 9時間）"""
         return CronTrigger(
+            day_of_week='mon-fri',  # 月曜日〜金曜日のみ実行
             hour=9,
             minute=0,
             second=0,
