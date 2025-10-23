@@ -23,7 +23,7 @@ Flask-Migrate==4.0.5  # データベースマイグレーション
 alembic==1.13.1  # データベースマイグレーション管理
 
 ## Phase 4: 本番環境対応
-# python-dotenv==1.0.0  # 環境変数管理
+python-dotenv==1.0.0  # 環境変数管理
 # minio==7.2.15  # S3互換ストレージクライアント
 # boto3==1.34.0  # AWS SDK（Cognito統合用）
 # Flask-Talisman==1.1.0  # セキュリティヘッダー
