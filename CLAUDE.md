@@ -1,16 +1,35 @@
 # VECR Garage プロジェクトガイド
 
+## 📖 ドキュメントナビゲーション
+
+このドキュメントはVECR Garageプロジェクトのマスターインデックスです。詳細な技術ドキュメントは各リンク先を参照してください。
+
+### アーキテクチャ
+
+- [サービス構成](docs/architecture/services.md) - 6つのコンテナサービスの詳細
+- [データベース設計](docs/architecture/database.md) - PostgreSQL/DynamoDBテーブル設計
+- [Webhook自動化システム](docs/architecture/webhook-automation.md) - MinIO Webhook完全自動化
+
+### 開発ガイド
+
+- [テスト戦略](docs/development/testing.md) - ユニット〜E2E統合テスト
+- [よく使うコマンド](docs/development/commands.md) - Docker/Make/CLI操作集
+- [トラブルシューティング](docs/development/troubleshooting.md) - よくある問題と解決策
+
+### 外部連携
+
+- [Discord統合](docs/integrations/discord.md) - Webhook通知＋Bot統合
+- [Claude API連携](docs/integrations/claude-api.md) - Anthropic Claude API実装
+- [MinIO設定](docs/integrations/minio.md) - オブジェクトストレージ操作
+- [認証システム](docs/integrations/authentication.md) - 3段階認証ロードマップ
+
+---
+
 ## プロジェクト概要
 
 人間とAIアシスタントエンジニアが協働する仮想スタートアップオフィス「VECRガレージ」のDockerベース環境です。
 
-## 言語設定
-
-このプロジェクトでは**日本語**での応答を行ってください。コード内のコメント、ログメッセージ、エラーメッセージ、ドキュメンテーション文字列なども日本語で記述してください。
-
-## アーキテクチャ
-
-### サービス構成
+### サービス構成（概要）
 
 - **backend-db-registration** (port: 3000): ストレージからメンバーデータをDBに登録
 - **backend-llm-response** (port: 3001): LLM応答の送受信処理
@@ -18,6 +37,48 @@
 - **storage** (port: 9000/9001): MinIOオブジェクトストレージ
 - **member-manager** (port: 8000): Django Webインターフェース
 - **db-chat-log** (port: 4566): LocalStack/DynamoDBチャットログ
+
+詳細: [サービス構成](docs/architecture/services.md)
+
+---
+
+## 言語設定
+
+このプロジェクトでは**日本語**での応答を行ってください。コード内のコメント、ログメッセージ、エラーメッセージ、ドキュメンテーション文字列なども日本語で記述してください。
+
+---
+
+## クイックスタート
+
+### 環境起動
+
+```bash
+# コンテナ起動
+make docker-build-up
+
+# 状態確認
+make docker-ps
+
+# ログ確認
+make docker-logs
+```
+
+### 動作確認
+
+```bash
+# 統合テスト実行
+make test-integration
+
+# PostgreSQL接続
+make db-member-psql
+
+# Discord Bot ログ確認
+make discord-bot-logs
+```
+
+詳細: [よく使うコマンド](docs/development/commands.md)
+
+---
 
 ## 開発ルール
 
@@ -29,133 +90,41 @@
 - 定数: UPPER_SNAKE_CASE
 - Docstring: Google Style
 
-### ディレクトリ構造
-
-```text
-backend-*/
-├── src/           # ソースコード
-├── tests/         # テストコード
-├── requirements.txt
-└── Dockerfile
-```
-
 ### データベース操作
 
 - トランザクション処理を必須とする
 - エラー時は必ずロールバック
 - SQLAlchemyのセッション管理を適切に行う
 
+詳細: [データベース設計](docs/architecture/database.md)
+
 ### テスト
 
 ```bash
-# backend-db-registrationのテスト（統合Makefileターゲット使用）
-make backend-db-registration-test
+# backend-db-registrationのテスト
+make backend-db-registration-test-integration
 
-# backend-llm-responseのテスト
-docker exec -it vecr-garage-backend-llm-response pytest tests/
+# 全サービス統合テスト
+make test-integration
 ```
 
-#### テストケース設計
+詳細: [テスト戦略](docs/development/testing.md)
 
-**正常系テスト**:
-- `data/samples/human_members/`: 人間メンバーの正常な登録ファイル
-- `data/samples/virtual_members/`: 仮想メンバーの正常な登録ファイル
-
-**異常系テスト**:
-- `data/test_cases/human_members/`: 人間メンバーの異常系テストケース
-  - `invalid_missing_name.yml`: nameフィールド欠損（ValidationError）
-  - `invalid_empty_file.yml`: 空ファイル（'NoneType' object エラー）
-- `data/test_cases/virtual_members/`: 仮想メンバーの異常系テストケース
-  - `invalid_missing_name.yml`: nameフィールド欠損（ValidationError）
-  - `invalid_missing_model.yml`: llm_modelフィールド欠損（ValidationError）
-
-#### バリデーション処理
-
-**エラーハンドリング設計**:
-- `process_file_event`: 純粋なファイル処理の責任（単一責任の原則）
-- `handle_webhook`: 例外処理とエラーログの統一管理
-- ValidationError、DatabaseError、その他の例外を適切に分離
-- 異常系ファイルは確実にエラーとして検出され、HTTP 400で応答
-
-### 型チェック・リンター
-
-```bash
-# Python (各backendサービス内で実行)
-mypy src/
-ruff check src/
-black src/
-```
-
-## よく使うコマンド
-
-### Docker操作
-
-```bash
-make docker-up              # コンテナ起動
-make docker-down            # コンテナ停止
-make docker-restart         # 再起動
-make docker-logs            # ログ確認
-make docker-ps              # 状態確認
-make docker-build-up        # ビルド＆起動
-```
-
-### サービスアクセス
-
-```bash
-make backend-db-registration-shell  # backend-db-registrationシェル
-make backend-llm-response-shell     # backend-llm-responseシェル
-make db-member-psql                 # PostgreSQLクライアント
-make storage-shell                  # MinIOシェル
-```
-
-### データベース確認
-
-```bash
-# PostgreSQL接続
-docker exec -it vecr-garage-db-member psql -U testuser -d member_db
-
-# テーブル確認
-\dt
-\d human_members
-\d virtual_members
-```
-
-## 環境変数
-
-`.env`ファイルで管理：
-
-- MEMBER_DB_NAME=member_db
-- MEMBER_DB_USER=testuser
-- MEMBER_DB_PASSWORD=password
-- MINIO_ROOT_USER=minioadmin
-- MINIO_ROOT_PASSWORD=minioadmin
-- MINIO_BUCKET_NAME=vecr-garage-storage
+---
 
 ## Git運用
 
-- ブランチ戦略: feature/*, fix/*, refactor/*
-- コミットメッセージ: 日本語可、動詞から始める
-- PRはmainブランチへ
+### ブランチ戦略
 
-## 開発ガイドライン
-
-### ドキュメント更新プロセス
-
-機能追加やPhase完了時には、以下のドキュメントを同期更新する：
-
-1. **CLAUDE.md**: プロジェクト全体状況、Phase完了記録、技術仕様
-2. **README.md**: ユーザー向け機能概要、実装状況、使用方法
-3. **Makefile**: コマンドヘルプテキスト（## コメント）の更新
-4. **makefiles/**: コマンドヘルプテキスト（## コメント）の更新
+- feature/* - 新機能開発
+- fix/* - バグ修正
+- refactor/* - リファクタリング
+- docs/* - ドキュメント更新
 
 ### コミットメッセージ規約
 
-#### コミット粒度
-- **1コミット = 1つの主要な変更**: 複数の独立した機能や修正を1つのコミットにまとめない
-- **論理的な単位でコミット**: 関連する変更は1つのコミットにまとめる
-- **段階的コミット**: 大きな変更は段階的に分割してコミット
-
 #### プレフィックスと絵文字
+
 - ✨ feat: 新機能
 - 🐛 fix: バグ修正
 - 📚 docs: ドキュメント
@@ -169,7 +138,15 @@ docker exec -it vecr-garage-db-member psql -U testuser -d member_db
 - 📝 update: 更新・改善
 - 🗑️ remove: 削除
 
-**重要**: Claude Codeを使用してコミットする場合は、必ず以下の署名を含める：
+#### コミット粒度
+
+- **1コミット = 1つの主要な変更**: 複数の独立した機能や修正を1つのコミットにまとめない
+- **論理的な単位でコミット**: 関連する変更は1つのコミットにまとめる
+- **段階的コミット**: 大きな変更は段階的に分割してコミット
+
+#### Claude Code署名
+
+Claude Codeを使用してコミットする場合は、必ず以下の署名を含める：
 
 ```text
 🤖 Generated with [Claude Code](https://claude.ai/code)
@@ -177,32 +154,63 @@ docker exec -it vecr-garage-db-member psql -U testuser -d member_db
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-## トラブルシューティング
+---
 
-### コンテナが起動しない場合
+## 開発ガイドライン
+
+### ドキュメント更新プロセス
+
+機能追加やPhase完了時には、以下のドキュメントを同期更新する：
+
+1. **CLAUDE.md**: プロジェクト全体状況、Phase完了記録、技術仕様
+2. **README.md**: ユーザー向け機能概要、実装状況、使用方法
+3. **Makefile**: コマンドヘルプテキスト（## コメント）の更新
+4. **makefiles/**: コマンドヘルプテキスト（## コメント）の更新
+5. **docs/**: 詳細技術ドキュメントの更新
+
+---
+
+## 環境変数
+
+`.env`ファイルで管理：
 
 ```bash
-make docker-clean
-make docker-build-up
+# データベース設定
+MEMBER_DB_NAME=member_db
+MEMBER_DB_USER=testuser
+MEMBER_DB_PASSWORD=password
+
+# MinIO設定
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+MINIO_BUCKET_NAME=vecr-garage-storage
+
+# 認証設定
+ADMIN_USERNAME=Admin
+ADMIN_PASSWORD=SamplePassword
+SECRET_KEY=vecr-garage-secret-key-development-only-2025
+
+# Claude API設定
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+ANTHROPIC_API_VERSION=2023-06-01
+ANTHROPIC_MAX_TOKENS=4096
+
+# Discord Bot設定
+DISCORD_BOT_NAME=🤖🍡華扇
+
+# Times Mode設定
+TIMES_TEST_MODE=false
+TIMES_TEST_INTERVAL=60
+
+# Webhook設定
+WEBHOOK_ETAG_CHECK_ENABLED=false
+WEBHOOK_AUTO_SETUP_ENABLED=true
 ```
 
-### データベース接続エラー
+詳細: [サービス構成](docs/architecture/services.md)
 
-```bash
-# ヘルスチェック確認
-docker ps --format "table {{.Names}}\t{{.Status}}"
-# db-memberが(healthy)であることを確認
-```
-
-### ポート競合
-
-```bash
-# 使用中のポート確認
-lsof -i :3000
-lsof -i :5432
-lsof -i :8000
-lsof -i :9000
-```
+---
 
 ## セキュリティ注意事項
 
@@ -211,715 +219,126 @@ lsof -i :9000
 - データベースパスワードは強力なものに変更する
 - APIエンドポイントには適切な認証を実装する
 
-## member-managerサービス
+詳細: [認証システム](docs/integrations/authentication.md)
 
-### 現在の実装状況（モックアップ）
-- Flask + JavaScriptによるWebインターフェース
-- ハードコードされたモックデータを使用
-- テーブル選択、表示、編集、削除機能
+---
 
-### 将来の実装計画
-- Jinjaテンプレートによる動的レンダリング
-- PostgreSQLデータベースとの実際の連携
-- SQLAlchemyによるORM実装
-- MinIOストレージとの統合
-- リアルタイムデータ同期
+## 実装完了Phase記録
 
-### アクセス方法
-```bash
-# ローカル環境（認証が必要）
-http://localhost:8000/
+<details>
+<summary>✅ MinIO Webhook自動化システム（クリックで展開）</summary>
 
-# ログインページに自動リダイレクト
-http://localhost:8000/login
-
-# 認証情報は .env.example の ADMIN_USERNAME / ADMIN_PASSWORD を参照
-# デフォルト: Admin / SamplePassword
-
-# Dockerコンテナ内で実行
-docker exec -it vecr-garage-member-manager python app.py
-```
-
-## 認証システム
-
-### 認証戦略ロードマップ
-
-#### Phase 1: モックアップ認証（✅ 実装済み）
-**目的**: UI/UX検証・プロトタイピング
-- 環境変数ベースの簡易認証
-- セッション管理（Flask-Session）
-- ログイン/ログアウト機能
-- パスワード表示切り替えボタン（👁️/🙈）
-
-```bash
-# 環境変数設定例（.env.exampleから.envにコピーして使用）
-ADMIN_USERNAME=Admin
-ADMIN_PASSWORD=SamplePassword
-SECRET_KEY=vecr-garage-secret-key-development-only-2025
-```
-
-**実装済み機能:**
-- 美しいログインページデザイン
-- セッション管理とリダイレクト
-- 全API保護（@login_required）
-- ログアウト機能
-
-#### Phase 2: セッションベース認証（次期実装）
-**目的**: 開発・ステージング環境での実用化
-- Flask-Login + Redis セッション管理
-- CSRF保護（Flask-WTF）
-- レート制限（Flask-Limiter）
-- パスワードハッシュ化（bcrypt）
-
-```python
-# 技術スタック例
-auth_stack = [
-    "Flask-Login",      # セッション管理
-    "Flask-WTF",        # CSRF保護
-    "Flask-Limiter",    # レート制限
-    "bcrypt",           # パスワードハッシュ化
-    "Redis"             # セッションストア
-]
-```
-
-#### Phase 3: 本番環境認証（将来実装）
-**目的**: 本格運用・AWS統合
-- AWS Cognito統合
-- MFA（多要素認証）対応
-- ソーシャルログイン連携
-- JWT認証 + API Gateway
-
-```yaml
-# AWS統合サービス
-aws_services:
-  authentication: AWS Cognito
-  secrets: AWS Secrets Manager
-  certificates: AWS Certificate Manager
-  deployment: EKS + ALB
-```
-
-### セキュリティ考慮事項
-
-#### 現在のモックアップ段階
-- ⚠️ 平文パスワード（開発専用）
-- ⚠️ 簡易セッション管理
-- ⚠️ HTTPS非対応（ローカル環境）
-
-#### 将来の本番環境
-- ✅ パスワードハッシュ化必須
-- ✅ HTTPS通信強制
-- ✅ セキュリティヘッダー設定
-- ✅ 監査ログ記録
-
-## Webhook自動化システム
-
-### MinIO Webhook設定の完全自動化（✅ 実装完了）
+### 実装概要
 
 **実装目的**: リポジトリクローン時の完全な再現性確保と手動設定の完全排除
 
-#### 🚀 3段階自動化アーキテクチャ
+**達成状況**: ✅ 完全達成 - 手動作業ゼロで環境が完全再現される
 
-**完全自動化プロセス**: `make docker-build-up` → 手動作業ゼロでWebhookシステム稼働
+**3段階自動化アーキテクチャ**:
+1. **minio-setup**: MinIO基本設定、サンプルデータコピー、webhook設定適用
+2. **minio-restarter**: MinIO再起動（設定反映のため）
+3. **webhook-configurator**: イベント設定とテスト実行
 
-1. **minio-setup** → MinIO基本設定、サンプルデータコピー、webhook設定適用
-2. **minio-restarter** → MinIO再起動（設定反映のため）
-3. **webhook-configurator** → イベント設定とテスト実行
+詳細: [Webhook自動化システム](docs/architecture/webhook-automation.md)
 
-**docker-compose.ymlサービス依存関係**:
-```yaml
-minio-setup:
-  depends_on: [storage: service_healthy]
-minio-restarter:
-  depends_on: [minio-setup: service_completed_successfully]
-webhook-configurator:
-  depends_on: [minio-restarter: service_completed_successfully]
-```
+</details>
 
-#### 🔧 主な技術改善
+<details>
+<summary>✅ 包括的テストシステム（クリックで展開）</summary>
 
-**自動化の実現方法**:
-1. **外部スクリプト分離**: docker-composeエントリーポイントの保守性向上
-2. **Docker-in-Docker**: minio-restarterサービスによるコンテナ間制御
-3. **イベント対応拡張**: `s3:ObjectCreated:Copy`イベントサポート追加
-4. **環境変数制御**: `WEBHOOK_ETAG_CHECK_ENABLED`による重複チェック制御
-
-**影響ファイル**:
-- `scripts/minio-setup.sh`: MinIO初期化（webhook設定のみ、イベント設定は除外）
-- `scripts/webhook-configurator.sh`: イベント設定とリトライロジック（新規作成）
-- `backend-db-registration/src/services/webhook_file_watcher.py`: Copy イベント対応とETag制御
-- `docker-compose.yml`: 3段階サービス依存関係実装
-
-#### 🧪 テスト結果
-
-**完全再現性テスト** (`make docker-down` → `make docker-build-up`):
-- ✅ 人間メンバー: 2件自動登録 (Syota, Rin)
-- ✅ 仮想メンバー: 2件自動登録 (華扇, Darcy)
-- ✅ 異常系ファイル: HTTP 400で適切にエラー処理
-- ✅ 手動作業: 完全にゼロ
-
-**環境変数設定**:
-```bash
-# ETag重複チェック機能の有効/無効制御
-# 本番環境: true (重複処理を防ぐ)
-# 開発環境: false (DBリセット後の再処理を可能にする)
-WEBHOOK_ETAG_CHECK_ENABLED=false
-
-# docker-compose起動時のWebhook自動設定を制御
-WEBHOOK_AUTO_SETUP_ENABLED=true
-```
-
-**現在の動作**:
-- `WEBHOOK_ETAG_CHECK_ENABLED=false`: 同じファイルでも毎回処理実行（開発環境向け）
-- `WEBHOOK_ETAG_CHECK_ENABLED=true`: 重複ファイルはスキップ（本番環境向け）
-- 自動的なMinIOバケット作成、サンプルデータコピー、Webhook設定
-- s3:ObjectCreated:* イベント（Put, Post, CompleteMultipartUpload, Copy）の完全サポート
-
-**技術的改善**:
-- TTY問題の適切な処理とフォールバック機能
-- リトライロジックによる堅牢性向上
-- 詳細なログ出力による運用性向上
-- 設定の外部化による保守性向上
-- Docker-in-Dockerによるコンテナ間操作の実現
-
-#### 🎯 完全自動化の達成
-
-**ユーザー要求**:「手動での設定は一切排除してください。環境の再現性が失われます。docker-compose.ymlやMakefileの更新のみを行い、make docker-build-upで環境が再現されるようにしてください」
-
-✅ **達成状況**: 完全達成 - 手動作業ゼロで環境が完全再現される
-
-## 包括的テストシステム
-
-### backend-db-registrationテスト統合アーキテクチャ（✅ 実装完了）
+### 実装概要
 
 **実装目的**: ユニットテストからE2Eテストまでを統合した包括的品質保証システム
 
-#### 🏗️ テストシステム構成
-
-**テストファイル構成**:
-- `makefiles/backend-db-registration-tests.mk`: backend-db-registration専用テスト集約
-- `makefiles/yml-file-operations.mk`: YMLファイル操作統合システム
-- `makefiles/integration.mk`: サービス横断統合テスト
-
-**既存のpytestユニットテストを活用**:
-- 25の包括的テストケース（正常・異常系）
-- docker exec による実際のコンテナ内実行
-- 実データベース接続での検証
-
-#### 🧪 テストターゲット体系
-
-**backend-db-registration専用テスト**:
-```makefile
-backend-db-registration-test-unit         # ユニットテストのみ
-backend-db-registration-test-samples      # 正常系E2Eテスト（DB登録確認）
-backend-db-registration-test-cases        # 異常系エラーハンドリング（HTTP 400確認）
-backend-db-registration-test-integration  # 上記すべて統合実行
-```
-
-**システム統合テスト**:
-```makefile
-test-integration  # 全サービス統合（現在はbackend-db-registrationのみ）
-```
-
-#### ✅ テスト結果
-
-**包括的テスト実行結果**:
+**テスト結果**:
 - **Unit Tests**: 25 tests passed（pytest container execution）
 - **Sample Processing**: Human & Virtual member DB registration confirmed
 - **Error Handling**: HTTP 400 validation errors properly handled
 - **E2E Integration**: File upload → Webhook → DB registration verified
 
-**自動クリーンアップ**:
-- テストファイル自動削除
-- 副作用なしの隔離されたテスト実行
+詳細: [テスト戦略](docs/development/testing.md)
 
-#### 🎯 実現した価値
+</details>
 
-**テストカバレッジ**:
-- **Unit Level**: コアロジックの品質保証
-- **Integration Level**: Webhook処理の動作確認
-- **E2E Level**: ファイルからDB登録までの全工程検証
+<details>
+<summary>✅ Discord統合（Webhook + Bot）（クリックで展開）</summary>
 
-**開発効率向上**:
-- 段階的実行可能（個別テスト対応）
-- 既存pytestリソースの最大活用
-- 統合実行での包括的品質確認
+### 実装概要
 
-## YMLファイル操作統合システム
+**Discord Webhook通知システム**:
+- セキュアなWebhook管理（JSONファイル + 環境変数）
+- REST API エンドポイント
+- Make ターゲット統合
 
-### ファイル操作の統一管理（✅ 実装完了）
+**Discord Bot統合**:
+- **Mention Mode**: @メンション応答
+- **AutoThread Mode**: 新着投稿自動応答
+- **Times Mode**: 1日1回自動投稿（本番/テストモード切り替え対応）
+
+詳細: [Discord統合](docs/integrations/discord.md)
+
+</details>
+
+<details>
+<summary>✅ Claude API連携（クリックで展開）</summary>
+
+### 実装概要
+
+**ClaudeClient実装**:
+- Anthropic公式Pythonライブラリ使用
+- 環境変数による設定管理
+- Discord Botとの統合
+
+**利用可能なコマンド**:
+- `make claude-test` - 接続テスト
+- `make claude-prompt PROMPT="テキスト"` - カスタムプロンプト送信
+
+詳細: [Claude API連携](docs/integrations/claude-api.md)
+
+</details>
+
+<details>
+<summary>✅ YMLファイル操作統合システム（クリックで展開）</summary>
+
+### 実装概要
 
 **実装目的**: samples.mkとtest-cases.mkの重複排除とファイル操作の一元化
 
-#### 📁 統合アーキテクチャ
+**統合効果**:
+- AWS S3操作コードの共通化
+- 1ファイルでの統一管理
+- 既存コマンドの完全互換
 
-**統合前の課題**:
-- samples.mkとtest-cases.mkで類似処理の重複
-- ファイル操作ロジックの分散
-- 保守性の低下
+詳細: [テスト戦略](docs/development/testing.md#ymlファイル操作統合システム)
 
-**統合後の構成**:
-- `makefiles/yml-file-operations.mk`: 全YMLファイル操作を統合
-- samples.mk, test-cases.mk: 削除済み
-- 完全な後方互換性を保持
+</details>
 
-#### 🎯 利用可能なコマンド
+<details>
+<summary>✅ 認証システム（モックアップ版）（クリックで展開）</summary>
 
-**Sample Files (正常系)**:
-```makefile
-samples-copy, samples-copy-human, samples-copy-virtual
-samples-copy-single, samples-clean, samples-verify
-```
+### 実装概要
 
-**Test Cases (異常系)**:
-```makefile
-test-cases-copy, test-cases-copy-human, test-cases-copy-virtual
-test-cases-copy-single, test-cases-clean, test-cases-verify
-```
+**Phase 1: モックアップ認証**:
+- 環境変数ベースの簡易認証
+- Flask-Session によるセッション管理
+- ログイン/ログアウト機能
+- パスワード表示切り替えボタン
 
-#### ✨ 統合効果
+**将来の実装計画**:
+- Phase 2: Flask-Login + bcrypt + Redis
+- Phase 3: AWS Cognito + MFA + JWT
 
-**重複排除**: AWS S3操作コードの共通化
-**保守性向上**: 1ファイルでの統一管理
-**機能性保持**: 既存コマンドの完全互換
+詳細: [認証システム](docs/integrations/authentication.md)
 
-## Discord Webhook通知システム
+</details>
 
-### セキュアなWebhook管理（✅ 実装完了）
-
-**実装目的**: Discordへのテストメッセージ送信機能の実装（将来的に各種通知機能を追加予定）
-
-#### 🏗️ アーキテクチャ設計
-
-**セキュリティ重視の設計**:
-1. **JSONファイル管理**: `config/discord_webhooks.json`（視認性・編集性◎）
-2. **.envrc自動変換**: JSONを環境変数に変換
-3. **Makefile統合**: `make docker-up/build-up`で自動読み込み
-4. **環境変数渡し**: コンテナにファイルをマウントせず環境変数のみ（セキュア）
-
-**ファイル構成**:
-```
-config/
-├── discord_webhooks.json          # 実際のWebhook URL（.gitignore対象）
-└── discord_webhooks.example.json  # サンプル（リポジトリ管理）
-
-.envrc                              # 環境変数変換スクリプト（.gitignore対象）
-.envrc.example                      # サンプル（リポジトリ管理）
-```
-
-#### 🎯 実装内容
-
-**コアモジュール**:
-- `backend-llm-response/src/config/webhook_config_parser.py`: JSON/環境変数パーサー
-- `backend-llm-response/src/config/webhook_validator.py`: URL形式・データ構造バリデーター
-- `backend-llm-response/src/services/discord_notifier.py`: メッセージ送信サービス
-- `makefiles/discord.mk`: Discord操作コマンド集約
-
-**REST APIエンドポイント**:
-- `GET /api/discord/webhooks`: Webhook一覧取得
-- `POST /api/discord/test/<webhook_name>`: テストメッセージ送信
-- `POST /api/discord/send/<webhook_name>`: カスタムメッセージ送信
-- `POST /api/discord/broadcast`: 全Webhook同時配信
-
-**Makeターゲット**:
-```bash
-make discord-webhooks-list        # Webhook一覧表示
-make discord-verify               # 動作確認（推奨）
-make discord-test-kasen          # 個別テスト送信
-make discord-test-karasuno_endo  # 個別テスト送信
-make discord-test-rusudan        # 個別テスト送信
-make discord-test-all            # 全Webhook同時送信
-make discord-send-message        # カスタムメッセージ
-make discord-help                # コマンド一覧
-```
-
-#### ✅ 動作確認結果
-
-**環境構築**:
-```bash
-# セットアップ
-cp config/discord_webhooks.example.json config/discord_webhooks.json
-# Webhook URLを記入
-
-# 起動（自動的に.envrcが読み込まれる）
-make docker-build-up
-
-# 動作確認
-make discord-verify
-```
-
-**テスト結果**:
-- ✅ 3つのWebhook登録: `kasen_times`, `karasuno_endo_times`, `rusudan_times`
-- ✅ 個別送信: 全Webhook正常動作（HTTP 204）
-- ✅ 同時配信: `make discord-test-all`で3件同時送信成功
-- ✅ カスタムメッセージ: 任意のメッセージ送信可能
-- ✅ 統合テスト: `make test-integration`に組み込み完了
-
-#### 🔒 セキュリティ対策
-
-**ファイル流出防止**:
-- `config/discord_webhooks.json`: .gitignoreで保護
-- `.envrc`: .gitignoreで保護
-- コンテナにファイルをマウントせず、環境変数として渡す
-
-**将来の拡張性**:
-- AWS Secrets Managerへの移行準備完了
-- 環境変数ベースの設計により、CI/CD環境でも同様に動作
-
-#### 🎯 設計原則
-
-**責任分離**:
-- パース/バリデーションロジックの独立（カプセル化）
-- `makefiles/discord.mk`でDiscord操作を集約
-- 既存パターン（storage.mk等）との統一
-
-**12-factor app原則**:
-- 環境変数による設定管理
-- コードと設定の分離
-- ポータビリティの確保
-
-#### 🧪 統合テスト組み込み
-
-**makefiles/integration.mk統合**:
-```makefile
-test-integration: ## Run comprehensive integration tests for all services
-  # Backend-DB-Registration統合テスト
-  @make backend-db-registration-test-integration
-
-  # Backend-LLM-Response統合テスト（Discord Webhook）
-  @make discord-verify
-```
-
-**統合テスト内容**:
-- Webhook一覧取得（3件登録確認）
-- 全Webhookへブロードキャスト送信
-- HTTP 204応答確認（送信成功）
-- **目視確認推奨**: Discordチャンネルでメッセージ到達を人間が確認
-
-**実行方法**:
-```bash
-# 全サービスの統合テストを実行（Discord Webhook含む）
-make test-integration
-```
-
-## Claude API連携
-
-### backend-llm-responseサービスによるClaude API統合（✅ 実装完了）
-
-**実装目的**: Anthropic Claude APIを使用してプロンプトを送信し、応答を取得する機能
-
-#### 🏗️ アーキテクチャ設計
-
-**ClaudeClientクラス**:
-- `backend-llm-response/src/services/claude_client.py`
-- 環境変数からAPIキー、モデル、max_tokensを読み込み
-- `send_message(prompt, system_prompt, temperature)`: プロンプト送信と応答取得
-- `send_test_message()`: 動作確認用のテストメッセージ送信
-
-**環境変数設定**:
-```bash
-# .env に追加
-ANTHROPIC_API_KEY=sk-ant-xxxxx
-ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
-ANTHROPIC_API_VERSION=2023-06-01
-ANTHROPIC_MAX_TOKENS=4096
-```
-
-#### 📦 依存関係
-
-**requirements.txt**:
-- `anthropic==0.69.0`: Anthropic公式Pythonライブラリ最新版
-
-**docker-compose.yml**:
-- backend-llm-responseサービスにClaude API環境変数を追加
-
-#### 🎯 利用可能なMakeコマンド
-
-**makefiles/claude.mk実装**:
-```makefile
-make claude-help                          # ヘルプ表示
-make claude-test                          # 接続テスト
-make claude-prompt PROMPT="テキスト"      # カスタムプロンプト送信
-```
-
-**実行例**:
-```bash
-# 接続テスト
-$ make claude-test
-🤖 Claude API接続テスト中...
-✅ 接続成功!
-モデル: claude-sonnet-4-5-20250929
-プロンプト: こんにちは！簡単な自己紹介をしてください。
-応答: [Claude APIからの応答]
-
-# カスタムプロンプト送信
-$ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてください"
-🤖 Claude APIにプロンプトを送信中...
-応答: [Claude APIからのコード生成]
-```
-
-#### ✨ 実装の特徴
-
-**セキュリティ**: APIキーは`.env`で管理（.gitignore保護）
-**シンプル**: ホストマシンからmakeコマンドで直接実行
-**拡張性**: 将来的なAPIエンドポイント化の基盤
-
-#### 🧪 テスト結果
-
-- ✅ ClaudeClient初期化成功
-- ✅ テストメッセージ送信成功（自己紹介応答）
-- ✅ カスタムプロンプト送信成功（コード生成応答）
-- ✅ makeターゲットからの呼び出し成功
-
-## Discord Bot統合
-
-### backend-llm-responseサービスによるDiscord Bot実装（✅ 実装完了）
-
-**実装目的**: Discordチャンネルで@メンションを検知し、Claude APIで応答するBot機能
-
-#### 🏗️ アーキテクチャ設計
-
-**Discord Botクラス**:
-- `backend-llm-response/src/services/discord_bot.py`
-- discord.py 2.4.0を使用
-- Message Content Intentを有効化（Privileged Intent）
-- 指定チャンネルでの@メンション検知と自動応答
-- Claude APIとの統合（ClaudeClientを使用）
-
-**設定管理**:
-- `config/discord_tokens.json`: Bot TokenとチャンネルID管理（モード別）
-- JSON直接読み込み（環境変数を経由しない）
-- 複数Bot対応（Bot名ごとに設定を分離）
-
-**設定フォーマット**:
-```json
-{
-    "🤖🍡華扇": {
-        "bot_token": "YOUR_BOT_TOKEN_HERE",
-        "channels": {
-            "mention_mode": ["1356872662831333452"],
-            "auto_thread_mode": ["1356872551019577395"]
-        }
-    }
-}
-```
-
-**モジュール構成**:
-- `config/discord/config_loader.py`: JSON読み込み
-- `config/discord/config_validator.py`: 設定バリデーション
-- `config/discord/config_parser.py`: 公開API（Facade）
-
-#### 🤖 Bot動作仕様
-
-**2つの動作モード**:
-
-1. **Mention Mode（@メンション対応）**:
-   - Botへの@メンションを検知
-   - メンション部分を除去してプロンプトを抽出
-   - Claude APIで応答生成
-   - 2000文字制限対応（超過時は省略表示）
-   - Discordチャンネルに返信
-
-2. **AutoThread Mode（新着投稿自動応答）** ✅ 実装完了:
-   - Bot自身以外の新着投稿を検知
-   - チャンネルの過去20件の会話履歴を取得
-   - 会話の文脈を含めてClaude APIに送信
-   - @メンション付きで自動返信（`message.reply()`使用）
-   - 無限ループ防止（Bot自身のメッセージは無視）
-
-3. **Times Mode（1日1回自動投稿）** ✅ 実装完了:
-   - **本番モード**: JST 9:00-18:00の間に1日1回ランダムな話題で投稿
-   - **テストモード**: 短いインターバルで繰り返し投稿（機能テスト用）
-   - APScheduler + pytzによるJST対応スケジューラー
-   - jitterによるランダム投稿時刻（9時間幅、本番モードのみ）
-   - 話題リスト管理（`prompts/times_topics.json`）
-   - 1日1回フラグ管理（日付ベース、本番モードのみ）
-   - Claude APIで応答生成→Discord投稿
-   - 2000文字制限対応（超過時は省略表示）
-
-**起動方法**:
-- `src/app.py`: Discord Bot専用起動スクリプト
-- DockerfileのCMDで自動起動
-- 環境変数`DISCORD_BOT_NAME`でBot選択可能（デフォルト: 🤖🍡華扇）
-
-#### 📦 依存関係
-
-**requirements.txt追加**:
-- `discord.py==2.4.0`: Discord Bot公式ライブラリ
-- `APScheduler==3.10.4`: Python用ジョブスケジューリングライブラリ
-- `pytz==2024.1`: タイムゾーン処理ライブラリ
-
-**docker-compose.yml設定**:
-```yaml
-backend-llm-response:
-  volumes:
-    - ./config/discord_tokens.json:/app/config/discord_tokens.json:ro
-  environment:
-    - DISCORD_BOT_NAME=${DISCORD_BOT_NAME:-🤖🍡華扇}
-  restart: unless-stopped
-```
-
-#### 🎯 利用可能なMakeコマンド
-
-**makefiles/backend-llm-response.mk実装**:
-```makefile
-make discord-bot-help           # Discord Botコマンドヘルプ
-make discord-bot-logs           # Discord Botログ表示
-make discord-bot-status         # Discord Bot状態確認
-make discord-bot-test-config    # Discord Bot設定テスト
-```
-
-#### ✅ テスト結果
-
-**起動確認**:
-- ✅ Bot設定読み込み成功（discord_tokens.json）
-- ✅ Discord Gatewayへの接続成功
-- ✅ Bot起動完了: `🤖🍡華扇#8670`
-- ✅ Mentionモード対象チャンネル: 1個 (1356872662831333452)
-- ✅ AutoThreadモード対象チャンネル: 1個 (1356872551019577395)
-- ✅ Timesモード対象チャンネル: 1個 (1356872662831333452)
-- ✅ TimesSchedulerスケジューラー起動完了
-
-**動作確認**:
-- ✅ @メンション検知成功（Mention Mode）
-- ✅ 新着投稿自動応答成功（AutoThread Mode）
-- ✅ 会話履歴の文脈理解確認
-- ✅ 1日1回自動投稿スケジュール設定完了（Times Mode）
-- ✅ 話題リスト読み込み成功（20件）
-- ✅ Claude API連携応答成功
-- ✅ 2000文字制限対応確認
-
-#### 🔧 セットアップ手順
-
-**Discord Developer Portal設定**:
-1. Bot作成とTokenの取得
-2. **Privileged Gateway Intents**で以下を有効化:
-   - ✅ MESSAGE CONTENT INTENT（必須）
-   - ✅ SERVER MEMBERS INTENT（推奨）
-3. BotをDiscordサーバーに招待
-4. Bot Permissions: View Channels, Send Messages, Create Public Threads, Send Messages in Threads
-
-**設定ファイル作成**:
-```bash
-cp config/discord_tokens.example.json config/discord_tokens.json
-# Bot Tokenとチャンネル IDを記入
-```
-
-**起動**:
-```bash
-make docker-build-up
-# Bot起動ログ確認
-make discord-bot-logs
-```
-
-#### 🧪 Times Mode テスト機能
-
-**実装目的**: 1日1回の投稿機能を24時間待たずにテストできる仕組み
-
-**2つの動作モード**:
-
-1. **本番モード（デフォルト）**:
-   - 毎日JST 9:00に起動、jitterで0-9時間のランダム遅延
-   - 実際の投稿時刻: 9:00-18:00の間にランダム
-   - 1日1回制御: 有効（日付ベースのフラグ管理）
-   - 用途: 本番運用
-
-2. **テストモード**:
-   - 指定した短いインターバル（例: 60秒）で繰り返し投稿
-   - 1日1回制御: 無効（何度でも投稿可能）
-   - 用途: 機能テスト、動作確認
-
-**環境変数設定（.env）**:
-```bash
-# ============================================================
-# Discord Times Mode テスト設定
-# ============================================================
-# 【本番モード】 TIMES_TEST_MODE=false (またはコメントアウト)
-#   - 動作: 毎日JST 9:00-18:00の間に1回ランダム投稿
-#   - 1日1回制御: 有効
-#
-# 【テストモード】 TIMES_TEST_MODE=true
-#   - 動作: 指定インターバルで繰り返し投稿
-#   - 1日1回制御: 無効（何度でも投稿可能）
-#   - 用途: 機能テスト、動作確認
-#
-# ⚠️ 警告: 本番環境では必ずfalseにするか削除すること！
-# ============================================================
-TIMES_TEST_MODE=false              # テストモード有効化
-TIMES_TEST_INTERVAL=60            # テスト時の投稿間隔（秒）
-```
-
-**テスト実行方法**:
-```bash
-# 1. .envファイルでテストモードを有効化
-sed -i 's/TIMES_TEST_MODE=false/TIMES_TEST_MODE=true/' .env
-
-# 2. コンテナ再起動
-make docker-restart
-
-# 3. ログで動作確認（60秒ごとに投稿されることを確認）
-make discord-bot-logs
-
-# 4. テスト完了後、本番モードに戻す
-sed -i 's/TIMES_TEST_MODE=true/TIMES_TEST_MODE=false/' .env
-make docker-restart
-```
-
-**実装設計**:
-- コンストラクタ引数による制御（`test_mode`, `test_interval_seconds`）
-- 本番優先の条件分岐（`if not self.test_mode:`）
-- トリガー生成の関数化（`_create_production_trigger()`, `_create_test_trigger()`）
-- 環境変数は app.py レベルでのみ読み込み
-
-**影響ファイル**:
-- `backend-llm-response/src/services/times_scheduler.py`: デュアルモード実装
-- `backend-llm-response/src/services/discord_bot.py`: テストモード引数渡し
-- `backend-llm-response/src/app.py`: 環境変数読み込み
-- `docker-compose.yml`: 環境変数設定
-- `.env`, `.env.example`: テストモード設定と警告
-
-#### 🎯 今後の拡張予定
-
-**AutoThread Mode改善**:
-- [ ] **会話履歴管理の改善**（優先度: 高）
-  - **現在の課題**: 過去20件の履歴を一律取得するため、終わった話題が繰り返される
-  - **解決策の選択肢**:
-    1. **DynamoDB統合**: ユーザーごとに会話セッションを管理（最も推奨）
-    2. **トピック検出**: LLMで会話の区切りを判定し、関連する履歴のみ取得
-    3. **時間ベースフィルタリング**: 直近N分間の会話のみを対象
-    4. **スレッド活用**: 話題ごとにスレッドを分け、スレッド単位で履歴管理
-
-**Times Mode改善**:
-- [ ] **話題管理の改善**（優先度: 中）
-  - **現在の実装**: JSONファイルにベタ書き（テスト用暫定処置）
-  - **改善案**:
-    1. **データベース管理**: PostgreSQLに話題テーブルを作成
-    2. **動的更新**: 管理画面から話題の追加・編集・削除
-    3. **カテゴリ分類**: 技術/趣味/日常などのカテゴリ別管理
-    4. **重み付け**: 話題ごとに出現頻度を制御
-    5. **履歴管理**: 過去に投稿した話題を記録し、重複を避ける
-
-**共通機能**:
-- [ ] 複数Botの同時起動（Bot名ごとの独立プロセス）
-- [ ] スレッド対応（スレッド内での会話継続）
-- [ ] リアクション機能（絵文字によるコマンド操作）
-- [ ] メンバープロフィール連携（db-memberとの統合）
-- [ ] リッチエンベッド対応（構造化された応答表示）
-- [ ] Slash Commands実装（/kasen <prompt>等）
+---
 
 ## 一時的な実装事項
 
 ### name-based UPSERT処理（暫定実装）
 
 **実装目的**: ETag重複チェック問題の解決とDBリセット後の再登録対応
-
-**実装範囲**:
-- `save_or_update_human_member()`: 人間メンバーのUPSERT処理
-- `save_or_update_virtual_member()`: 仮想メンバーのUPSERT処理
-
-**影響ファイル**:
-- `backend-db-registration/src/db/database.py`: UPSERT関数実装
-- `backend-db-registration/src/operations/member_registration.py`: UPSERT関数使用
-- `backend-db-registration/src/services/webhook_file_watcher.py`: ETag制御ロジック実装
 
 **現在の動作**:
 - 同名メンバーが存在する場合: `updated_at`フィールドを現在時刻で更新
@@ -931,23 +350,30 @@ make docker-restart
 - PostgreSQLの`ON CONFLICT DO UPDATE`句の活用
 - ファイル単位での厳密な重複管理
 
+詳細: [データベース設計](docs/architecture/database.md)
+
+---
+
 ## 今後の開発予定
 
+### 実装完了
 - [x] member-managerのモックUI実装
 - [x] 認証システム（モックアップ版）実装
 - [x] name-based UPSERT処理（暫定実装）
-- [x] **MinIO Webhook自動化システム完全実装**
-- [x] **ETag重複チェック制御機能実装**
-- [x] **3段階自動化アーキテクチャ実装（完全再現性達成）**
-- [x] **s3:ObjectCreated:Copy イベント対応**
-- [x] **包括的テストシステム実装（ユニット〜E2E統合）**
-- [x] **YMLファイル操作の統合システム実装**
-- [x] **Discord Webhook通知システム実装（backend-llm-response）**
-- [x] **Claude API連携実装（backend-llm-response）**
-- [x] **Discord Bot統合実装（@メンション検知＋Claude API応答）**
-- [x] **Discord Bot AutoThreadモード実装（新着投稿自動応答＋会話履歴管理）**
-- [x] **Discord Bot Timesモード実装（1日1回自動投稿＋APScheduler統合）**
-- [x] **Discord Bot Times Modeテスト機能実装（本番/テストモード切り替え）**
+- [x] MinIO Webhook自動化システム完全実装
+- [x] ETag重複チェック制御機能実装
+- [x] 3段階自動化アーキテクチャ実装（完全再現性達成）
+- [x] s3:ObjectCreated:Copy イベント対応
+- [x] 包括的テストシステム実装（ユニット〜E2E統合）
+- [x] YMLファイル操作の統合システム実装
+- [x] Discord Webhook通知システム実装（backend-llm-response）
+- [x] Claude API連携実装（backend-llm-response）
+- [x] Discord Bot統合実装（@メンション検知＋Claude API応答）
+- [x] Discord Bot AutoThreadモード実装（新着投稿自動応答＋会話履歴管理）
+- [x] Discord Bot Timesモード実装（1日1回自動投稿＋APScheduler統合）
+- [x] Discord Bot Times Modeテスト機能実装（本番/テストモード切り替え）
+
+### 実装予定
 - [ ] Discord Bot Times Mode話題管理の改善（データベース化、カテゴリ分類等）
 - [ ] Discord Bot会話履歴管理の改善（DynamoDB統合、トピック検出等）
 - [ ] file_uri-based UPSERT処理（本格実装）
@@ -960,3 +386,36 @@ make docker-restart
 - [ ] Discord通知機能の拡張（定期通知、エラー通知、リッチエンベッド等）
 - [ ] AWS Secrets Managerへの移行
 - [ ] 本番環境用の設定追加
+
+---
+
+## ヘルプ・トラブルシューティング
+
+### よく使うコマンド
+
+```bash
+# ヘルプ表示
+make help
+make discord-help
+make discord-bot-help
+make claude-help
+
+# 統合テスト
+make test-integration
+
+# トラブルシューティング
+make docker-clean
+make docker-build-up
+```
+
+詳細: [よく使うコマンド](docs/development/commands.md)
+
+### トラブルが発生した場合
+
+詳細: [トラブルシューティング](docs/development/troubleshooting.md)
+
+---
+
+## ライセンス
+
+このプロジェクトは開発中です。ライセンスについては後日決定します。
