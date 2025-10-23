@@ -194,67 +194,50 @@ def update_record(table_name, record_id):
                 'error': 'リクエストデータがありません'
             }), 400
 
-        # メンバーテーブルでYMLファイルURIを持つ場合はUPSERT処理を使用
+        # メンバーテーブルでYMLファイルURIを持つ場合はWebhookフローを使用
         if table_name in ['human_members', 'virtual_members'] and 'yml_file_uri' in data:
-            # backend-db-registrationのUPSERT処理を呼び出し
-            from storage.storage_client import StorageClient
-            from yaml_generator import YAMLGenerator
-            import requests
-
-            member_name = data.get('member_name', '')
-            yml_file_uri = data.get('yml_file_uri', '')
-
-            # YAMLファイルを更新
-            storage_client = StorageClient()
-
-            # 既存のYAMLファイルを読み込んで更新
             try:
-                existing_yaml_data = storage_client.read_yaml_from_minio(yml_file_uri)
-                existing_yaml_data.update({
-                    'member_name': member_name,
-                    # 他の更新可能フィールドもここで処理
-                })
+                from storage_client import StorageClient
+                from yaml_generator import YAMLGenerator
 
-                # YAMLファイルの再生成とアップロード
+                member_name = data.get('member_name', '')
+                yml_file_uri = data.get('yml_file_uri', '')
+
+                # ストレージクライアントの初期化
+                storage_client = StorageClient()
+
+                # 更新データの準備
+                form_data = {
+                    'member_name': member_name
+                }
+
+                # テーブルタイプに応じた追加データ処理
                 if table_name == 'human_members':
-                    yaml_content = YAMLGenerator.generate_human_member_yaml(existing_yaml_data)
+                    if 'bio' in data:
+                        form_data['bio'] = data['bio']
+                    yaml_content = YAMLGenerator.generate_human_member_yaml(form_data)
                 else:  # virtual_members
-                    yaml_content = YAMLGenerator.generate_virtual_member_yaml(existing_yaml_data)
+                    # 仮想メンバーはllm_modelが必須
+                    form_data['llm_model'] = data.get('llm_model', 'Claude')
+                    if 'custom_prompt' in data:
+                        form_data['custom_prompt'] = data['custom_prompt']
+                    yaml_content = YAMLGenerator.generate_virtual_member_yaml(form_data)
 
+                # ストレージにアップロード（Webhookが自動的にDB更新を実行）
                 upload_result = storage_client.upload_yaml_file(yaml_content, yml_file_uri)
-
-                # backend-db-registrationのUPSERT処理を呼び出す
-                if table_name == 'human_members':
-                    # 人間メンバーのUPSERT処理
-                    import sys
-                    import os
-                    sys.path.append('/home/rindguitar/vecr-office/backend-db-registration/src')
-                    from operations.member_registration import register_human_member_from_yaml
-
-                    # UPSERT処理実行
-                    register_human_member_from_yaml(yml_file_uri)
-
-                else:  # virtual_members
-                    # 仮想メンバーのUPSERT処理
-                    import sys
-                    import os
-                    sys.path.append('/home/rindguitar/vecr-office/backend-db-registration/src')
-                    from operations.member_registration import register_virtual_member_from_yaml
-
-                    # UPSERT処理実行
-                    register_virtual_member_from_yaml(yml_file_uri)
 
                 return jsonify({
                     'success': True,
-                    'message': f'{table_name}テーブルのレコードがUPSERT処理で更新されました',
-                    'data': data
+                    'message': f'{table_name}テーブルのレコードがWebhook経由で更新されます',
+                    'upload_result': upload_result,
+                    'webhook_note': 'データベースの更新はWebhookにより自動的に実行されます'
                 })
 
             except Exception as e:
-                logger.error(f"UPSERT processing error: {str(e)}")
+                logger.error(f"Webhook flow update error: {str(e)}")
                 return jsonify({
                     'success': False,
-                    'error': f'UPSERT処理中にエラーが発生: {str(e)}'
+                    'error': f'Webhook経由更新中にエラーが発生: {str(e)}'
                 }), 500
 
         else:
@@ -530,47 +513,18 @@ def create_member():
                 'message': '無効なストレージパスです'
             }), 400
         
-        # YAMLファイルのアップロード
+        # YAMLファイルのアップロード（Webhookが自動的にDB更新を実行）
         upload_result = storage_client.upload_yaml_file(yaml_content, storage_path)
-
-        # データベースにメンバー情報を保存
-        table_name = f'{member_type}_members'
-        db_data = {
-            'member_name': member_name,
-            'yml_file_uri': storage_path
-        }
-
-        db_record = db_manager.insert_record(table_name, db_data)
-
-        # メンバータイプに応じてプロフィール情報も保存
-        if db_record:
-            if member_type == 'virtual':
-                # 仮想メンバーのプロフィール情報
-                profile_data = {
-                    'member_id': db_record['member_id'],
-                    'member_uuid': db_record['member_uuid'],
-                    'llm_model': form_data.get('llm_model', 'Claude'),
-                    'custom_prompt': form_data.get('custom_prompt', '')
-                }
-                db_manager.insert_record('virtual_member_profiles', profile_data)
-            elif member_type == 'human':
-                # 人間メンバーのプロフィール情報
-                profile_data = {
-                    'member_id': db_record['member_id'],
-                    'member_uuid': db_record['member_uuid'],
-                    'bio': form_data.get('bio', '')
-                }
-                db_manager.insert_record('human_member_profiles', profile_data)
 
         return jsonify({
             'success': True,
-            'message': f'{member_type}メンバー「{member_name}」を作成し、ストレージとデータベースに保存しました',
+            'message': f'{member_type}メンバー「{member_name}」のYAMLファイルを作成し、ストレージにアップロードしました。データベース登録は自動的に実行されます。',
             'data': {
                 'member_name': member_name,
                 'member_type': member_type,
                 'storage_path': storage_path,
                 'upload_result': upload_result,
-                'db_record': db_record
+                'webhook_note': 'データベースの登録はWebhookにより自動的に実行されます'
             }
         })
         
