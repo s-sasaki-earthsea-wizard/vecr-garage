@@ -49,7 +49,9 @@ class DiscordNotifier:
                 f"（現在: {type(webhooks_config).__name__}）"
             )
 
-        logger.info(f"Discord Notifier初期化完了: {len(self.webhooks)}個のWebhook登録済み")
+        logger.info(
+            f"Discord Notifier初期化完了: {len(self.webhooks)}個のWebhook登録済み"
+        )
         logger.debug(f"登録Webhook: {list(self.webhooks.keys())}")
 
     def get_webhook_url(self, webhook_name: str) -> str:
@@ -121,7 +123,9 @@ class DiscordNotifier:
             response = requests.post(webhook_url, json=payload, timeout=10)
             response.raise_for_status()
 
-            logger.info(f"Discordへのメッセージ送信成功 " f"[{webhook_name}]: {content[:50]}...")
+            logger.info(
+                f"Discordへのメッセージ送信成功 " f"[{webhook_name}]: {content[:50]}..."
+            )
 
             return {
                 "success": True,
@@ -141,7 +145,10 @@ class DiscordNotifier:
             }
 
         except requests.exceptions.HTTPError as e:
-            error_msg = f"Discord Webhook HTTPエラー [{webhook_name}]: " f"{e.response.status_code}"
+            error_msg = (
+                f"Discord Webhook HTTPエラー [{webhook_name}]: "
+                f"{e.response.status_code}"
+            )
             logger.error(f"{error_msg} - {e.response.text}")
             return {
                 "success": False,
@@ -185,7 +192,10 @@ class DiscordNotifier:
 
         for webhook_name in target_webhooks:
             result = self.send_message(
-                webhook_name=webhook_name, content=content, username=username, avatar_url=avatar_url
+                webhook_name=webhook_name,
+                content=content,
+                username=username,
+                avatar_url=avatar_url,
             )
             results.append(result)
 

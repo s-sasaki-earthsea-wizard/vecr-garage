@@ -14,7 +14,16 @@ import logging
 import os
 from functools import wraps
 
-from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_cors import CORS
 
 from database import DatabaseManager
@@ -145,7 +154,11 @@ def tables_view():
         for table in tables:
             count = db_manager.get_table_count(table)
             table_info.append(
-                {"name": table, "record_count": count, "description": get_table_description(table)}
+                {
+                    "name": table,
+                    "record_count": count,
+                    "description": get_table_description(table),
+                }
             )
 
         return render_template("tables.html", tables=table_info)
@@ -197,53 +210,66 @@ def update_record(table_name, record_id):
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"success": False, "error": "リクエストデータがありません"}), 400
+            return (
+                jsonify({"success": False, "error": "リクエストデータがありません"}),
+                400,
+            )
 
         # メンバーテーブルでYMLファイルURIを持つ場合はWebhookフローを使用
-        if table_name in ['human_members', 'virtual_members'] and 'yml_file_uri' in data:
+        if (
+            table_name in ["human_members", "virtual_members"]
+            and "yml_file_uri" in data
+        ):
             try:
                 from storage_client import StorageClient
                 from yaml_generator import YAMLGenerator
 
-                member_name = data.get('member_name', '')
-                yml_file_uri = data.get('yml_file_uri', '')
+                member_name = data.get("member_name", "")
+                yml_file_uri = data.get("yml_file_uri", "")
 
                 # ストレージクライアントの初期化
                 storage_client = StorageClient()
 
                 # 更新データの準備
-                form_data = {
-                    'member_name': member_name
-                }
+                form_data = {"member_name": member_name}
 
                 # テーブルタイプに応じた追加データ処理
-                if table_name == 'human_members':
-                    if 'bio' in data:
-                        form_data['bio'] = data['bio']
+                if table_name == "human_members":
+                    if "bio" in data:
+                        form_data["bio"] = data["bio"]
                     yaml_content = YAMLGenerator.generate_human_member_yaml(form_data)
                 else:  # virtual_members
                     # 仮想メンバーはllm_modelが必須
-                    form_data['llm_model'] = data.get('llm_model', 'Claude')
-                    if 'custom_prompt' in data:
-                        form_data['custom_prompt'] = data['custom_prompt']
+                    form_data["llm_model"] = data.get("llm_model", "Claude")
+                    if "custom_prompt" in data:
+                        form_data["custom_prompt"] = data["custom_prompt"]
                     yaml_content = YAMLGenerator.generate_virtual_member_yaml(form_data)
 
                 # ストレージにアップロード（Webhookが自動的にDB更新を実行）
-                upload_result = storage_client.upload_yaml_file(yaml_content, yml_file_uri)
+                upload_result = storage_client.upload_yaml_file(
+                    yaml_content, yml_file_uri
+                )
 
-                return jsonify({
-                    'success': True,
-                    'message': f'{table_name}テーブルのレコードがWebhook経由で更新されます',
-                    'upload_result': upload_result,
-                    'webhook_note': 'データベースの更新はWebhookにより自動的に実行されます'
-                })
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": f"{table_name}テーブルのレコードがWebhook経由で更新されます",
+                        "upload_result": upload_result,
+                        "webhook_note": "データベースの更新はWebhookにより自動的に実行されます",
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"Webhook flow update error: {str(e)}")
-                return jsonify({
-                    'success': False,
-                    'error': f'Webhook経由更新中にエラーが発生: {str(e)}'
-                }), 500
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": f"Webhook経由更新中にエラーが発生: {str(e)}",
+                        }
+                    ),
+                    500,
+                )
 
         else:
             # 通常のUPDATE処理
@@ -262,17 +288,29 @@ def update_record(table_name, record_id):
                         }
                     )
                 else:
-                    return jsonify({"success": False, "error": "レコードの更新に失敗しました"}), 500
+                    return (
+                        jsonify(
+                            {"success": False, "error": "レコードの更新に失敗しました"}
+                        ),
+                        500,
+                    )
             except Exception as e:
                 logger.error(f"Database update error: {str(e)}")
                 return (
-                    jsonify({"success": False, "error": f"データベース更新エラー: {str(e)}"}),
+                    jsonify(
+                        {"success": False, "error": f"データベース更新エラー: {str(e)}"}
+                    ),
                     500,
                 )
 
     except Exception as e:
         logger.error(f"Record update error: {str(e)}")
-        return jsonify({"success": False, "error": f"レコード更新中にエラーが発生: {str(e)}"}), 500
+        return (
+            jsonify(
+                {"success": False, "error": f"レコード更新中にエラーが発生: {str(e)}"}
+            ),
+            500,
+        )
 
 
 @app.route("/api/table/<table_name>/record/<int:record_id>", methods=["DELETE"])
@@ -286,14 +324,25 @@ def delete_record(table_name, record_id):
 
         if result:
             return jsonify(
-                {"success": True, "message": f"{table_name}テーブルのレコードが削除されました"}
+                {
+                    "success": True,
+                    "message": f"{table_name}テーブルのレコードが削除されました",
+                }
             )
         else:
-            return jsonify({"success": False, "error": "レコードの削除に失敗しました"}), 500
+            return (
+                jsonify({"success": False, "error": "レコードの削除に失敗しました"}),
+                500,
+            )
 
     except Exception as e:
         logger.error(f"Record deletion error: {str(e)}")
-        return jsonify({"success": False, "error": f"レコード削除中にエラーが発生: {str(e)}"}), 500
+        return (
+            jsonify(
+                {"success": False, "error": f"レコード削除中にエラーが発生: {str(e)}"}
+            ),
+            500,
+        )
 
 
 # データベース接続テスト用エンドポイント
@@ -346,7 +395,10 @@ def test_database_connection():
     except Exception as e:
         return (
             jsonify(
-                {"success": False, "message": f"データベース接続テスト中にエラーが発生: {str(e)}"}
+                {
+                    "success": False,
+                    "message": f"データベース接続テスト中にエラーが発生: {str(e)}",
+                }
             ),
             500,
         )
@@ -374,7 +426,12 @@ def get_database_table_data(table_name):
 
     except Exception as e:
         return (
-            jsonify({"success": False, "message": f"テーブルデータ取得中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {
+                    "success": False,
+                    "message": f"テーブルデータ取得中にエラーが発生: {str(e)}",
+                }
+            ),
             500,
         )
 
@@ -396,7 +453,12 @@ def get_database_tables():
 
     except Exception as e:
         return (
-            jsonify({"success": False, "message": f"テーブル一覧取得中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {
+                    "success": False,
+                    "message": f"テーブル一覧取得中にエラーが発生: {str(e)}",
+                }
+            ),
             500,
         )
 
@@ -430,7 +492,12 @@ def get_table_data_api(table_name):
 
     except Exception as e:
         return (
-            jsonify({"success": False, "error": f"テーブルデータ取得中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"テーブルデータ取得中にエラーが発生: {str(e)}",
+                }
+            ),
             500,
         )
 
@@ -442,7 +509,10 @@ def create_table_record_api(table_name):
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"success": False, "error": "リクエストデータがありません"}), 400
+            return (
+                jsonify({"success": False, "error": "リクエストデータがありません"}),
+                400,
+            )
 
         # データベースへの直接挿入
         result = db_manager.insert_record(table_name, data)
@@ -456,10 +526,18 @@ def create_table_record_api(table_name):
                 }
             )
         else:
-            return jsonify({"success": False, "error": "レコードの作成に失敗しました"}), 500
+            return (
+                jsonify({"success": False, "error": "レコードの作成に失敗しました"}),
+                500,
+            )
 
     except Exception as e:
-        return jsonify({"success": False, "error": f"レコード作成中にエラーが発生: {str(e)}"}), 500
+        return (
+            jsonify(
+                {"success": False, "error": f"レコード作成中にエラーが発生: {str(e)}"}
+            ),
+            500,
+        )
 
 
 @app.route("/api/member/create", methods=["POST"])
@@ -475,12 +553,18 @@ def create_member():
         # リクエストデータの取得
         data = request.get_json()
         if not data:
-            return jsonify({"success": False, "message": "リクエストデータがありません"}), 400
+            return (
+                jsonify({"success": False, "message": "リクエストデータがありません"}),
+                400,
+            )
 
         # メンバータイプの取得
         member_type = data.get("member_type")
         if member_type not in ["human", "virtual"]:
-            return jsonify({"success": False, "message": "無効なメンバータイプです"}), 400
+            return (
+                jsonify({"success": False, "message": "無効なメンバータイプです"}),
+                400,
+            )
 
         # フォームデータのバリデーション
         form_data = data.get("form_data", {})
@@ -513,32 +597,36 @@ def create_member():
 
         # ストレージパスの検証
         if not storage_client.validate_storage_path(storage_path):
-            return jsonify({
-                'success': False,
-                'message': '無効なストレージパスです'
-            }), 400
+            return (
+                jsonify({"success": False, "message": "無効なストレージパスです"}),
+                400,
+            )
 
         # YAMLファイルのアップロード（Webhookが自動的にDB更新を実行）
         upload_result = storage_client.upload_yaml_file(yaml_content, storage_path)
 
-        return jsonify({
-            'success': True,
-            'message': f'{member_type}メンバー「{member_name}」のYAMLファイルを作成し、ストレージにアップロードしました。データベース登録は自動的に実行されます。',
-            'data': {
-                'member_name': member_name,
-                'member_type': member_type,
-                'storage_path': storage_path,
-                'upload_result': upload_result,
-                'webhook_note': 'データベースの登録はWebhookにより自動的に実行されます'
+        return jsonify(
+            {
+                "success": True,
+                "message": f"{member_type}メンバー「{member_name}」のYAMLファイルを作成し、ストレージにアップロードしました。データベース登録は自動的に実行されます。",
+                "data": {
+                    "member_name": member_name,
+                    "member_type": member_type,
+                    "storage_path": storage_path,
+                    "upload_result": upload_result,
+                    "webhook_note": "データベースの登録はWebhookにより自動的に実行されます",
+                },
             }
-        })
+        )
 
     except ValueError as e:
         return jsonify({"success": False, "message": f"データエラー: {str(e)}"}), 400
     except Exception as e:
         logger.error(f"Member creation error: {str(e)}")
         return (
-            jsonify({"success": False, "message": f"メンバー作成中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {"success": False, "message": f"メンバー作成中にエラーが発生: {str(e)}"}
+            ),
             500,
         )
 
@@ -556,7 +644,12 @@ def get_storage_info():
 
     except Exception as e:
         return (
-            jsonify({"success": False, "message": f"ストレージ情報取得中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {
+                    "success": False,
+                    "message": f"ストレージ情報取得中にエラーが発生: {str(e)}",
+                }
+            ),
             500,
         )
 

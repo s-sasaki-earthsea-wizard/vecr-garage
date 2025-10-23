@@ -9,18 +9,21 @@ VECR Garageプロジェクトは、以下の6つのコンテナサービスで�
 **役割**: ストレージからメンバーデータをDBに登録
 
 **技術スタック**:
+
 - Python 3.11
 - Flask
 - SQLAlchemy
 - PostgreSQL接続
 
 **主な機能**:
+
 - MinIO Webhookイベント受信
 - YMLファイル解析とバリデーション
 - メンバーデータのDB登録（UPSERT処理）
 - エラーハンドリングとログ記録
 
 **関連ドキュメント**:
+
 - [Webhook自動化システム](webhook-automation.md)
 - [データベース設計](database.md)
 
@@ -29,6 +32,7 @@ VECR Garageプロジェクトは、以下の6つのコンテナサービスで�
 **役割**: LLM応答の送受信処理
 
 **技術スタック**:
+
 - Python 3.11
 - Flask
 - Anthropic Claude API
@@ -36,6 +40,7 @@ VECR Garageプロジェクトは、以下の6つのコンテナサービスで�
 - APScheduler
 
 **主な機能**:
+
 - Claude APIとの連携
 - Discord Bot統合（3つのモード）
   - Mention Mode: @メンション応答
@@ -44,6 +49,7 @@ VECR Garageプロジェクトは、以下の6つのコンテナサービスで�
 - Discord Webhook通知
 
 **関連ドキュメント**:
+
 - [Discord Bot統合](../integrations/discord.md)
 - [Claude API連携](../integrations/claude-api.md)
 
@@ -52,14 +58,17 @@ VECR Garageプロジェクトは、以下の6つのコンテナサービスで�
 **役割**: PostgreSQLメンバーデータベース
 
 **技術スタック**:
+
 - PostgreSQL 15
 - ヘルスチェック機能
 
 **テーブル構成**:
+
 - `human_members`: 人間メンバー情報
 - `virtual_members`: 仮想メンバー（AI）情報
 
 **関連ドキュメント**:
+
 - [データベース設計](database.md)
 
 ### storage (port: 9000/9001)
@@ -67,19 +76,23 @@ VECR Garageプロジェクトは、以下の6つのコンテナサービスで�
 **役割**: MinIOオブジェクトストレージ
 
 **技術スタック**:
+
 - MinIO
 - S3互換API
 
 **主な機能**:
+
 - メンバープロフィールYMLファイルストレージ
 - Webhook通知（S3イベント）
 - バケット管理
 
 **アクセス**:
+
 - API: `http://localhost:9000`
 - Console: `http://localhost:9001`
 
 **関連ドキュメント**:
+
 - [MinIO設定](../integrations/minio.md)
 - [Webhook自動化システム](webhook-automation.md)
 
@@ -88,21 +101,25 @@ VECR Garageプロジェクトは、以下の6つのコンテナサービスで�
 **役割**: Django Webインターフェース
 
 **技術スタック**:
+
 - Flask
 - Flask-Session
 - JavaScript（モックUI）
 
 **現在の実装状況**:
+
 - モックアップ版（開発中）
 - 環境変数ベース認証
 - ハードコードされたデータ表示
 
 **将来の実装計画**:
+
 - PostgreSQL実連携
 - Jinjaテンプレート動的レンダリング
 - SQLAlchemy ORM統合
 
 **関連ドキュメント**:
+
 - [認証システム](../integrations/authentication.md)
 
 ### db-chat-log (port: 4566)
@@ -110,12 +127,14 @@ VECR Garageプロジェクトは、以下の6つのコンテナサービスで�
 **役割**: LocalStack/DynamoDBチャットログ
 
 **技術スタック**:
+
 - LocalStack
 - DynamoDB
 
 **実装状況**: 未実装（準備中）
 
 **将来の実装計画**:
+
 - 会話履歴の永続化
 - Discord Bot会話ログ管理
 - セッション管理の改善

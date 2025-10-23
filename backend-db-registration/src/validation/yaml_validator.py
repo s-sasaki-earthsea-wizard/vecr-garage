@@ -56,7 +56,11 @@ class YAMLValidator:
         missing_fields = []
 
         for field in required_fields:
-            if field not in yaml_data or yaml_data[field] is None or yaml_data[field] == "":
+            if (
+                field not in yaml_data
+                or yaml_data[field] is None
+                or yaml_data[field] == ""
+            ):
                 missing_fields.append(field)
 
         if missing_fields:
@@ -89,13 +93,15 @@ class YAMLValidator:
         missing_fields = []
 
         for field in required_fields:
-            if field not in yaml_data or yaml_data[field] is None or yaml_data[field] == "":
+            if (
+                field not in yaml_data
+                or yaml_data[field] is None
+                or yaml_data[field] == ""
+            ):
                 missing_fields.append(field)
 
         if missing_fields:
-            error_msg = (
-                f"Required fields missing in virtual member YAML: {', '.join(missing_fields)}"
-            )
+            error_msg = f"Required fields missing in virtual member YAML: {', '.join(missing_fields)}"
             logger.error(error_msg)
             raise ValidationError(error_msg, missing_fields)
 

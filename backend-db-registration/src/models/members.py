@@ -1,7 +1,15 @@
 import datetime
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -12,7 +20,9 @@ class HumanMember(Base):
     __tablename__ = "human_members"
 
     member_id = Column(Integer, primary_key=True)
-    member_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    member_uuid = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
     member_name = Column(String(50), unique=True, nullable=False)
     yml_file_uri = Column(String(500), unique=True, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
@@ -30,7 +40,9 @@ class VirtualMember(Base):
     __tablename__ = "virtual_members"
 
     member_id = Column(Integer, primary_key=True)
-    member_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    member_uuid = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
     member_name = Column(String(50), unique=True, nullable=False)
     yml_file_uri = Column(String(500), unique=True, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
@@ -48,10 +60,15 @@ class HumanMemberProfile(Base):
     __tablename__ = "human_member_profiles"
 
     profile_id = Column(Integer, primary_key=True)
-    profile_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    profile_uuid = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
     member_id = Column(Integer, ForeignKey("human_members.member_id"), nullable=False)
     member_uuid = Column(
-        UUID(as_uuid=True), ForeignKey("human_members.member_uuid"), nullable=False, unique=True
+        UUID(as_uuid=True),
+        ForeignKey("human_members.member_uuid"),
+        nullable=False,
+        unique=True,
     )
     bio = Column(Text)
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
@@ -62,7 +79,9 @@ class HumanMemberProfile(Base):
     )
 
     # リレーションシップ（foreign_keysを明示的に指定）
-    human_member = relationship("HumanMember", backref="profiles", foreign_keys=[member_uuid])
+    human_member = relationship(
+        "HumanMember", backref="profiles", foreign_keys=[member_uuid]
+    )
 
     def __repr__(self):
         return f"<HumanMemberProfile(id={self.profile_id}, member_id={self.member_id})>"
@@ -72,10 +91,15 @@ class VirtualMemberProfile(Base):
     __tablename__ = "virtual_member_profiles"
 
     profile_id = Column(Integer, primary_key=True)
-    profile_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    profile_uuid = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
     member_id = Column(Integer, ForeignKey("virtual_members.member_id"), nullable=False)
     member_uuid = Column(
-        UUID(as_uuid=True), ForeignKey("virtual_members.member_uuid"), nullable=False, unique=True
+        UUID(as_uuid=True),
+        ForeignKey("virtual_members.member_uuid"),
+        nullable=False,
+        unique=True,
     )
     llm_model = Column(String(50), nullable=False)
     custom_prompt = Column(Text)
@@ -87,10 +111,14 @@ class VirtualMemberProfile(Base):
     )
 
     # リレーションシップ（foreign_keysを明示的に指定）
-    virtual_member = relationship("VirtualMember", backref="profiles", foreign_keys=[member_uuid])
+    virtual_member = relationship(
+        "VirtualMember", backref="profiles", foreign_keys=[member_uuid]
+    )
 
     def __repr__(self):
-        return f"<VirtualMemberProfile(id={self.profile_id}, member_id={self.member_id})>"
+        return (
+            f"<VirtualMemberProfile(id={self.profile_id}, member_id={self.member_id})>"
+        )
 
 
 class MemberRelationship(Base):
@@ -111,7 +139,10 @@ class MemberRelationship(Base):
     # ユニーク制約の追加
     __table_args__ = (
         UniqueConstraint(
-            "from_member_uuid", "to_member_uuid", "relationship_type", name="unique_relationship"
+            "from_member_uuid",
+            "to_member_uuid",
+            "relationship_type",
+            name="unique_relationship",
         ),
     )
 

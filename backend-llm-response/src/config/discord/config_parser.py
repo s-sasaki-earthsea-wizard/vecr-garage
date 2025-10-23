@@ -4,8 +4,9 @@ Discord Bot設定パーサー（ファサード）
 設定の読み込み・バリデーション・取得を統合した公開APIを提供します。
 """
 
-from typing import Dict, List, Tuple, Optional
 import logging
+from typing import Optional
+
 from .config_loader import DiscordConfigLoader
 from .config_validator import DiscordConfigValidator
 
@@ -16,7 +17,7 @@ class DiscordConfigParser:
     """Discord Bot設定パーサー（公開API）"""
 
     @staticmethod
-    def load_and_validate(file_path: Optional[str] = None) -> Dict[str, Dict[str, any]]:
+    def load_and_validate(file_path: Optional[str] = None) -> dict[str, dict[str, any]]:
         """
         設定を読み込みバリデーション
 
@@ -39,7 +40,7 @@ class DiscordConfigParser:
         return config
 
     @staticmethod
-    def get_bot_token(bot_name: str, config: Optional[Dict] = None) -> str:
+    def get_bot_token(bot_name: str, config: Optional[dict] = None) -> str:
         """
         Bot名からTokenを取得
 
@@ -59,15 +60,16 @@ class DiscordConfigParser:
         if bot_name not in config:
             available_bots = ", ".join(config.keys())
             raise ValueError(
-                f"Bot '{bot_name}' が見つかりません。\n" f"利用可能なBot: {available_bots}"
+                f"Bot '{bot_name}' が見つかりません。\n"
+                f"利用可能なBot: {available_bots}"
             )
 
         return config[bot_name]["bot_token"]
 
     @staticmethod
     def get_bot_config(
-        bot_name: str, config: Optional[Dict] = None
-    ) -> Tuple[str, List[int], List[int], List[int]]:
+        bot_name: str, config: Optional[dict] = None
+    ) -> tuple[str, list[int], list[int], list[int]]:
         """
         Bot名からTokenとモード別チャンネルIDリストを取得
 
@@ -87,7 +89,8 @@ class DiscordConfigParser:
         if bot_name not in config:
             available_bots = ", ".join(config.keys())
             raise ValueError(
-                f"Bot '{bot_name}' が見つかりません。\n" f"利用可能なBot: {available_bots}"
+                f"Bot '{bot_name}' が見つかりません。\n"
+                f"利用可能なBot: {available_bots}"
             )
 
         bot_config = config[bot_name]
@@ -101,7 +104,7 @@ class DiscordConfigParser:
         return token, mention_channels, auto_thread_channels, times_channels
 
     @staticmethod
-    def list_bots(config: Optional[Dict] = None) -> List[str]:
+    def list_bots(config: Optional[dict] = None) -> list[str]:
         """
         登録されているBot名のリストを取得
 

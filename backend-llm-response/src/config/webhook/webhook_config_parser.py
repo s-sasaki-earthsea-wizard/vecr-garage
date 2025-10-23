@@ -4,10 +4,10 @@ Webhook設定パーサー
 環境変数からWebhook設定を読み込み、パース、バリデーションを実行
 """
 
-import os
 import json
 import logging
-from typing import Dict, Optional
+import os
+
 from .webhook_validator import WebhookValidator
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class WebhookConfigParser:
     DEFAULT_FILE_ENV_VAR = "DISCORD_WEBHOOKS_FILE"
 
     @staticmethod
-    def parse_from_file(file_path: str) -> Dict[str, str]:
+    def parse_from_file(file_path: str) -> dict[str, str]:
         """
         JSONファイルからWebhook設定を読み込む
 
@@ -35,7 +35,7 @@ class WebhookConfigParser:
             ValueError: JSONパースまたはバリデーションエラー
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 config = json.load(f)
         except FileNotFoundError:
             raise FileNotFoundError(
@@ -48,7 +48,9 @@ class WebhookConfigParser:
         # バリデーション
         is_valid, error_msg = WebhookValidator.validate_webhook_config(config)
         if not is_valid:
-            raise ValueError(f"Webhook設定のバリデーションエラー ({file_path}): {error_msg}")
+            raise ValueError(
+                f"Webhook設定のバリデーションエラー ({file_path}): {error_msg}"
+            )
 
         logger.info(f"Webhook設定ファイル読み込み成功: {file_path} ({len(config)}個)")
         logger.debug(f"登録Webhook: {list(config.keys())}")
@@ -56,7 +58,7 @@ class WebhookConfigParser:
         return config
 
     @staticmethod
-    def parse_from_env(env_var: str = DEFAULT_ENV_VAR) -> Dict[str, str]:
+    def parse_from_env(env_var: str = DEFAULT_ENV_VAR) -> dict[str, str]:
         """
         環境変数からWebhook設定をパースして取得
 
@@ -92,7 +94,7 @@ class WebhookConfigParser:
         return config
 
     @staticmethod
-    def parse_from_string(config_str: str) -> Dict[str, str]:
+    def parse_from_string(config_str: str) -> dict[str, str]:
         """
         JSON文字列からWebhook設定をパース
 
@@ -115,7 +117,7 @@ class WebhookConfigParser:
         return config
 
     @staticmethod
-    def parse_from_dict(config_dict: Dict[str, str]) -> Dict[str, str]:
+    def parse_from_dict(config_dict: dict[str, str]) -> dict[str, str]:
         """
         辞書からWebhook設定を取得（バリデーションのみ実行）
 
@@ -136,7 +138,7 @@ class WebhookConfigParser:
         return config_dict
 
     @staticmethod
-    def _parse_json_string(config_str: str) -> Dict[str, str]:
+    def _parse_json_string(config_str: str) -> dict[str, str]:
         """
         JSON文字列をパース（内部メソッド）
 
@@ -165,11 +167,12 @@ class WebhookConfigParser:
 
         except json.JSONDecodeError as e:
             raise ValueError(
-                f"Webhook設定のJSONパースに失敗しました: {e}\n" f"入力値: {cleaned_str[:100]}..."
+                f"Webhook設定のJSONパースに失敗しました: {e}\n"
+                f"入力値: {cleaned_str[:100]}..."
             )
 
     @staticmethod
-    def get_webhook_url(config: Dict[str, str], webhook_name: str) -> str:
+    def get_webhook_url(config: dict[str, str], webhook_name: str) -> str:
         """
         Webhook名からURLを安全に取得
 
@@ -183,7 +186,9 @@ class WebhookConfigParser:
         Raises:
             KeyError: Webhook名が存在しない場合
         """
-        is_valid, error_msg = WebhookValidator.validate_webhook_name(config, webhook_name)
+        is_valid, error_msg = WebhookValidator.validate_webhook_name(
+            config, webhook_name
+        )
 
         if not is_valid:
             raise KeyError(error_msg)

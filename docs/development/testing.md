@@ -89,10 +89,12 @@ make test-integration
 ### 正常系テスト
 
 **Sample Files**:
+
 - `data/samples/human_members/`: 人間メンバーの正常な登録ファイル
 - `data/samples/virtual_members/`: 仮想メンバーの正常な登録ファイル
 
 **実行方法**:
+
 ```bash
 # 全サンプルファイルをコピー＆DB登録確認
 make backend-db-registration-test-samples
@@ -101,6 +103,7 @@ make backend-db-registration-test-samples
 ### 異常系テスト
 
 **Test Cases**:
+
 - `data/test_cases/human_members/`: 人間メンバーの異常系テストケース
   - `invalid_missing_name.yml`: nameフィールド欠損（ValidationError）
   - `invalid_empty_file.yml`: 空ファイル（'NoneType' object エラー）
@@ -109,6 +112,7 @@ make backend-db-registration-test-samples
   - `invalid_missing_model.yml`: llm_modelフィールド欠損（ValidationError）
 
 **実行方法**:
+
 ```bash
 # 異常系ファイルをコピー＆エラーハンドリング確認
 make backend-db-registration-test-cases
@@ -119,12 +123,14 @@ make backend-db-registration-test-cases
 ### エラーハンドリング設計
 
 **責任分離**:
+
 - `process_file_event`: 純粋なファイル処理の責任（単一責任の原則）
 - `handle_webhook`: 例外処理とエラーログの統一管理
 - ValidationError、DatabaseError、その他の例外を適切に分離
 - 異常系ファイルは確実にエラーとして検出され、HTTP 400で応答
 
 **実装例**:
+
 ```python
 # backend-db-registration/src/services/webhook_file_watcher.py
 
@@ -200,6 +206,7 @@ black src/
 #### 利用可能なコマンド
 
 **Sample Files (正常系)**:
+
 ```bash
 make samples-copy              # 全サンプルファイルコピー
 make samples-copy-human        # 人間メンバーのみ
@@ -210,6 +217,7 @@ make samples-verify            # 登録確認
 ```
 
 **Test Cases (異常系)**:
+
 ```bash
 make test-cases-copy           # 全テストケースコピー
 make test-cases-copy-human     # 人間メンバーのみ

@@ -35,7 +35,10 @@ async def storage_monitor_health():
     """ストレージ監視サービスの詳細ヘルスチェック"""
     try:
         # Webhook設定の確認（セキュリティのため詳細情報は制限）
-        webhook_status = {"enabled": storage_monitor.webhook_enabled, "configured": True}
+        webhook_status = {
+            "enabled": storage_monitor.webhook_enabled,
+            "configured": True,
+        }
 
         # ストレージ接続の確認
         from storage.storage_client import StorageClient
@@ -186,7 +189,9 @@ async def test_webhook():
                     "eventName": "s3:ObjectCreated:Put",
                     "eventTime": "2024-01-01T00:00:00.000Z",
                     "s3": {
-                        "bucket": {"name": os.getenv("MINIO_BUCKET_NAME", "vecr-storage")},
+                        "bucket": {
+                            "name": os.getenv("MINIO_BUCKET_NAME", "vecr-storage")
+                        },
                         "object": {
                             "key": "data/samples/human_members/test_human_member.yaml",
                             "eTag": "test-etag-123",

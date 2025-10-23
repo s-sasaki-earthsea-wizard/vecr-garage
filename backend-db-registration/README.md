@@ -96,6 +96,7 @@ storage サービスへ、DBにインサートしたい情報のファイルを�
 ファイル監視サービスを使用すると、ストレージ内のYAMLファイルをリアルタイムで検知します。
 
 **使用方法:**
+
 ```bash
 # 本番環境: Dockerコンテナが自動的にFastAPIサーバーを起動
 docker-compose -p vecr-garage up -d backend-db-registration
@@ -108,11 +109,13 @@ python src/scripts/setup_webhook.py setup
 ```
 
 **Webhookエンドポイント:**
+
 - `POST /webhook/file-change` - ファイル変更通知を受け取る
 - `GET /webhook/status` - Webhookサービスの状態を確認
 - `POST /webhook/test` - Webhook機能のテスト
 
 **Webhook設定スクリプト:**
+
 ```bash
 # Webhook設定を作成
 python src/scripts/setup_webhook.py setup
@@ -128,10 +131,12 @@ python src/scripts/setup_webhook.py remove <webhook_id>
 ```
 
 **監視対象:**
+
 - `data/human_members/` ディレクトリ内のYAMLファイル
 - `data/virtual_members/` ディレクトリ内のYAMLファイル
 
 **利点:**
+
 - リアルタイムでのファイル変更検知
 - ポーリング不要でリソース効率が良い
 - スケーラブルな設計
@@ -140,6 +145,7 @@ python src/scripts/setup_webhook.py remove <webhook_id>
 - **自動起動**: Dockerコンテナ起動時にAPIサーバーが自動的に開始
 
 **テスト:**
+
 ```bash
 # Webhook機能のテスト
 make test-webhook
@@ -152,6 +158,7 @@ python src/scripts/test_webhook.py --test human
 ##### 登録モードの選択
 
 **バッチ処理モード（推奨）:**
+
 - 全てのファイルを一つのトランザクションで処理
 - 一つでもバリデーションエラーがあれば、全ての変更がロールバック
 - データの整合性を保証
@@ -168,6 +175,7 @@ make register-virtual-members
 ```
 
 **単独処理モード:**
+
 - 各ファイルを個別に処理
 - エラーがあっても他のファイルの処理を続行
 - 部分的な成功を許容
@@ -180,6 +188,7 @@ make register-members-single
 ##### 処理例
 
 **バッチ処理モード（成功例）:**
+
 ```bash
 === Batch Registration Mode ===
 Processing all files in a single transaction.
@@ -205,6 +214,7 @@ Found 2 virtual member files:
 ```
 
 **バッチ処理モード（エラー例）:**
+
 ```bash
 === Processing Human Members (Batch Mode) ===
 Found 2 human member files:
@@ -229,6 +239,7 @@ Found 2 virtual member files:
 ```
 
 **単独処理モード（部分成功例）:**
+
 ```bash
 === Single Registration Mode ===
 Processing files individually. Each file is processed separately.
@@ -296,15 +307,18 @@ SELECT * FROM virtual_members;
 データベースへのレコード登録時に、以下の機能が追加されました：
 
 **バリデーション機能:**
+
 - YAMLファイルの必須フィールドチェック
 - YAML形式の構文チェック
 
 **ロールバック機能:**
+
 - データベース操作失敗時の自動ロールバック
 - 詳細なエラーメッセージの表示
 - エラーの原因と対処法の提示
 
 **テスト機能:**
+
 ```bash
 make test-rollback-functionality
 ```
@@ -312,6 +326,7 @@ make test-rollback-functionality
 このコマンドで、バリデーション機能とロールバック機能をテストできます。
 
 **エラー例:**
+
 ```
 ❌ Validation error for human member registration from data/human_members/invalid_human.yml: Required fields missing in human member YAML: name
    Missing fields: name
@@ -322,7 +337,6 @@ make test-rollback-functionality
 
 現在のスクリプトはストレージの接続チェックとサンプルデータの読み込みを行う処理が同時に実行されており、
 将来的には両者の分離を行います (ストレージのオブジェクトを読み込み、DBへのインサートを行う処理を実装する時に)
-
 
 #### テストコードの実行方法
 

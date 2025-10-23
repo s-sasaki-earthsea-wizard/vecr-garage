@@ -13,6 +13,7 @@ make db-member-psql
 ```
 
 **接続パラメータ**:
+
 - ホスト: `db-member` (コンテナ内) / `localhost:5432` (ホストから)
 - データベース名: `member_db`
 - ユーザー: `testuser`
@@ -38,6 +39,7 @@ CREATE TABLE human_members (
 ```
 
 **フィールド説明**:
+
 - `id`: 自動採番されるプライマリーキー
 - `name`: メンバー名（一意制約）
 - `role`: 役割・職種
@@ -67,6 +69,7 @@ CREATE TABLE virtual_members (
 ```
 
 **フィールド説明**:
+
 - `id`: 自動採番されるプライマリーキー
 - `name`: メンバー名（一意制約）
 - `role`: 役割・職種
@@ -144,6 +147,7 @@ def save_or_update_virtual_member(session, member_data):
 - SQLAlchemyのセッション管理を適切に行う
 
 **実装例**:
+
 ```python
 from sqlalchemy.orm import Session
 
@@ -165,6 +169,7 @@ def process_member_data(session: Session, data: dict):
 #### バックアップとリストア
 
 **開発環境**:
+
 ```bash
 # バックアップ
 docker exec vecr-garage-db-member pg_dump -U testuser member_db > backup.sql

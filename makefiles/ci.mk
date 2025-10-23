@@ -3,7 +3,7 @@
 # コード品質チェックとフォーマット自動化
 # ============================================================
 
-.PHONY: ci-build lint format lint-fix typecheck ci-all ci-shell ci-help test-pre-commit-install test-pre-commit-secrets test-pre-commit-all pre-commit-help
+.PHONY: ci-build lint format lint-fix typecheck ci-all ci-shell ci-help test-pre-commit-install test-pre-commit-secrets test-pre-commit-all pre-commit-help markdown-lint markdown-fix
 
 # CI/CDコンテナのビルド
 ci-build: ## Build CI/CD container image
@@ -36,11 +36,42 @@ format-check: ## Check code formatting without modifying files
 	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "black --check backend-* member-manager"
 
 # CI全体実行（GitHub Actions相当）
-ci-all: lint format-check typecheck ## Run all CI checks (lint + format-check + typecheck)
+ci-all: lint format-check typecheck markdown-lint ## Run all CI checks (lint + format-check + typecheck + markdown-lint)
 	@echo ""
 	@echo "============================================================"
 	@echo "✅ All CI checks passed!"
 	@echo "============================================================"
+
+# ============================================================
+# Markdown リント・フォーマット
+# ============================================================
+
+markdown-lint: ## Check Markdown files formatting (read-only)
+	@echo "📝 Checking Markdown formatting..."
+	@if command -v markdownlint >/dev/null 2>&1; then \
+		markdownlint '**/*.md' --ignore node_modules || exit 1; \
+	elif command -v pre-commit >/dev/null 2>&1; then \
+		pre-commit run markdownlint --all-files || exit 1; \
+	else \
+		echo "❌ ERROR: markdownlint or pre-commit is not installed"; \
+		echo "   Install: npm install -g markdownlint-cli"; \
+		echo "   OR: make test-pre-commit-install"; \
+		exit 1; \
+	fi
+
+markdown-fix: ## Auto-fix Markdown files formatting
+	@echo "🔧 Fixing Markdown formatting..."
+	@if command -v markdownlint >/dev/null 2>&1; then \
+		markdownlint '**/*.md' --ignore node_modules --fix; \
+	elif command -v pre-commit >/dev/null 2>&1; then \
+		pre-commit run markdownlint --all-files; \
+	else \
+		echo "❌ ERROR: markdownlint or pre-commit is not installed"; \
+		echo "   Install: npm install -g markdownlint-cli"; \
+		echo "   OR: make test-pre-commit-install"; \
+		exit 1; \
+	fi
+	@echo "✅ Markdown formatting fixed!"
 
 # CI/CDコンテナのシェル起動（デバッグ用）
 ci-shell: ## Open a shell in CI/CD container for debugging
@@ -211,6 +242,8 @@ ci-help: ## Show CI/CD commands help
 	@echo "  make lint-fix        - Auto-fix linting issues"
 	@echo "  make format-check    - Check formatting without modifying files"
 	@echo "  make typecheck       - Run type checker (mypy)"
+	@echo "  make markdown-lint   - Check Markdown files formatting"
+	@echo "  make markdown-fix    - Auto-fix Markdown files formatting"
 	@echo "  make ci-all          - Run all CI checks (recommended before PR)"
 	@echo "  make ci-shell        - Open CI/CD container shell for debugging"
 	@echo "  make ci-help         - Show this help message"
@@ -221,7 +254,8 @@ ci-help: ## Show CI/CD commands help
 	@echo ""
 	@echo "  1. make format       - Auto-format your code"
 	@echo "  2. make lint-fix     - Auto-fix linting issues"
-	@echo "  3. make ci-all       - Run all checks before commit"
-	@echo "  4. git commit        - Commit your changes"
+	@echo "  3. make markdown-fix - Auto-fix Markdown formatting"
+	@echo "  4. make ci-all       - Run all checks before commit"
+	@echo "  5. git commit        - Commit your changes"
 	@echo ""
 	@echo "============================================================"

@@ -7,6 +7,7 @@
 **症状**: `make docker-up`でコンテナが起動しない
 
 **解決策**:
+
 ```bash
 # 1. クリーン＆再ビルド
 make docker-clean
@@ -27,6 +28,7 @@ docker logs vecr-garage-storage
 **症状**: `docker ps`で`Restarting`状態が続く
 
 **解決策**:
+
 ```bash
 # 1. ログでエラー原因を特定
 docker logs vecr-garage-<service-name>
@@ -45,6 +47,7 @@ make docker-restart
 **症状**: `connection refused`や`could not connect to server`エラー
 
 **解決策**:
+
 ```bash
 # 1. ヘルスチェック確認
 docker ps --format "table {{.Names}}\t{{.Status}}"
@@ -65,6 +68,7 @@ make docker-restart
 **症状**: `relation "human_members" does not exist`エラー
 
 **解決策**:
+
 ```bash
 # 1. テーブル確認
 make db-member-psql
@@ -83,6 +87,7 @@ make docker-build-up
 **症状**: YMLファイルをアップロードしてもDBに反映されない
 
 **解決策**:
+
 ```bash
 # 1. backend-db-registrationログ確認
 docker logs vecr-garage-backend-db-registration
@@ -104,6 +109,7 @@ make docker-restart
 **症状**: ファイルアップロードしてもWebhook通知が来ない
 
 **解決策**:
+
 ```bash
 # 1. MinIOのWebhook設定確認
 docker exec vecr-garage-storage mc admin config get myminio notify_webhook
@@ -126,6 +132,7 @@ make docker-restart
 **症状**: `http://localhost:9001`にアクセスできない
 
 **解決策**:
+
 ```bash
 # 1. ポート確認
 lsof -i :9001
@@ -147,6 +154,7 @@ kill -9 <PID>
 **症状**: Discord Botがオンラインにならない
 
 **解決策**:
+
 ```bash
 # 1. Bot起動ログ確認
 make discord-bot-logs
@@ -171,6 +179,7 @@ make docker-restart
 **症状**: @メンションしても応答がない
 
 **解決策**:
+
 ```bash
 # 1. チャンネルID確認
 # config/discord_tokens.jsonの"mention_mode"にチャンネルIDが含まれているか
@@ -192,6 +201,7 @@ make claude-test
 **症状**: 新着投稿に自動応答しない
 
 **解決策**:
+
 ```bash
 # 1. チャンネルID確認
 # config/discord_tokens.jsonの"auto_thread_mode"にチャンネルIDが含まれているか
@@ -208,6 +218,7 @@ make discord-bot-logs
 **症状**: 1日1回の自動投稿が実行されない
 
 **解決策**:
+
 ```bash
 # 1. テストモードで動作確認
 # .envで TIMES_TEST_MODE=true に設定
@@ -232,6 +243,7 @@ make docker-restart
 **症状**: `AuthenticationError`や`APIConnectionError`
 
 **解決策**:
+
 ```bash
 # 1. APIキー確認
 cat .env | grep ANTHROPIC_API_KEY
@@ -254,6 +266,7 @@ make docker-restart
 **症状**: `RateLimitError`
 
 **解決策**:
+
 ```bash
 # 1. リクエスト頻度を下げる
 # Times Modeのテストモードを無効化
@@ -272,6 +285,7 @@ TIMES_TEST_MODE=false
 **症状**: `make discord-test-all`でHTTP 204だがメッセージが届かない
 
 **解決策**:
+
 ```bash
 # 1. Webhook URL確認
 cat config/discord_webhooks.json
@@ -293,6 +307,7 @@ docker logs vecr-garage-backend-llm-response
 **症状**: `bind: address already in use`エラー
 
 **解決策**:
+
 ```bash
 # 1. 使用中のポート確認
 lsof -i :3000
@@ -311,6 +326,7 @@ make docker-up
 **症状**: ローカルのPostgreSQLと競合
 
 **解決策**:
+
 ```bash
 # 1. ローカルのPostgreSQL停止
 sudo systemctl stop postgresql
@@ -327,6 +343,7 @@ sudo systemctl stop postgresql
 **症状**: 環境変数がコンテナ内で設定されていない
 
 **解決策**:
+
 ```bash
 # 1. .envファイル存在確認
 ls -la .env
@@ -346,6 +363,7 @@ docker exec vecr-garage-backend-db-registration env
 **症状**: Discord Webhook環境変数が設定されていない
 
 **解決策**:
+
 ```bash
 # 1. direnv許可
 direnv allow
@@ -367,6 +385,7 @@ make docker-build-up
 **症状**: コマンド実行やレスポンスが遅い
 
 **解決策**:
+
 ```bash
 # 1. リソース使用状況確認
 docker stats
@@ -388,6 +407,7 @@ docker image prune
 **症状**: ディスク容量が圧迫される
 
 **解決策**:
+
 ```bash
 # 1. ログサイズ確認
 docker system df
@@ -411,6 +431,7 @@ docker logs vecr-garage-<service-name> --tail 0
 **症状**: `make: command not found`
 
 **解決策**:
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install make
@@ -424,6 +445,7 @@ xcode-select --install
 **症状**: コミットやプッシュができない
 
 **解決策**:
+
 ```bash
 # 1. Git設定確認
 git config --list

@@ -60,18 +60,21 @@ VECR Garageプロジェクトでは、APIキー、トークン、Webhook URL等�
 コミット前に必ず以下を確認してください：
 
 - [ ] **Pre-commit Hooksがインストール済み**
+
   ```bash
   pip install pre-commit
   pre-commit install
   ```
 
 - [ ] **`git status`で機密ファイルが含まれていないことを確認**
+
   ```bash
   git status
   # .env, .envrc, config/discord_*.json が表示されないこと
   ```
 
 - [ ] **`git diff --cached`で機密情報がないことを目視確認**
+
   ```bash
   git diff --cached
   # APIキー、トークン、Webhook URLが含まれていないこと
@@ -142,6 +145,7 @@ git commit -m "test"
 ### 即座に実施すること
 
 1. **プッシュを停止**
+
    ```bash
    # まだpushしていない場合は絶対にpushしない
    ```
@@ -155,6 +159,7 @@ git commit -m "test"
    - Anthropic API Key: Anthropic Console で無効化・再生成
 
 4. **直前のコミットから削除（pushしていない場合）**
+
    ```bash
    # 最新のコミットを取り消し
    git reset HEAD~1

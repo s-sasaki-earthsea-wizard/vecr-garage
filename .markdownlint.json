@@ -1,0 +1,14 @@
+{
+  "default": true,
+  "MD013": false,
+  "MD033": false,
+  "MD041": false,
+  "line-length": false,
+  "no-inline-html": false,
+  "first-line-heading": false,
+  "no-trailing-spaces": true,
+  "no-multiple-blanks": true,
+  "blanks-around-headings": true,
+  "blanks-around-lists": true,
+  "blanks-around-fences": true
+}

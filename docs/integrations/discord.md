@@ -16,12 +16,14 @@ VECR Garageプロジェクトは、2つのDiscord統合機能を提供してい�
 ### 🏗️ アーキテクチャ設計
 
 **セキュリティ重視の設計**:
+
 1. **JSONファイル管理**: `config/discord_webhooks.json`（視認性・編集性◎）
 2. **.envrc自動変換**: JSONを環境変数に変換
 3. **Makefile統合**: `make docker-up/build-up`で自動読み込み
 4. **環境変数渡し**: コンテナにファイルをマウントせず環境変数のみ（セキュア）
 
 **ファイル構成**:
+
 ```
 config/
 ├── discord_webhooks.json          # 実際のWebhook URL（.gitignore対象）
@@ -34,18 +36,21 @@ config/
 ### 🎯 実装内容
 
 **コアモジュール**:
+
 - `backend-llm-response/src/config/webhook_config_parser.py`: JSON/環境変数パーサー
 - `backend-llm-response/src/config/webhook_validator.py`: URL形式・データ構造バリデーター
 - `backend-llm-response/src/services/discord_notifier.py`: メッセージ送信サービス
 - `makefiles/discord.mk`: Discord操作コマンド集約
 
 **REST APIエンドポイント**:
+
 - `GET /api/discord/webhooks`: Webhook一覧取得
 - `POST /api/discord/test/<webhook_name>`: テストメッセージ送信
 - `POST /api/discord/send/<webhook_name>`: カスタムメッセージ送信
 - `POST /api/discord/broadcast`: 全Webhook同時配信
 
 **Makeターゲット**:
+
 ```bash
 make discord-webhooks-list        # Webhook一覧表示
 make discord-verify               # 動作確認（推奨）
@@ -93,11 +98,13 @@ make discord-verify
 ### 🔒 セキュリティ対策
 
 **ファイル流出防止**:
+
 - `config/discord_webhooks.json`: .gitignoreで保護
 - `.envrc`: .gitignoreで保護
 - コンテナにファイルをマウントせず、環境変数として渡す
 
 **将来の拡張性**:
+
 - AWS Secrets Managerへの移行準備完了
 - 環境変数ベースの設計により、CI/CD環境でも同様に動作
 
@@ -110,6 +117,7 @@ make discord-verify
 ### 🏗️ アーキテクチャ設計
 
 **Discord Botクラス**:
+
 - `backend-llm-response/src/services/discord_bot.py`
 - discord.py 2.4.0を使用
 - Message Content Intentを有効化（Privileged Intent）
@@ -117,11 +125,13 @@ make discord-verify
 - Claude APIとの統合（ClaudeClientを使用）
 
 **設定管理**:
+
 - `config/discord_tokens.json`: Bot TokenとチャンネルID管理（モード別）
 - JSON直接読み込み（環境変数を経由しない）
 - 複数Bot対応（Bot名ごとに設定を分離）
 
 **設定フォーマット**:
+
 ```json
 {
     "🤖🍡華扇": {
@@ -136,6 +146,7 @@ make discord-verify
 ```
 
 **モジュール構成**:
+
 - `config/discord/config_loader.py`: JSON読み込み
 - `config/discord/config_validator.py`: 設定バリデーション
 - `config/discord/config_parser.py`: 公開API（Facade）
@@ -145,6 +156,7 @@ make discord-verify
 #### 1. Mention Mode（@メンション対応）
 
 **動作**:
+
 - Botへの@メンションを検知
 - メンション部分を除去してプロンプトを抽出
 - Claude APIで応答生成
@@ -156,6 +168,7 @@ make discord-verify
 #### 2. AutoThread Mode（新着投稿自動応答）
 
 **動作**:
+
 - Bot自身以外の新着投稿を検知
 - チャンネルの過去20件の会話履歴を取得
 - 会話の文脈を含めてClaude APIに送信
@@ -165,6 +178,7 @@ make discord-verify
 **対象チャンネル**: `config/discord_tokens.json`の`auto_thread_mode`で指定
 
 **将来の改善計画**:
+
 - [ ] **会話履歴管理の改善**（優先度: 高）
   - **現在の課題**: 過去20件の履歴を一律取得するため、終わった話題が繰り返される
   - **解決策の選択肢**:
@@ -176,6 +190,7 @@ make discord-verify
 #### 3. Times Mode（1日1回自動投稿）
 
 **動作**:
+
 - **本番モード**: JST 9:00-18:00の間に1日1回ランダムな話題で投稿
 - **テストモード**: 短いインターバルで繰り返し投稿（機能テスト用）
 - APScheduler + pytzによるJST対応スケジューラー
@@ -188,6 +203,7 @@ make discord-verify
 **対象チャンネル**: `config/discord_tokens.json`の`times_mode`で指定
 
 **環境変数設定（.env）**:
+
 ```bash
 # 【本番モード】 TIMES_TEST_MODE=false (またはコメントアウト)
 #   - 動作: 毎日JST 9:00-18:00の間に1回ランダム投稿
@@ -203,6 +219,7 @@ TIMES_TEST_MODE=false
 ```
 
 **将来の改善計画**:
+
 - [ ] **話題管理の改善**（優先度: 中）
   - **現在の実装**: JSONファイルにベタ書き（テスト用暫定処置）
   - **改善案**:
@@ -216,7 +233,7 @@ TIMES_TEST_MODE=false
 
 #### 1. Discord Developer Portal設定
 
-1. https://discord.com/developers/applications にアクセス
+1. <https://discord.com/developers/applications> にアクセス
 2. 「New Application」でBot作成
 3. 「Bot」タブでTokenを取得
 4. **Privileged Gateway Intents**で以下を有効化:
@@ -257,11 +274,13 @@ make discord-bot-logs
 ### 📦 依存関係
 
 **requirements.txt追加**:
+
 - `discord.py==2.4.0`: Discord Bot公式ライブラリ
 - `APScheduler==3.10.4`: Python用ジョブスケジューリングライブラリ
 - `pytz==2024.1`: タイムゾーン処理ライブラリ
 
 **docker-compose.yml設定**:
+
 ```yaml
 backend-llm-response:
   volumes:
@@ -290,6 +309,7 @@ make discord-bot-test-config
 ### ✅ 動作確認
 
 **起動確認**:
+
 - ✅ Bot設定読み込み成功（discord_tokens.json）
 - ✅ Discord Gatewayへの接続成功
 - ✅ Bot起動完了: `🤖🍡華扇#8670`
@@ -299,6 +319,7 @@ make discord-bot-test-config
 - ✅ TimesSchedulerスケジューラー起動完了
 
 **動作確認**:
+
 - ✅ @メンション検知成功（Mention Mode）
 - ✅ 新着投稿自動応答成功（AutoThread Mode）
 - ✅ 会話履歴の文脈理解確認
@@ -310,6 +331,7 @@ make discord-bot-test-config
 ### 🎯 今後の拡張予定
 
 **共通機能**:
+
 - [ ] 複数Botの同時起動（Bot名ごとの独立プロセス）
 - [ ] スレッド対応（スレッド内での会話継続）
 - [ ] リアクション機能（絵文字によるコマンド操作）

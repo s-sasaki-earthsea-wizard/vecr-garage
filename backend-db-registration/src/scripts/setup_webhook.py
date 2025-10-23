@@ -121,7 +121,9 @@ class WebhookSetup:
                 logger.info(f"Response: {response.json()}")
                 return True
             else:
-                logger.error(f"❌ Webhook connection test failed: {response.status_code}")
+                logger.error(
+                    f"❌ Webhook connection test failed: {response.status_code}"
+                )
                 logger.error(f"Response: {response.text}")
                 return False
 
@@ -181,7 +183,9 @@ def main():
     # 環境変数から設定を取得
     webhook_url = os.getenv("WEBHOOK_URL", os.getenv("WEBHOOK_FULL_URL"))
     if not webhook_url:
-        print("❌ Error: WEBHOOK_URL or WEBHOOK_FULL_URL environment variable is required")
+        print(
+            "❌ Error: WEBHOOK_URL or WEBHOOK_FULL_URL environment variable is required"
+        )
         sys.exit(1)
     bucket_name = os.getenv("MINIO_BUCKET_NAME")
     if not bucket_name:

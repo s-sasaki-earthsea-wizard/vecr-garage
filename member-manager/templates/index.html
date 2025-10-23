@@ -56,7 +56,7 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="table-responsive">
                         <table id="dataTable" class="table table-striped table-hover">
                             <thead id="tableHead" class="table-dark">
@@ -182,7 +182,7 @@ function loadAvailableTables() {
 function populateTableSelect(tables) {
     const tableSelect = document.getElementById('tableSelect');
     tableSelect.innerHTML = '<option value="">-- テーブルを選択してください --</option>';
-    
+
     tables.forEach(table => {
         const option = document.createElement('option');
         option.value = table.name;
@@ -195,15 +195,15 @@ function populateTableSelect(tables) {
 function loadTableData() {
     const tableSelect = document.getElementById('tableSelect');
     const tableName = tableSelect.value;
-    
+
     if (!tableName) {
         document.getElementById('dataSection').style.display = 'none';
         document.getElementById('noTableSelected').style.display = 'block';
         return;
     }
-    
+
     currentTableName = tableName;
-    
+
     // テーブルの詳細データを取得
     fetch(`/api/db/table/${tableName}`)
         .then(response => response.json())
@@ -227,11 +227,11 @@ function displayTableData(tableData) {
     const tableName = document.getElementById('tableName');
     const tableHead = document.getElementById('tableHead');
     const tableBody = document.getElementById('tableBody');
-    
+
     tableName.textContent = tableData.table_name || 'テーブル';
     dataSection.style.display = 'block';
     noTableSelected.style.display = 'none';
-    
+
     // ヘッダー行の生成
     if (tableData.columns && tableData.columns.length > 0) {
         let headerHtml = '<tr>';
@@ -241,7 +241,7 @@ function displayTableData(tableData) {
         headerHtml += '<th>操作</th></tr>';
         tableHead.innerHTML = headerHtml;
     }
-    
+
     // データ行の生成
     if (tableData.data && tableData.data.length > 0) {
         let bodyHtml = '';
@@ -273,7 +273,7 @@ function formatCellValue(value, columnType) {
     if (value === null) {
         return '<span class="text-muted fst-italic">NULL</span>';
     }
-    
+
     if (columnType === 'timestamp with time zone' || columnType === 'timestamp without time zone') {
         return `<span class="text-info">${value}</span>`;
     } else if (columnType === 'uuid') {
@@ -283,7 +283,7 @@ function formatCellValue(value, columnType) {
     } else if (columnType === 'text' && value.length > 50) {
         return `<span title="${value}">${value.substring(0, 50)}...</span>`;
     }
-    
+
     return value;
 }
 
@@ -297,13 +297,13 @@ function refreshTableData() {
 // 新規レコード追加モーダルの表示
 function showAddRecordModal() {
     if (!currentTableData) return;
-    
+
     const modal = new bootstrap.Modal(document.getElementById('addRecordModal'));
     const form = document.getElementById('addRecordForm');
-    
+
     // フォームを生成
     form.innerHTML = generateFormFields(currentTableData.columns, {});
-    
+
     modal.show();
 }
 
@@ -328,57 +328,57 @@ function editRecord(tableName, index) {
 // 削除確認モーダルの表示
 function deleteRecord(tableName, index) {
     if (!currentTableData || !currentTableData.data[index]) return;
-    
+
     const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
     const record = currentTableData.data[index];
-    
+
     // 削除情報を表示
     const deleteInfo = document.getElementById('deleteInfo');
     let infoText = '';
-    
+
     // 主要な列の値を表示
     if (record.member_name) infoText += `名前: ${record.member_name} `;
     if (record.member_id) infoText += `ID: ${record.member_id} `;
     if (record.relationship_type) infoText += `関係: ${record.relationship_type} `;
-    
+
     deleteInfo.textContent = infoText || 'レコード情報がありません';
-    
+
     modal.show();
 }
 
 // フォームフィールドの生成（統合フォーム表示）
 function generateFormFields(columns, record) {
     let formHtml = '';
-    
+
     // 新規レコード登録時に除外するフィールド（バックエンド/DB側で自動生成）
     const excludeFields = [
         'uuid', 'member_id', 'id', 'created_at', 'updated_at',
         'member_uuid', 'profile_uuid', 'profile_id', 'relationship_id'
     ];
-    
+
     // テーブル名に基づいて統合フィールドを取得
     const integratedFields = getIntegratedFields(currentTableName);
-    
+
     // メンバー名フィールドを最初に表示
     const memberNameField = getMemberNameField(currentTableName);
     if (memberNameField) {
         formHtml += generateFieldHtml(memberNameField, record[memberNameField.name] || '');
     }
-    
+
     // 統合フィールドのみを表示（重複を避けるため既存列は使用しない）
     integratedFields.forEach(field => {
         if (!isMemberNameField(field.name)) {
             formHtml += generateFieldHtml(field, record[field.name] || '');
         }
     });
-    
+
     return formHtml;
 }
 
 // テーブル名に基づいて統合フィールドを取得
 function getIntegratedFields(tableName) {
     const integratedFields = [];
-    
+
     if (tableName === 'human_members') {
         // human_member_profilesのフィールドを追加
         integratedFields.push({
@@ -424,14 +424,14 @@ function getIntegratedFields(tableName) {
             description: 'カスタムプロンプト設定'
         });
     }
-    
+
     return integratedFields;
 }
 
 // フィールドHTMLを生成
 function generateFieldHtml(column, value) {
     const isRequired = column.nullable === 'NO';
-    
+
     let fieldHtml = `
         <div class="mb-3">
             <label for="${column.name}" class="form-label">
@@ -439,18 +439,18 @@ function generateFieldHtml(column, value) {
                 ${isRequired ? '<span class="text-danger">*</span>' : ''}
             </label>
     `;
-    
+
     if (column.type === 'text' || column.type === 'character varying') {
         if (column.name === 'bio' || column.name === 'custom_prompt') {
             fieldHtml += `
-                <textarea class="form-control" id="${column.name}" name="${column.name}" 
-                          rows="3" ${isRequired ? 'required' : ''} 
+                <textarea class="form-control" id="${column.name}" name="${column.name}"
+                          rows="3" ${isRequired ? 'required' : ''}
                           onblur="validateField('${column.name}', this.value)"
                           oninput="clearValidationError('${column.name}')">${value}</textarea>
             `;
         } else {
             fieldHtml += `
-                <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
+                <input type="text" class="form-control" id="${column.name}" name="${column.name}"
                        value="${value}" ${isRequired ? 'required' : ''}
                        onblur="validateField('${column.name}', this.value)"
                        oninput="clearValidationError('${column.name}')">
@@ -458,40 +458,40 @@ function generateFieldHtml(column, value) {
         }
     } else if (column.type === 'integer' || column.type === 'bigint') {
         fieldHtml += `
-            <input type="number" class="form-control" id="${column.name}" name="${column.name}" 
+            <input type="number" class="form-control" id="${column.name}" name="${column.name}"
                    value="${value}" ${isRequired ? 'required' : ''}
                    onblur="validateField('${column.name}', this.value)"
                    oninput="clearValidationError('${column.name}')">
         `;
     } else if (column.type === 'uuid') {
         fieldHtml += `
-            <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
-                   value="${value}" pattern="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" 
+            <input type="text" class="form-control" id="${column.name}" name="${column.name}"
+                   value="${value}" pattern="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
                    placeholder="UUID形式で入力" ${isRequired ? 'required' : ''}
                    onblur="validateField('${column.name}', this.value)"
                    oninput="clearValidationError('${column.name}')">
         `;
     } else {
         fieldHtml += `
-            <input type="text" class="form-control" id="${column.name}" name="${column.name}" 
+            <input type="text" class="form-control" id="${column.name}" name="${column.name}"
                    value="${value}" ${isRequired ? 'required' : ''}
                    onblur="validateField('${column.name}', this.value)"
                    oninput="clearValidationError('${column.name}')">
         `;
     }
-    
+
     fieldHtml += `
             <div class="form-text">${column.description || getColumnDescription(column.name)}</div>
             <div id="${column.name}-error" class="invalid-feedback" style="display: none;"></div>
         </div>
     `;
-    
+
     return fieldHtml;
 }
 
 // メンバー名フィールドを取得（すべてmember_nameに統一）
 function getMemberNameField(tableName) {
-    if (tableName === 'human_members' || tableName === 'virtual_members' || 
+    if (tableName === 'human_members' || tableName === 'virtual_members' ||
         tableName === 'human_member_profiles' || tableName === 'virtual_member_profiles') {
         return {
             name: 'member_name',
@@ -541,29 +541,29 @@ function saveRecord() {
         alert('入力内容にエラーがあります。エラーメッセージを確認してください。');
         return;
     }
-    
+
     // フォームデータを収集
     const formData = collectFormData();
     if (!formData) {
         return;
     }
-    
+
     // メンバータイプを判定（テーブル名から）
     const memberType = getMemberTypeFromTable(currentTableName);
     if (!memberType) {
         alert('サポートされていないテーブルです。');
         return;
     }
-    
+
     // APIリクエストの準備
     const requestData = {
         member_type: memberType,
         form_data: formData
     };
-    
+
     // ローディング表示
     showLoadingState();
-    
+
     // APIリクエストの送信
     fetch('/api/member/create', {
         method: 'POST',
@@ -575,16 +575,16 @@ function saveRecord() {
     .then(response => response.json())
     .then(data => {
         hideLoadingState();
-        
+
         if (data.success) {
             // 成功時の処理
             alert(data.message);
             console.log('Member created successfully:', data.data);
-            
+
             // モーダルを閉じる
             const modal = bootstrap.Modal.getInstance(document.getElementById('addRecordModal'));
             modal.hide();
-            
+
             // テーブルデータを更新
             refreshTableData();
         } else {
@@ -667,7 +667,7 @@ function confirmDelete() {
     // レコードの削除ロジック
     console.log('レコード削除機能は今後の実装予定です');
     alert('レコード削除機能は今後の実装予定です');
-    
+
     // モーダルを閉じる
     const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
     modal.hide();
@@ -678,25 +678,25 @@ function confirmDelete() {
 function validateField(fieldName, value) {
     const errorElement = document.getElementById(`${fieldName}-error`);
     const inputElement = document.getElementById(fieldName);
-    
+
     // エラーをクリア
     clearValidationError(fieldName);
-    
+
     // 必須チェック
     if (isFieldRequired(fieldName) && (!value || value.trim() === '')) {
         showValidationError(fieldName, 'このフィールドは必須です');
         return false;
     }
-    
+
     // 空の値の場合はバリデーションをスキップ
     if (!value || value.trim() === '') {
         return true;
     }
-    
+
     // フィールド別のバリデーション
     let isValid = true;
     let errorMessage = '';
-    
+
     switch (fieldName) {
         case 'member_name':
             isValid = validateMemberName(value);
@@ -723,11 +723,11 @@ function validateField(fieldName, value) {
             if (!isValid) errorMessage = '呼び方は1-50文字で入力してください';
             break;
     }
-    
+
     if (!isValid && errorMessage) {
         showValidationError(fieldName, errorMessage);
     }
-    
+
     return isValid;
 }
 
@@ -741,7 +741,7 @@ function isFieldRequired(fieldName) {
 function showValidationError(fieldName, message) {
     const errorElement = document.getElementById(`${fieldName}-error`);
     const inputElement = document.getElementById(fieldName);
-    
+
     if (errorElement && inputElement) {
         errorElement.textContent = message;
         errorElement.style.display = 'block';
@@ -753,7 +753,7 @@ function showValidationError(fieldName, message) {
 function clearValidationError(fieldName) {
     const errorElement = document.getElementById(`${fieldName}-error`);
     const inputElement = document.getElementById(fieldName);
-    
+
     if (errorElement && inputElement) {
         errorElement.style.display = 'none';
         inputElement.classList.remove('is-invalid');
@@ -836,13 +836,13 @@ function validateAllFields() {
     let isValid = true;
     const form = document.getElementById('addRecordForm');
     const inputs = form.querySelectorAll('input, textarea');
-    
+
     inputs.forEach(input => {
         if (!validateField(input.name, input.value)) {
             isValid = false;
         }
     });
-    
+
     return isValid;
 }
 
@@ -851,13 +851,13 @@ function collectFormData() {
     const form = document.getElementById('addRecordForm');
     const inputs = form.querySelectorAll('input, textarea');
     const formData = {};
-    
+
     inputs.forEach(input => {
         if (input.name && input.value) {
             formData[input.name] = input.value;
         }
     });
-    
+
     return formData;
 }
 
@@ -897,17 +897,17 @@ function displayValidationErrors(errors) {
     errorElements.forEach(element => {
         element.style.display = 'none';
     });
-    
+
     const inputElements = form.querySelectorAll('.is-invalid');
     inputElements.forEach(element => {
         element.classList.remove('is-invalid');
     });
-    
+
     // 新しいエラーを表示
     for (const [fieldName, errorMessage] of Object.entries(errors)) {
         const inputElement = document.getElementById(fieldName);
         const errorElement = document.getElementById(`${fieldName}-error`);
-        
+
         if (inputElement && errorElement) {
             inputElement.classList.add('is-invalid');
             errorElement.textContent = errorMessage;

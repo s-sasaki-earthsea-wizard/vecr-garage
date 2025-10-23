@@ -167,7 +167,9 @@ class StorageClient:
                 logger.info("Storage service connection test successful")
                 return True
             else:
-                logger.warning(f"Storage service returned status: {response.status_code}")
+                logger.warning(
+                    f"Storage service returned status: {response.status_code}"
+                )
                 return False
 
         except Exception as e:

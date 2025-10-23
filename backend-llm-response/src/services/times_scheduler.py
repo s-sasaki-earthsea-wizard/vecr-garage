@@ -82,10 +82,14 @@ class TimesScheduler:
             FileNotFoundError: ファイルが存在しない
             ValueError: JSON形式が不正
         """
-        topics_file = Path(__file__).parent.parent.parent / "prompts" / "times_topics.json"
+        topics_file = (
+            Path(__file__).parent.parent.parent / "prompts" / "times_topics.json"
+        )
 
         if not topics_file.exists():
-            raise FileNotFoundError(f"話題リストファイルが見つかりません: {topics_file}")
+            raise FileNotFoundError(
+                f"話題リストファイルが見つかりません: {topics_file}"
+            )
 
         try:
             with open(topics_file, encoding="utf-8") as f:
@@ -104,7 +108,9 @@ class TimesScheduler:
     def start(self):
         """スケジューラー起動"""
         if not self.times_channels:
-            logger.warning("⚠️ Times Mode対象チャンネルが0件のためスケジューラーを起動しません")
+            logger.warning(
+                "⚠️ Times Mode対象チャンネルが0件のためスケジューラーを起動しません"
+            )
             return
 
         # トリガー設定（本番モード or テストモード）
@@ -121,7 +127,10 @@ class TimesScheduler:
             logger.info(f"🧪 テストモード有効: {log_msg}")
 
         self.scheduler.add_job(
-            self._post_random_topic, trigger=trigger, id="times_mode_daily_post", name=job_name
+            self._post_random_topic,
+            trigger=trigger,
+            id="times_mode_daily_post",
+            name=job_name,
         )
 
         self.scheduler.start()
@@ -130,7 +139,7 @@ class TimesScheduler:
     def _create_production_trigger(self):
         """本番モード用のトリガーを作成（平日のみ9:00、jitter 9時間）"""
         return CronTrigger(
-            day_of_week='mon-fri',  # 月曜日〜金曜日のみ実行
+            day_of_week="mon-fri",  # 月曜日〜金曜日のみ実行
             hour=9,
             minute=0,
             second=0,
@@ -166,7 +175,9 @@ class TimesScheduler:
 
         # LLM API呼び出し
         try:
-            response = self.llm_client.send_message(prompt=topic, system_prompt=self.system_prompt)
+            response = self.llm_client.send_message(
+                prompt=topic, system_prompt=self.system_prompt
+            )
 
             # Discord文字数制限対応（2000文字）
             if len(response) > 2000:
@@ -188,7 +199,8 @@ class TimesScheduler:
 
                 except Exception as e:
                     logger.error(
-                        f"❌ Times Mode投稿エラー (チャンネルID: {channel_id}): {e}", exc_info=True
+                        f"❌ Times Mode投稿エラー (チャンネルID: {channel_id}): {e}",
+                        exc_info=True,
                     )
 
             # 投稿済みフラグ更新

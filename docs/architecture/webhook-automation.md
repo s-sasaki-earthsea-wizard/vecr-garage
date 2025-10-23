@@ -13,6 +13,7 @@
 **役割**: MinIO基本設定、サンプルデータコピー、webhook設定適用
 
 **処理内容**:
+
 - MinIOバケット作成
 - サンプルYMLファイルのコピー
 - Webhook設定ファイル適用（`/root/.mc/config.json`）
@@ -24,10 +25,12 @@
 **役割**: MinIO再起動（設定反映のため）
 
 **処理内容**:
+
 - Docker-in-Dockerによるコンテナ再起動
 - Webhook設定の有効化
 
 **技術的特徴**:
+
 - `/var/run/docker.sock`マウントによるコンテナ間制御
 - Alpine + docker-cliベースの軽量イメージ
 
@@ -36,6 +39,7 @@
 **役割**: イベント設定とテスト実行
 
 **処理内容**:
+
 - S3イベント通知設定（`s3:ObjectCreated:*`）
 - リトライロジック（最大10回、5秒間隔）
 - 動作確認テスト
@@ -84,6 +88,7 @@ webhook-configurator:
 **手順**: `make docker-down` → `make docker-build-up`
 
 **結果**:
+
 - ✅ 人間メンバー: 2件自動登録 (Syota, Rin)
 - ✅ 仮想メンバー: 2件自動登録 (華扇, Darcy)
 - ✅ 異常系ファイル: HTTP 400で適切にエラー処理
@@ -165,6 +170,7 @@ make docker-restart
 **症状**: DBリセット後にファイルが再処理されない
 
 **解決策**:
+
 ```bash
 # .envファイルでETagチェックを無効化
 WEBHOOK_ETAG_CHECK_ENABLED=false

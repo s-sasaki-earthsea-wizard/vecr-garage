@@ -235,6 +235,7 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 **達成状況**: ✅ 完全達成 - 手動作業ゼロで環境が完全再現される
 
 **3段階自動化アーキテクチャ**:
+
 1. **minio-setup**: MinIO基本設定、サンプルデータコピー、webhook設定適用
 2. **minio-restarter**: MinIO再起動（設定反映のため）
 3. **webhook-configurator**: イベント設定とテスト実行
@@ -251,6 +252,7 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 **実装目的**: ユニットテストからE2Eテストまでを統合した包括的品質保証システム
 
 **テスト結果**:
+
 - **Unit Tests**: 25 tests passed（pytest container execution）
 - **Sample Processing**: Human & Virtual member DB registration confirmed
 - **Error Handling**: HTTP 400 validation errors properly handled
@@ -266,11 +268,13 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 ### 実装概要
 
 **Discord Webhook通知システム**:
+
 - セキュアなWebhook管理（JSONファイル + 環境変数）
 - REST API エンドポイント
 - Make ターゲット統合
 
 **Discord Bot統合**:
+
 - **Mention Mode**: @メンション応答
 - **AutoThread Mode**: 新着投稿自動応答
 - **Times Mode**: 1日1回自動投稿（本番/テストモード切り替え対応）
@@ -285,11 +289,13 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 ### 実装概要
 
 **ClaudeClient実装**:
+
 - Anthropic公式Pythonライブラリ使用
 - 環境変数による設定管理
 - Discord Botとの統合
 
 **利用可能なコマンド**:
+
 - `make claude-test` - 接続テスト
 - `make claude-prompt PROMPT="テキスト"` - カスタムプロンプト送信
 
@@ -305,6 +311,7 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 **実装目的**: samples.mkとtest-cases.mkの重複排除とファイル操作の一元化
 
 **統合効果**:
+
 - AWS S3操作コードの共通化
 - 1ファイルでの統一管理
 - 既存コマンドの完全互換
@@ -319,12 +326,14 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 ### 実装概要
 
 **Phase 1: モックアップ認証**:
+
 - 環境変数ベースの簡易認証
 - Flask-Session によるセッション管理
 - ログイン/ログアウト機能
 - パスワード表示切り替えボタン
 
 **将来の実装計画**:
+
 - Phase 2: Flask-Login + bcrypt + Redis
 - Phase 3: AWS Cognito + MFA + JWT
 
@@ -341,11 +350,13 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 **実装目的**: ETag重複チェック問題の解決とDBリセット後の再登録対応
 
 **現在の動作**:
+
 - 同名メンバーが存在する場合: `updated_at`フィールドを現在時刻で更新
 - 存在しない場合: 新規作成
 - ETag制御によりDBリセット後の再処理が可能
 
 **将来の実装計画**:
+
 - file_uri（ファイルパス）をプライマリーキーとした本格的なUPSERT
 - PostgreSQLの`ON CONFLICT DO UPDATE`句の活用
 - ファイル単位での厳密な重複管理
@@ -357,6 +368,7 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 ## 今後の開発予定
 
 ### 実装完了
+
 - [x] member-managerのモックUI実装
 - [x] 認証システム（モックアップ版）実装
 - [x] name-based UPSERT処理（暫定実装）
@@ -374,6 +386,7 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 - [x] Discord Bot Times Modeテスト機能実装（本番/テストモード切り替え）
 
 ### 実装予定
+
 - [ ] Discord Bot Times Mode話題管理の改善（データベース化、カテゴリ分類等）
 - [ ] Discord Bot会話履歴管理の改善（DynamoDB統合、トピック検出等）
 - [ ] file_uri-based UPSERT処理（本格実装）

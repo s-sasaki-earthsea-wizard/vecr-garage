@@ -5,9 +5,8 @@ JSONファイルからBot設定を読み込みます。
 """
 
 import json
-import os
-from typing import Dict
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ class DiscordConfigLoader:
     DEFAULT_CONFIG_FILE = "config/discord_tokens.json"
 
     @staticmethod
-    def load_config(file_path: str = None) -> Dict[str, Dict[str, any]]:
+    def load_config(file_path: str = None) -> dict[str, dict[str, any]]:
         """
         JSONファイルから設定を読み込み
 
@@ -48,7 +47,7 @@ class DiscordConfigLoader:
             )
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 config = json.load(f)
         except json.JSONDecodeError as e:
             raise json.JSONDecodeError(

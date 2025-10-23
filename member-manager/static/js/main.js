@@ -14,7 +14,7 @@ let deletingRecord = null;
 document.addEventListener('DOMContentLoaded', function() {
     const tableSelect = document.getElementById('tableSelect');
     tableSelect.addEventListener('change', handleTableChange);
-    
+
     document.getElementById('addRecordBtn').addEventListener('click', handleAddRecord);
 });
 
@@ -24,18 +24,18 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 async function handleTableChange(event) {
     const tableName = event.target.value;
-    
+
     if (!tableName) {
         document.getElementById('dataSection').style.display = 'none';
         return;
     }
-    
+
     currentTable = tableName;
-    
+
     try {
         const response = await fetch(`/api/table/${tableName}`);
         const data = await response.json();
-        
+
         if (response.ok) {
             currentColumns = data.columns;
             currentData = data.data;
@@ -56,37 +56,37 @@ async function handleTableChange(event) {
 function displayTable(tableName, columns, data) {
     document.getElementById('tableName').textContent = tableName;
     document.getElementById('dataSection').style.display = 'block';
-    
+
     // ヘッダーを作成
     const tableHead = document.getElementById('tableHead');
     tableHead.innerHTML = '';
     const headerRow = document.createElement('tr');
-    
+
     columns.forEach(column => {
         const th = document.createElement('th');
         th.textContent = column;
         headerRow.appendChild(th);
     });
-    
+
     // アクション列を追加
     const actionTh = document.createElement('th');
     actionTh.textContent = 'アクション';
     actionTh.className = 'action-column';
     headerRow.appendChild(actionTh);
-    
+
     tableHead.appendChild(headerRow);
-    
+
     // ボディを作成
     const tableBody = document.getElementById('tableBody');
     tableBody.innerHTML = '';
-    
+
     data.forEach((record, index) => {
         const row = document.createElement('tr');
-        
+
         columns.forEach(column => {
             const td = document.createElement('td');
             const value = record[column];
-            
+
             // UUIDなど長い値は省略表示
             if (typeof value === 'string' && value.length > 20) {
                 td.textContent = value.substring(0, 20) + '...';
@@ -94,10 +94,10 @@ function displayTable(tableName, columns, data) {
             } else {
                 td.textContent = value || '';
             }
-            
+
             row.appendChild(td);
         });
-        
+
         // アクションボタンを追加
         const actionTd = document.createElement('td');
         actionTd.className = 'action-column';
@@ -106,7 +106,7 @@ function displayTable(tableName, columns, data) {
             <button class="btn btn-sm btn-delete" onclick="deleteRecord(${index})">削除</button>
         `;
         row.appendChild(actionTd);
-        
+
         tableBody.appendChild(row);
     });
 }
@@ -136,37 +136,37 @@ function editRecord(index) {
 function showEditModal(record) {
     const form = document.getElementById('editForm');
     form.innerHTML = '';
-    
+
     currentColumns.forEach(column => {
         // 自動生成される項目はスキップ
         if (column === 'created_at' || column === 'updated_at') {
             return;
         }
-        
+
         const formGroup = document.createElement('div');
         formGroup.className = 'form-group';
-        
+
         const label = document.createElement('label');
         label.textContent = column;
         label.setAttribute('for', column);
-        
+
         const input = document.createElement('input');
         input.type = 'text';
         input.id = column;
         input.name = column;
         input.className = 'form-control';
         input.value = record[column] || '';
-        
+
         // IDフィールドは編集時は読み取り専用
         if ((column.endsWith('_id') || column.endsWith('_uuid')) && editingRecord) {
             input.readOnly = true;
         }
-        
+
         formGroup.appendChild(label);
         formGroup.appendChild(input);
         form.appendChild(formGroup);
     });
-    
+
     document.getElementById('editModal').style.display = 'block';
 }
 
@@ -186,11 +186,11 @@ async function saveRecord() {
     const form = document.getElementById('editForm');
     const formData = new FormData(form);
     const record = {};
-    
+
     for (let [key, value] of formData.entries()) {
         record[key] = value;
     }
-    
+
     try {
         let response;
         if (editingRecord) {
@@ -214,9 +214,9 @@ async function saveRecord() {
                 body: JSON.stringify(record)
             });
         }
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             alert('保存しました');
             closeModal();
@@ -255,17 +255,17 @@ function closeDeleteModal() {
  */
 async function confirmDelete() {
     if (!deletingRecord) return;
-    
+
     try {
         const idField = getIdField();
         const recordId = deletingRecord[idField];
-        
+
         const response = await fetch(`/api/table/${currentTable}/record/${recordId}`, {
             method: 'DELETE'
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             alert('削除しました');
             closeDeleteModal();

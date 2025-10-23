@@ -5,8 +5,8 @@ Bot用のシステムプロンプトをファイルから読み込む機能を�
 将来的にデータベースからの読み込みにも対応予定。
 """
 
-import os
 import logging
+import os
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,9 @@ class PromptLoader:
         prompt_file = f"{PromptLoader.PROMPT_DIR}/{bot_name}.txt"
 
         if not os.path.exists(prompt_file):
-            logger.warning(f"⚠️ システムプロンプトファイルが見つかりません: {prompt_file}")
+            logger.warning(
+                f"⚠️ システムプロンプトファイルが見つかりません: {prompt_file}"
+            )
             logger.info(
                 f"💡 デフォルトプロンプトなしで起動します。"
                 f"カスタマイズする場合は {prompt_file} を作成してください。"
@@ -39,7 +41,7 @@ class PromptLoader:
             return None
 
         try:
-            with open(prompt_file, "r", encoding="utf-8") as f:
+            with open(prompt_file, encoding="utf-8") as f:
                 prompt = f.read().strip()
 
             logger.info(f"✅ システムプロンプト読み込み成功: {prompt_file}")

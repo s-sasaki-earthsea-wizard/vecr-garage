@@ -43,12 +43,14 @@ rm -rf aws awscliv2.zip
 ### プロジェクトのセットアップ
 
 1. リポジトリをクローン
+
 ```bash
 git clone https://github.com/s-sasaki-earthsea-wizard/vecr-garage.git
 cd vecr-garage
 ```
 
 2. 環境変数ファイルの作成
+
 ```bash
 cp .env.example .env
 ```
@@ -56,6 +58,7 @@ cp .env.example .env
 - 環境変数は実際のものに書き換えてください
 
 3. Discord Webhook設定（オプション）
+
 ```bash
 # Webhook設定ファイルを作成
 cp config/discord_webhooks.example.json config/discord_webhooks.json
@@ -128,7 +131,7 @@ make s3-ls
 
 ##### テストケース構造
 
-**新しいディレクトリ構造**: 
+**新しいディレクトリ構造**:
 
 - `data/samples/`: 正常系テストファイル（実際の登録用データ）
   - `human_members/`: 人間メンバー（rin.yml, syota.yml）
@@ -154,6 +157,7 @@ Tests completed!
 ```
 
 **テストケース概要**:
+
 - 正常系: 4つのサンプルファイルからの正常な登録テスト
 - 異常系: 5つの異常系ファイルでのバリデーションエラー検証テスト
 - 合計25テストケース（既存16 + 新規9）が全て成功
@@ -188,6 +192,7 @@ db-member-psql
 メンバー管理のWebインターフェースです。認証システム付きで以下の機能を提供：
 
 **アクセス方法:**
+
 ```bash
 # ブラウザでアクセス（認証が必要）
 http://localhost:8000/
@@ -200,10 +205,12 @@ http://localhost:8000/login
 `.env.example`ファイルの`ADMIN_USERNAME`と`ADMIN_PASSWORD`を参照してください。
 
 デフォルト:
+
 - ユーザー名: `Admin`
 - パスワード: `SamplePassword`
 
 **機能:**
+
 - メンバーデータのテーブル表示・編集
 - レコードの追加・更新・削除
 - 認証システム（ログイン/ログアウト）
@@ -214,6 +221,7 @@ http://localhost:8000/login
 Discord Webhookを使用してメッセージを送信する機能を提供しています。
 
 **セットアップ:**
+
 ```bash
 # 1. Webhook設定ファイルを作成
 cp config/discord_webhooks.example.json config/discord_webhooks.json
@@ -229,6 +237,7 @@ make docker-up
 ```
 
 **使用可能なコマンド:**
+
 ```bash
 # Webhook一覧表示
 make discord-webhooks-list
@@ -255,12 +264,14 @@ make test-integration
 ```
 
 **セキュリティ:**
+
 - `config/discord_webhooks.json`は`.gitignore`で保護
 - `.envrc`も`.gitignore`で保護
 - コンテナにはファイルをマウントせず、環境変数として渡す
 - AWS Secrets Managerへの移行準備完了
 
 **統合テスト:**
+
 - `make test-integration`でDiscord Webhookテストも自動実行
 - HTTP 204レスポンス確認（送信成功）
 - 実際のメッセージ到達は各Discordチャンネルで目視確認推奨
@@ -270,6 +281,7 @@ make test-integration
 Claude APIを使用してプロンプトを送信し、応答を取得する機能を提供しています。
 
 **セットアップ:**
+
 ```bash
 # 1. .envファイルにAPIキーを設定
 ANTHROPIC_API_KEY=sk-ant-xxxxx
@@ -282,6 +294,7 @@ make docker-up
 ```
 
 **使用可能なコマンド:**
+
 ```bash
 # 接続テスト
 make claude-test
@@ -294,6 +307,7 @@ make claude-help
 ```
 
 **実行例:**
+
 ```bash
 $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてください"
 🤖 Claude APIにプロンプトを送信中...
@@ -304,6 +318,7 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 ```
 
 **セキュリティ:**
+
 - APIキーは`.env`で管理（.gitignore保護）
 - コンテナに環境変数として渡される
 
@@ -312,6 +327,7 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 Discordチャンネルで@メンションを検知し、Claude APIで自動応答するBot機能を提供しています。
 
 **セットアップ:**
+
 ```bash
 # 1. Discord Developer Portalで以下を設定:
 #    - Botの作成とToken取得
@@ -334,6 +350,7 @@ make docker-build-up
 ```
 
 **使用可能なコマンド:**
+
 ```bash
 # Bot起動ログ確認
 make discord-bot-logs
@@ -349,11 +366,13 @@ make discord-bot-help
 ```
 
 **使い方:**
+
 1. Discordチャンネルで `@🤖🍡華扇 質問内容` とメンション
 2. BotがClaude APIを使用して自動応答
 3. 2000文字制限に対応（超過時は省略表示）
 
 **カスタムプロンプト設定:**
+
 ```bash
 # 1. プロンプトファイルを作成（Bot名と一致させる）
 vim backend-llm-response/prompts/bot_characters/🤖🍡華扇.txt
@@ -369,16 +388,19 @@ make docker-restart
 ```
 
 **プロンプトファイル構造:**
+
 - `backend-llm-response/prompts/bot_characters/🤖🍡華扇.txt`: 華扇のキャラクター定義
 - `backend-llm-response/prompts/bot_characters/example.txt`: テンプレート
 - ファイル名はconfig/discord_tokens.jsonのBot名と一致させる
 
 **動作要件:**
+
 - Discord Developer PortalでMESSAGE CONTENT INTENTを有効化（必須）
 - Bot Permissions: View Channels, Send Messages, Create Public Threads
 - 対象チャンネルは`config/discord_tokens.json`で設定
 
 **セキュリティ:**
+
 - Bot Tokenは`config/discord_tokens.json`で管理（.gitignore保護）
 - プロンプトファイルはGit管理対象（チーム共有）
 - コンテナにread-onlyでマウント
@@ -388,6 +410,7 @@ make docker-restart
 Docker化されたCI/CDツールで全Pythonサービスのコード品質チェックを実行できます。
 
 **利用可能なコマンド:**
+
 ```bash
 # CI/CDコンテナのビルド（初回のみ）
 make ci-build
@@ -418,6 +441,7 @@ make ci-help
 ```
 
 **推奨ワークフロー:**
+
 ```bash
 # 1. コードを自動整形
 make format
@@ -433,6 +457,7 @@ git commit
 ```
 
 **チェック内容:**
+
 - **Black**: Pythonコードの自動フォーマット（PEP 8準拠）
 - **Ruff**: 高速リンター（import整列、命名規則、バグ検出等）
 - **mypy**: 型チェック（backend-db-registration、backend-llm-response）
@@ -454,6 +479,7 @@ make pre-commit-help
 ```
 
 **インストール後の動作:**
+
 - `git commit`時に自動的に以下をチェック:
   - ✅ Anthropic API Keys (`sk-ant-xxxxx`)
   - ✅ Discord Bot Tokens (`MTxxxxxxxxxx...`)
@@ -465,6 +491,7 @@ make pre-commit-help
 - `.example`ファイルは除外される
 
 **定期的なテスト実行（推奨）:**
+
 ```bash
 # Secrets検出が正しく動作することを確認
 make test-pre-commit-secrets
@@ -474,11 +501,13 @@ make test-pre-commit-all
 ```
 
 **対象サービス:**
+
 - backend-db-registration
 - backend-llm-response
 - member-manager
 
 **設定ファイル:**
+
 - `.pre-commit-config.yaml`: Pre-commit hooks設定
 - `backend-*/pyproject.toml`: Black/Ruff/mypy設定
 - `ci-cd/Dockerfile`: CI/CDツールコンテナ定義
@@ -486,7 +515,6 @@ make test-pre-commit-all
 #### TBD
 
 - バックエンドサービス(LLM応答): `make backend-llm-response-shell`
-
 
 ## ネットワーク構成
 
@@ -496,12 +524,12 @@ make test-pre-commit-all
     - データベース操作やプロンプト生成、LLMからの応答の送受信を行います。
   - member-database
     - メンバー情報のデータベース、PostgreSQLを利用
-  - storage 
+  - storage
     - ユーザーのアイコン画像やカスタムプロンプトを保存するストレージ、将来的なS3への以降を見越してMinIOを利用
-  - chat-log-database 
+  - chat-log-database
     - メンバー間のチャットログのデータベース, 暫定的にlocalstack/DynamoDBを使用 (予定)
   - member-manager
-      - ブラウザ操作でメンバー管理を行うWebインターフェース。認証システム付き。
+    - ブラウザ操作でメンバー管理を行うWebインターフェース。認証システム付き。
 
 各サービスはDocker Composeのネットワーク機能により、プロジェクト名をプレフィックスとしたネットワーク内で通信可能です。
 
@@ -512,6 +540,7 @@ make test-pre-commit-all
 このプロジェクトでは、API キー、トークン、Webhook URL等の機密情報を適切に管理するため、以下の仕組みを実装しています。
 
 **保護対象の機密情報:**
+
 - Anthropic API Key (`ANTHROPIC_API_KEY`)
 - Discord Bot Token (`config/discord_tokens.json`)
 - Discord Webhook URL (`config/discord_webhooks.json`)
@@ -531,11 +560,13 @@ make test-pre-commit-secrets
 ```
 
 **インストール後:**
+
 - `git commit`実行時に自動チェック
 - 機密情報が検出された場合はコミットをブロック
 - `.example`ファイルは除外される（ダミー値のため）
 
 **詳細情報:**
+
 - 完全なセキュリティガイドライン: [docs/security/secrets-management.md](docs/security/secrets-management.md)
 - 万が一コミットしてしまった場合の対処法も記載
 
@@ -544,6 +575,7 @@ make test-pre-commit-secrets
 本番環境で使用する際は、以下の設定を必ず変更してください：
 
 1. **認証情報の変更**
+
    ```bash
    # .envファイルで以下を変更
    MEMBER_DB_PASSWORD=your-secure-password
@@ -667,7 +699,7 @@ make docker-build-up
   - storage
     - Stores user icon images and custom prompts, using MinIO with future migration to S3 in mind.
   - chat-log-database
-   - Uses localstack/DynamoDB temporarily for chat logs between members (planned).
+  - Uses localstack/DynamoDB temporarily for chat logs between members (planned).
   - member-manager
     - Allows DB operations and file uploads via the backend service using a browser (planned).
 

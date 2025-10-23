@@ -4,7 +4,6 @@ Discord Bot設定バリデーター
 Bot設定の構造とフィールドをバリデーションします。
 """
 
-from typing import Dict, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,7 +13,7 @@ class DiscordConfigValidator:
     """Discord Bot設定のバリデーター"""
 
     @staticmethod
-    def validate_config(config: Dict[str, Dict[str, any]]) -> Tuple[bool, str]:
+    def validate_config(config: dict[str, dict[str, any]]) -> tuple[bool, str]:
         """
         設定全体をバリデーション
 
@@ -25,17 +24,24 @@ class DiscordConfigValidator:
             (成功フラグ, エラーメッセージ)
         """
         if not isinstance(config, dict):
-            return False, f"設定のルートは辞書である必要があります（現在: {type(config).__name__}）"
+            return (
+                False,
+                f"設定のルートは辞書である必要があります（現在: {type(config).__name__}）",
+            )
 
         for bot_name, bot_config in config.items():
-            is_valid, error_msg = DiscordConfigValidator.validate_bot_config(bot_name, bot_config)
+            is_valid, error_msg = DiscordConfigValidator.validate_bot_config(
+                bot_name, bot_config
+            )
             if not is_valid:
                 return False, error_msg
 
         return True, ""
 
     @staticmethod
-    def validate_bot_config(bot_name: str, bot_config: Dict[str, any]) -> Tuple[bool, str]:
+    def validate_bot_config(
+        bot_name: str, bot_config: dict[str, any]
+    ) -> tuple[bool, str]:
         """
         個別Bot設定をバリデーション
 
@@ -93,7 +99,10 @@ class DiscordConfigValidator:
         # times_modeのチェック
         if "times_mode" in channels:
             if not isinstance(channels["times_mode"], list):
-                return False, f"Bot '{bot_name}' の channels.times_mode は配列である必要があります"
+                return (
+                    False,
+                    f"Bot '{bot_name}' の channels.times_mode は配列である必要があります",
+                )
             for idx, channel_id in enumerate(channels["times_mode"]):
                 if not isinstance(channel_id, (str, int)):
                     return False, (

@@ -7,12 +7,15 @@
 ### アクセス情報
 
 **API エンドポイント**:
+
 - `http://localhost:9000` (S3互換API)
 
 **Console Web UI**:
+
 - `http://localhost:9001` (管理画面)
 
 **認証情報**:
+
 ```bash
 ユーザー名: minioadmin
 パスワード: minioadmin
@@ -25,6 +28,7 @@
 **バケット名**: `vecr-garage-storage`
 
 **ディレクトリ構造**:
+
 ```
 vecr-garage-storage/
 ├── human_members/          # 人間メンバーYMLファイル
@@ -52,6 +56,7 @@ docker exec -it vecr-garage-storage sh
 #### 基本コマンド
 
 **ファイル一覧**:
+
 ```bash
 # バケット一覧
 mc ls myminio/
@@ -64,6 +69,7 @@ mc ls myminio/vecr-garage-storage/virtual_members/
 ```
 
 **ファイルアップロード**:
+
 ```bash
 # ローカルファイルをアップロード
 mc cp /path/to/file.yml myminio/vecr-garage-storage/human_members/
@@ -73,6 +79,7 @@ mc cp --recursive /path/to/dir/ myminio/vecr-garage-storage/human_members/
 ```
 
 **ファイルダウンロード**:
+
 ```bash
 # ファイルをダウンロード
 mc cp myminio/vecr-garage-storage/human_members/syota.yml /tmp/
@@ -82,6 +89,7 @@ mc cp --recursive myminio/vecr-garage-storage/human_members/ /tmp/members/
 ```
 
 **ファイル削除**:
+
 ```bash
 # 単一ファイル削除
 mc rm myminio/vecr-garage-storage/human_members/test.yml
@@ -91,6 +99,7 @@ mc rm --recursive myminio/vecr-garage-storage/test_dir/
 ```
 
 **ファイル詳細表示**:
+
 ```bash
 # ファイルメタデータ表示
 mc stat myminio/vecr-garage-storage/human_members/syota.yml
@@ -131,11 +140,13 @@ docker exec vecr-garage-storage mc event list myminio/vecr-garage-storage
 **完全自動化**: 詳細は [Webhook自動化システム](../architecture/webhook-automation.md) を参照
 
 **処理フロー**:
+
 1. `minio-setup`: バケット作成、サンプルデータコピー、webhook設定
 2. `minio-restarter`: MinIO再起動（設定反映）
 3. `webhook-configurator`: イベント設定とテスト実行
 
 **実行コマンド**:
+
 ```bash
 # 完全自動セットアップ
 make docker-build-up
@@ -206,6 +217,7 @@ aws --endpoint-url http://localhost:9000 s3 cp s3://vecr-garage-storage/human_me
 4. ファイルのアップロード/ダウンロード/削除が可能
 
 **主な機能**:
+
 - ファイルブラウザ
 - ファイルアップロード（ドラッグ＆ドロップ対応）
 - ファイルダウンロード
@@ -238,6 +250,7 @@ mc mirror /backup/vecr-garage-storage myminio/vecr-garage-storage
 #### 本番環境での推奨設定
 
 1. **認証情報変更**:
+
 ```bash
 # .envファイル
 MINIO_ROOT_USER=your-secure-username
@@ -245,6 +258,7 @@ MINIO_ROOT_PASSWORD=your-secure-password-min-8-chars
 ```
 
 2. **HTTPS有効化**:
+
 ```bash
 # 証明書配置
 mkdir -p /path/to/certs
@@ -256,6 +270,7 @@ volumes:
 ```
 
 3. **アクセスポリシー設定**:
+
 ```bash
 # 読み取り専用ポリシー作成
 mc admin policy add myminio readonly-policy /path/to/readonly-policy.json
@@ -265,6 +280,7 @@ mc admin policy set myminio readonly-policy user=readonly-user
 ```
 
 4. **監査ログ有効化**:
+
 ```bash
 # docker-compose.yml
 environment:
@@ -299,6 +315,7 @@ docker ps --format "table {{.Names}}\t{{.Status}}" | grep storage
 詳細は [トラブルシューティング](../development/troubleshooting.md#minio関連) を参照
 
 **よくある問題**:
+
 - Webhook通知が届かない → イベント設定確認
 - ファイルアップロードできない → 認証情報確認
 - Console にアクセスできない → ポート9001の競合確認

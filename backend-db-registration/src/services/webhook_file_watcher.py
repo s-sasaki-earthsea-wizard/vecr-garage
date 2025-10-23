@@ -37,7 +37,9 @@ class WebhookFileWatcherService:
         self.processed_events: dict[str, str] = {}  # event_id -> etag
 
         # ETagチェック機能の有効/無効を環境変数から取得
-        self.etag_check_enabled = os.getenv("WEBHOOK_ETAG_CHECK_ENABLED", "true").lower() == "true"
+        self.etag_check_enabled = (
+            os.getenv("WEBHOOK_ETAG_CHECK_ENABLED", "true").lower() == "true"
+        )
         logger.info(
             f"WebhookFileWatcherService initialized (ETag check: {'enabled' if self.etag_check_enabled else 'disabled'})"
         )
@@ -116,7 +118,9 @@ class WebhookFileWatcherService:
                     f"URL decoded object name: {event.object_name} -> {decoded_object_name}"
                 )
         except Exception as e:
-            logger.warning(f"Failed to URL decode object name '{event.object_name}': {e}")
+            logger.warning(
+                f"Failed to URL decode object name '{event.object_name}': {e}"
+            )
             # デコードに失敗した場合は元のパスを使用
             decoded_object_name = event.object_name
 
@@ -158,8 +162,12 @@ class WebhookFileWatcherService:
             "data/virtual_members/",
         ]
 
-        if not any(decoded_object_name.startswith(pattern) for pattern in target_patterns):
-            logger.debug(f"Skipping file outside target directories: {decoded_object_name}")
+        if not any(
+            decoded_object_name.startswith(pattern) for pattern in target_patterns
+        ):
+            logger.debug(
+                f"Skipping file outside target directories: {decoded_object_name}"
+            )
             return False
 
         return True
@@ -187,20 +195,28 @@ class WebhookFileWatcherService:
                     f"URL decoded object name: {event.object_name} -> {decoded_object_name}"
                 )
         except Exception as e:
-            logger.warning(f"Failed to URL decode object name '{event.object_name}': {e}")
+            logger.warning(
+                f"Failed to URL decode object name '{event.object_name}': {e}"
+            )
             # デコードに失敗した場合は元のパスを使用
             decoded_object_name = event.object_name
 
-        logger.info(f"Processing file event: {event.event_name} for {decoded_object_name}")
+        logger.info(
+            f"Processing file event: {event.event_name} for {decoded_object_name}"
+        )
 
         # ファイルパスに基づいてメンバータイプを判定（デコード後のパスで判定）
         if "human_members" in decoded_object_name:
             register_human_member_from_yaml(decoded_object_name)
-            logger.info(f"✅ Successfully registered human member from: {decoded_object_name}")
+            logger.info(
+                f"✅ Successfully registered human member from: {decoded_object_name}"
+            )
 
         elif "virtual_members" in decoded_object_name:
             register_virtual_member_from_yaml(decoded_object_name)
-            logger.info(f"✅ Successfully registered virtual member from: {decoded_object_name}")
+            logger.info(
+                f"✅ Successfully registered virtual member from: {decoded_object_name}"
+            )
 
         else:
             logger.warning(f"⚠️  Unknown file type, skipping: {decoded_object_name}")
@@ -261,7 +277,9 @@ class WebhookFileWatcherService:
                     except Exception as e:
                         # ValidationError, DatabaseError, その他全ての例外をここでキャッチ
                         # エラーは既にregister_*_member_from_yaml関数内でログ出力済み
-                        errors.append(f"Failed to process {event.object_name}: {str(e)}")
+                        errors.append(
+                            f"Failed to process {event.object_name}: {str(e)}"
+                        )
                         logger.error(
                             f"❌ Failed to process file event {event.object_name}: {str(e)}"
                         )
@@ -286,13 +304,18 @@ class WebhookFileWatcherService:
                 message += f", {len(errors)} errors occurred"
 
             return WebhookResponse(
-                success=success, message=message, processed_files=processed_files, errors=errors
+                success=success,
+                message=message,
+                processed_files=processed_files,
+                errors=errors,
             )
 
         except Exception as e:
             logger.error(f"💥 Error handling webhook: {e}")
             return WebhookResponse(
-                success=False, message=f"Error handling webhook: {str(e)}", errors=[str(e)]
+                success=False,
+                message=f"Error handling webhook: {str(e)}",
+                errors=[str(e)],
             )
 
     def _cleanup_processed_events(self, max_events: int = 1000):
