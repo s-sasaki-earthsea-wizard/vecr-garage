@@ -11,7 +11,11 @@ WORKDIR /workspace
 # 必要なシステムパッケージのインストール
 RUN apt-get update && apt-get install -y \
     git \
+    libatomic1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Git safe directory設定（Dockerコンテナ内での実行用）
+RUN git config --global --add safe.directory /workspace
 
 # CI/CDツールのインストール
 COPY requirements.txt .

@@ -44,37 +44,37 @@ rm -rf aws awscliv2.zip
 
 1. リポジトリをクローン
 
-```bash
-git clone https://github.com/s-sasaki-earthsea-wizard/vecr-garage.git
-cd vecr-garage
-```
+   ```bash
+   git clone https://github.com/s-sasaki-earthsea-wizard/vecr-garage.git
+   cd vecr-garage
+   ```
 
-2. 環境変数ファイルの作成
+1. 環境変数ファイルの作成
 
-```bash
-cp .env.example .env
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-- 環境変数は実際のものに書き換えてください
+   - 環境変数は実際のものに書き換えてください
 
-3. Discord Webhook設定（オプション）
+1. Discord Webhook設定（オプション）
 
-```bash
-# Webhook設定ファイルを作成
-cp config/discord_webhooks.example.json config/discord_webhooks.json
+   ```bash
+   # Webhook設定ファイルを作成
+   cp config/discord_webhooks.example.json config/discord_webhooks.json
 
-# Webhook URLを実際のものに書き換える
-# config/discord_webhooks.json を編集
+   # Webhook URLを実際のものに書き換える
+   # config/discord_webhooks.json を編集
 
-# .envrcファイルをコピー（自動読み込み用）
-cp .envrc.example .envrc
-```
+   # .envrcファイルをコピー（自動読み込み用）
+   cp .envrc.example .envrc
+   ```
 
-4. コンテナのビルドと起動
+1. コンテナのビルドと起動
 
-```bash
-make docker-build-up
-```
+   ```bash
+   make docker-build-up
+   ```
 
 **Note**: `.envrc`が存在する場合、`make docker-up`/`docker-build-up`実行時に自動的にDiscord Webhook設定が読み込まれます。
 
@@ -368,8 +368,8 @@ make discord-bot-help
 **使い方:**
 
 1. Discordチャンネルで `@🤖🍡華扇 質問内容` とメンション
-2. BotがClaude APIを使用して自動応答
-3. 2000文字制限に対応（超過時は省略表示）
+1. BotがClaude APIを使用して自動応答
+1. 2000文字制限に対応（超過時は省略表示）
 
 **カスタムプロンプト設定:**
 
@@ -407,40 +407,21 @@ make docker-restart
 
 ### CI/CD（コード品質管理）
 
-Docker化されたCI/CDツールで全Pythonサービスのコード品質チェックを実行できます。
+🐳 **Docker化されたCI/CD環境で完全な再現性を実現**
 
-**利用可能なコマンド:**
+すべてのコード品質チェックは`ci-runner`コンテナ内で実行されるため、全開発者が同一環境でチェックできます。
+
+#### 初回セットアップ
 
 ```bash
-# CI/CDコンテナのビルド（初回のみ）
+# 1. CI/CDコンテナのビルド
 make ci-build
 
-# コードの自動フォーマット
-make format
-
-# Lintチェック
-make lint
-
-# Lint問題の自動修正
-make lint-fix
-
-# 型チェック
-make typecheck
-
-# フォーマットチェック（修正なし）
-make format-check
-
-# 全チェック実行（PR前推奨）
-make ci-all
-
-# CI/CDコンテナのシェル起動（デバッグ用）
-make ci-shell
-
-# コマンド一覧表示
-make ci-help
+# 2. Git Hooksのインストール（推奨）
+make ci-pre-commit-install
 ```
 
-**推奨ワークフロー:**
+#### 開発ワークフロー（推奨）
 
 ```bash
 # 1. コードを自動整形
@@ -449,56 +430,73 @@ make format
 # 2. Lint問題を自動修正
 make lint-fix
 
-# 3. 全チェック実行
+# 3. Markdownを自動修正
+make markdown-fix
+
+# 4. 全チェック実行（⭐PR前に必須）
 make ci-all
 
-# 4. 問題なければコミット
+# 5. コミット（Git Hooksが自動実行）
 git commit
 ```
 
-**チェック内容:**
+#### 利用可能なコマンド
+
+**コード品質チェック（すべてci-runnerコンテナで実行）:**
+
+```bash
+make lint            # Ruff linterチェック
+make format          # Black自動フォーマット
+make lint-fix        # Lint問題の自動修正
+make format-check    # フォーマットチェック（修正なし）
+make typecheck       # mypy型チェック
+make markdown-lint   # Markdownフォーマットチェック
+make markdown-fix    # Markdown自動修正
+make ci-all          # 全チェック実行（⭐推奨）
+```
+
+**Pre-commit Hooks（ci-runnerコンテナ統合）:**
+
+```bash
+make ci-pre-commit-install     # Git Hooksインストール（推奨）
+make ci-pre-commit-run         # Pre-commit全ファイル実行
+make ci-pre-commit-run-staged  # Pre-commitステージファイルのみ実行
+```
+
+**デバッグ:**
+
+```bash
+make ci-shell   # ci-runnerコンテナのシェル起動
+make ci-help    # コマンド一覧表示
+```
+
+#### チェック内容
 
 - **Black**: Pythonコードの自動フォーマット（PEP 8準拠）
 - **Ruff**: 高速リンター（import整列、命名規則、バグ検出等）
 - **mypy**: 型チェック（backend-db-registration、backend-llm-response）
-- **Pre-commit Hooks（オプション）**: ローカル環境でのコミット前自動チェック
+- **markdownlint**: Markdown記法チェック
+- **detect-secrets**: 機密情報検出（APIキー、トークン等）
+- **その他**: YAML/JSON構文チェック、末尾空白削除、etc.
 
-**Pre-commit Hooks（機密情報保護）:**
+#### Git Hooks（機密情報保護）
 
-コミット前に自動的に機密情報（APIキー、トークン、Webhook URL等）を検出してブロックします。
+`make ci-pre-commit-install`でインストール後、`git commit`時に自動実行：
 
-```bash
-# 1. Pre-commit hooksのインストールとセットアップ
-make test-pre-commit-install
+**検出対象:**
 
-# 2. Secrets検出テストの実行（動作確認）
-make test-pre-commit-secrets
+- ✅ Anthropic API Keys (`sk-ant-xxxxx`)
+- ✅ Discord Bot Tokens (`MTxxxxxxxxxx...`)
+- ✅ Discord Webhook URLs (`discord.com/api/webhooks/...`)
+- ✅ SSH Private Keys
+- ✅ AWS Access Keys
+- ✅ データベースパスワード（非.envファイル）
 
-# 3. コマンド一覧表示
-make pre-commit-help
-```
+**動作:**
 
-**インストール後の動作:**
-
-- `git commit`時に自動的に以下をチェック:
-  - ✅ Anthropic API Keys (`sk-ant-xxxxx`)
-  - ✅ Discord Bot Tokens (`MTxxxxxxxxxx...`)
-  - ✅ Discord Webhook URLs (`discord.com/api/webhooks/...`)
-  - ✅ SSH Private Keys
-  - ✅ AWS Access Keys
-  - ✅ データベースパスワード（非.envファイル）
-- 検出された場合はコミットをブロック
-- `.example`ファイルは除外される
-
-**定期的なテスト実行（推奨）:**
-
-```bash
-# Secrets検出が正しく動作することを確認
-make test-pre-commit-secrets
-
-# 全Pre-commitテストを実行
-make test-pre-commit-all
-```
+- 機密情報を検出した場合はコミットをブロック
+- `.example`ファイルは自動除外
+- すべてci-runnerコンテナ内で実行（環境差異なし）
 
 **対象サービス:**
 
@@ -585,11 +583,11 @@ make test-pre-commit-secrets
    ANTHROPIC_API_KEY=sk-ant-your-real-api-key
    ```
 
-2. **Webhook認証の有効化**
+1. **Webhook認証の有効化**
    - `WEBHOOK_AUTH_TOKEN`を設定してWebhook認証を有効化
    - 未設定の場合は認証なしで動作（開発環境のみ推奨）
 
-3. **ネットワークセキュリティ**
+1. **ネットワークセキュリティ**
    - 本番環境では適切なファイアウォール設定
    - 必要に応じてVPNやプライベートネットワークの使用
 
@@ -653,24 +651,24 @@ rm -rf aws awscliv2.zip
 
 1. Clone the repository
 
-```bash
-git clone https://github.com/s-sasaki-earthsea-wizard/vecr-office.git
-cd vecr-office
-```
+   ```bash
+   git clone https://github.com/s-sasaki-earthsea-wizard/vecr-office.git
+   cd vecr-office
+   ```
 
-2. Create the environment variable file
+1. Create the environment variable file
 
-```bash
-cp .env.example .env
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-- Replace the environment variables with actual values.
+   - Replace the environment variables with actual values.
 
-3. Build and start the containers
+1. Build and start the containers
 
-```bash
-make docker-build-up
-```
+   ```bash
+   make docker-build-up
+   ```
 
 ## Usage
 

@@ -31,7 +31,9 @@ class PromptLoader:
         prompt_file = f"{PromptLoader.PROMPT_DIR}/{bot_name}.txt"
 
         if not os.path.exists(prompt_file):
-            logger.warning(f"⚠️ システムプロンプトファイルが見つかりません: {prompt_file}")
+            logger.warning(
+                f"⚠️ システムプロンプトファイルが見つかりません: {prompt_file}"
+            )
             logger.info(
                 f"💡 デフォルトプロンプトなしで起動します。"
                 f"カスタマイズする場合は {prompt_file} を作成してください。"

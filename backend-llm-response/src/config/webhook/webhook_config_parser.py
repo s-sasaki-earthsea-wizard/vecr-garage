@@ -48,7 +48,9 @@ class WebhookConfigParser:
         # バリデーション
         is_valid, error_msg = WebhookValidator.validate_webhook_config(config)
         if not is_valid:
-            raise ValueError(f"Webhook設定のバリデーションエラー ({file_path}): {error_msg}")
+            raise ValueError(
+                f"Webhook設定のバリデーションエラー ({file_path}): {error_msg}"
+            )
 
         logger.info(f"Webhook設定ファイル読み込み成功: {file_path} ({len(config)}個)")
         logger.debug(f"登録Webhook: {list(config.keys())}")
@@ -165,7 +167,8 @@ class WebhookConfigParser:
 
         except json.JSONDecodeError as e:
             raise ValueError(
-                f"Webhook設定のJSONパースに失敗しました: {e}\n" f"入力値: {cleaned_str[:100]}..."
+                f"Webhook設定のJSONパースに失敗しました: {e}\n"
+                f"入力値: {cleaned_str[:100]}..."
             )
 
     @staticmethod
@@ -183,7 +186,9 @@ class WebhookConfigParser:
         Raises:
             KeyError: Webhook名が存在しない場合
         """
-        is_valid, error_msg = WebhookValidator.validate_webhook_name(config, webhook_name)
+        is_valid, error_msg = WebhookValidator.validate_webhook_name(
+            config, webhook_name
+        )
 
         if not is_valid:
             raise KeyError(error_msg)

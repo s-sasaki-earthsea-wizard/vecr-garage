@@ -228,8 +228,6 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ MinIO Webhook自動化システム（クリックで展開）</summary>
 
-### 実装概要
-
 **実装目的**: リポジトリクローン時の完全な再現性確保と手動設定の完全排除
 
 **達成状況**: ✅ 完全達成 - 手動作業ゼロで環境が完全再現される
@@ -247,8 +245,6 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ 包括的テストシステム（クリックで展開）</summary>
 
-### 実装概要
-
 **実装目的**: ユニットテストからE2Eテストまでを統合した包括的品質保証システム
 
 **テスト結果**:
@@ -264,8 +260,6 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 
 <details>
 <summary>✅ Discord統合（Webhook + Bot）（クリックで展開）</summary>
-
-### 実装概要
 
 **Discord Webhook通知システム**:
 
@@ -286,8 +280,6 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ Claude API連携（クリックで展開）</summary>
 
-### 実装概要
-
 **ClaudeClient実装**:
 
 - Anthropic公式Pythonライブラリ使用
@@ -306,8 +298,6 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ YMLファイル操作統合システム（クリックで展開）</summary>
 
-### 実装概要
-
 **実装目的**: samples.mkとtest-cases.mkの重複排除とファイル操作の一元化
 
 **統合効果**:
@@ -323,8 +313,6 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ 認証システム（モックアップ版）（クリックで展開）</summary>
 
-### 実装概要
-
 **Phase 1: モックアップ認証**:
 
 - 環境変数ベースの簡易認証
@@ -338,6 +326,35 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 - Phase 3: AWS Cognito + MFA + JWT
 
 詳細: [認証システム](docs/integrations/authentication.md)
+
+</details>
+
+<details>
+<summary>✅ CI/CD Docker化システム（クリックで展開）</summary>
+
+**実装目的**: 開発環境の完全な再現性確保とローカル依存の排除
+
+**達成状況**: ✅ 完全達成 - すべてのコード品質チェックをci-runnerコンテナで実行
+
+**実装内容**:
+
+1. **ci-runnerコンテナ統合**: 既存のci-runnerサービスを活用
+2. **pre-commitフック自動化**: Git Hooks経由でコンテナ内実行
+3. **レガシーターゲット削除**: ローカル環境依存のMakeターゲットを完全削除
+4. **スクリプト管理**: ci-cd/scripts/配下に実行スクリプトを配置
+
+**利用可能なコマンド**:
+
+- `make ci-pre-commit-run` - 全ファイルに対してpre-commit実行
+- `make ci-pre-commit-run-staged` - ステージ済みファイルのみ実行
+- `make ci-pre-commit-install` - Git Hooksインストール
+
+**検証内容**:
+
+- Black, Ruff, mypy, markdownlint
+- detect-secrets（API Key漏洩検知）
+- Gitコンテナ内実行（safe.directory設定）
+- Node.js依存解決（libatomic1追加）
 
 </details>
 
@@ -384,6 +401,7 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 - [x] Discord Bot AutoThreadモード実装（新着投稿自動応答＋会話履歴管理）
 - [x] Discord Bot Timesモード実装（1日1回自動投稿＋APScheduler統合）
 - [x] Discord Bot Times Modeテスト機能実装（本番/テストモード切り替え）
+- [x] CI/CD Docker化システム実装（完全コンテナベース実行）
 
 ### 実装予定
 
@@ -409,9 +427,13 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 ```bash
 # ヘルプ表示
 make help
+make ci-help
 make discord-help
 make discord-bot-help
 make claude-help
+
+# CI/CDコード品質チェック
+make ci-pre-commit-run
 
 # 統合テスト
 make test-integration
