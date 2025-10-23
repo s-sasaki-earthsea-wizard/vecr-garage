@@ -212,3 +212,9 @@ config/*
 
 # Docker runtime artifacts (created when containers mount volumes)
 backend-llm-response/config/
+
+# Pre-commit hooks test files (temporary files created during CI/CD testing)
+test_secrets*.txt
+test_secrets*.py
+test_secrets*.json
+test_secrets*.env

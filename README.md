@@ -438,16 +438,39 @@ git commit
 - **mypy**: 型チェック（backend-db-registration、backend-llm-response）
 - **Pre-commit Hooks（オプション）**: ローカル環境でのコミット前自動チェック
 
-**Pre-commit Hooks（任意）:**
+**Pre-commit Hooks（機密情報保護）:**
 
-Docker経由の実行を推奨していますが、ローカル環境でコミット前に自動チェックしたい場合:
+コミット前に自動的に機密情報（APIキー、トークン、Webhook URL等）を検出してブロックします。
 
 ```bash
-# ホスト環境にインストール（任意）
-pip install pre-commit
-pre-commit install
+# 1. Pre-commit hooksのインストールとセットアップ
+make test-pre-commit-install
 
-# 以降はgit commit時に自動実行される
+# 2. Secrets検出テストの実行（動作確認）
+make test-pre-commit-secrets
+
+# 3. コマンド一覧表示
+make pre-commit-help
+```
+
+**インストール後の動作:**
+- `git commit`時に自動的に以下をチェック:
+  - ✅ Anthropic API Keys (`sk-ant-xxxxx`)
+  - ✅ Discord Bot Tokens (`MTxxxxxxxxxx...`)
+  - ✅ Discord Webhook URLs (`discord.com/api/webhooks/...`)
+  - ✅ SSH Private Keys
+  - ✅ AWS Access Keys
+  - ✅ データベースパスワード（非.envファイル）
+- 検出された場合はコミットをブロック
+- `.example`ファイルは除外される
+
+**定期的なテスト実行（推奨）:**
+```bash
+# Secrets検出が正しく動作することを確認
+make test-pre-commit-secrets
+
+# 全Pre-commitテストを実行
+make test-pre-commit-all
 ```
 
 **対象サービス:**
@@ -484,6 +507,38 @@ pre-commit install
 
 ## セキュリティ注意事項
 
+### 機密情報管理（重要）
+
+このプロジェクトでは、API キー、トークン、Webhook URL等の機密情報を適切に管理するため、以下の仕組みを実装しています。
+
+**保護対象の機密情報:**
+- Anthropic API Key (`ANTHROPIC_API_KEY`)
+- Discord Bot Token (`config/discord_tokens.json`)
+- Discord Webhook URL (`config/discord_webhooks.json`)
+- データベース認証情報 (`.env`)
+- MinIO認証情報 (`.env`)
+
+**Pre-commit Hooksによる保護:**
+
+コミット前に自動的に機密情報を検出してブロックします。
+
+```bash
+# 1. Pre-commit hooksのインストール（初回のみ）
+make test-pre-commit-install
+
+# 2. 動作確認テスト
+make test-pre-commit-secrets
+```
+
+**インストール後:**
+- `git commit`実行時に自動チェック
+- 機密情報が検出された場合はコミットをブロック
+- `.example`ファイルは除外される（ダミー値のため）
+
+**詳細情報:**
+- 完全なセキュリティガイドライン: [docs/security/secrets-management.md](docs/security/secrets-management.md)
+- 万が一コミットしてしまった場合の対処法も記載
+
 ### 本番環境での設定
 
 本番環境で使用する際は、以下の設定を必ず変更してください：
@@ -495,6 +550,7 @@ pre-commit install
    MINIO_ROOT_USER=your-secure-username
    MINIO_ROOT_PASSWORD=your-secure-password
    WEBHOOK_AUTH_TOKEN=your-secure-webhook-token
+   ANTHROPIC_API_KEY=sk-ant-your-real-api-key
    ```
 
 2. **Webhook認証の有効化**
@@ -508,8 +564,9 @@ pre-commit install
 ### 開発環境
 
 - 現在の設定は開発環境用です
-- `.env`ファイルはGitにコミットされません
+- `.env`、`.envrc`、`config/*.json`ファイルはGitにコミットされません
 - 実際の認証情報は環境変数で管理されています
+- Pre-commit Hooksで機密情報の誤コミットを防止
 
 ## その他
 

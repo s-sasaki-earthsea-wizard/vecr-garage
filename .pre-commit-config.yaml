@@ -45,6 +45,7 @@ repos:
       - id: detect-private-key
         name: 秘密鍵の検知
         description: SSH秘密鍵などの誤コミットを防止
+        exclude: makefiles/ci\.mk
 
   # Python: Black (コードフォーマッター)
   - repo: https://github.com/psf/black
@@ -80,7 +81,8 @@ repos:
             .*\.example\..*|
             .*\.md|
             .*\.txt|
-            .*/tests/.*
+            .*/tests/.*|
+            makefiles/ci\.mk
           )$
 
 # ============================================================
