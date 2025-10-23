@@ -62,23 +62,19 @@ def register_human_member_from_yaml(yaml_path: str):
         bio = yaml_data.get("bio", "")
         if not bio:  # bioが存在しない場合はロールバック
             db.rollback()
-            error_msg = f"Bio field is required for human member registration from {yaml_path}"
+            error_msg = (
+                f"Bio field is required for human member registration from {yaml_path}"
+            )
             logger.error(error_msg)
             print(f"❌ {error_msg}")
             raise ValidationError(error_msg, ["bio"])
 
         from db.database import upsert_human_member_profile
 
-        profile = upsert_human_member_profile(db, member.member_id, member.member_uuid, bio)
+        upsert_human_member_profile(db, member.member_id, member.member_uuid, bio)
 
         # 全ての処理が成功した場合のみコミット
         db.commit()
-
-        # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
-        member_name = member.member_name
-        member_uuid = member.member_uuid
-        yml_file_uri = member.yml_file_uri
-        member_id = member.member_id
 
         logger.info(f"Human member {name} upserted successfully from {yaml_path}")
         return member
@@ -176,36 +172,26 @@ def register_virtual_member_from_yaml(yaml_path: str):
         # llm_modelは必須、custom_promptも必須
         if not llm_model:
             db.rollback()
-            error_msg = (
-                f"LLM model field is required for virtual member registration from {yaml_path}"
-            )
+            error_msg = f"LLM model field is required for virtual member registration from {yaml_path}"
             logger.error(error_msg)
             print(f"❌ {error_msg}")
             raise ValidationError(error_msg, ["llm_model"])
 
         if not custom_prompt:
             db.rollback()
-            error_msg = (
-                f"Custom prompt field is required for virtual member registration from {yaml_path}"
-            )
+            error_msg = f"Custom prompt field is required for virtual member registration from {yaml_path}"
             logger.error(error_msg)
             print(f"❌ {error_msg}")
             raise ValidationError(error_msg, ["custom_prompt"])
 
         from db.database import upsert_virtual_member_profile
 
-        profile = upsert_virtual_member_profile(
+        upsert_virtual_member_profile(
             db, member.member_id, member.member_uuid, llm_model, custom_prompt
         )
 
         # 全ての処理が成功した場合のみコミット
         db.commit()
-
-        # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
-        member_name = member.member_name
-        member_uuid = member.member_uuid
-        yml_file_uri = member.yml_file_uri
-        member_id = member.member_id
 
         logger.info(f"Virtual member {name} upserted successfully from {yaml_path}")
         return member
@@ -214,9 +200,7 @@ def register_virtual_member_from_yaml(yaml_path: str):
         # バリデーションエラーでもロールバックを実行
         if db:
             db.rollback()
-        error_msg = (
-            f"Validation error for virtual member registration from {yaml_path}: {e.message}"
-        )
+        error_msg = f"Validation error for virtual member registration from {yaml_path}: {e.message}"
         if e.missing_fields:
             error_msg += f" Missing fields: {', '.join(e.missing_fields)}"
         logger.error(error_msg)
@@ -241,9 +225,7 @@ def register_virtual_member_from_yaml(yaml_path: str):
             logger.error(error_msg)
             print(f"❌ {error_msg}")
         else:
-            error_msg = (
-                f"Unexpected error for virtual member registration from {yaml_path}: {str(e)}"
-            )
+            error_msg = f"Unexpected error for virtual member registration from {yaml_path}: {str(e)}"
             logger.error(error_msg)
             print(f"❌ {error_msg}")
         raise

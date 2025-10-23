@@ -58,9 +58,8 @@ class WebhookTester:
                 logger.info(f"Status: {data.get('status')}")
                 logger.info(f"Service: {data.get('service')}")
                 return True
-            else:
-                logger.error(f"❌ Health check failed: {response.status_code}")
-                return False
+            logger.error(f"❌ Health check failed: {response.status_code}")
+            return False
 
         except Exception as e:
             logger.error(f"❌ Health check error: {e}")
@@ -82,9 +81,8 @@ class WebhookTester:
                 logger.info(f"Status: {data.get('status')}")
                 logger.info(f"Data: {data.get('data')}")
                 return True
-            else:
-                logger.error(f"❌ Webhook status check failed: {response.status_code}")
-                return False
+            logger.error(f"❌ Webhook status check failed: {response.status_code}")
+            return False
 
         except Exception as e:
             logger.error(f"❌ Webhook status check error: {e}")
@@ -106,9 +104,8 @@ class WebhookTester:
                 logger.info(f"Message: {data.get('message')}")
                 logger.info(f"Result: {data.get('result', {})}")
                 return True
-            else:
-                logger.error(f"❌ Webhook test endpoint failed: {response.status_code}")
-                return False
+            logger.error(f"❌ Webhook test endpoint failed: {response.status_code}")
+            return False
 
         except Exception as e:
             logger.error(f"❌ Webhook test endpoint error: {e}")
@@ -155,10 +152,9 @@ class WebhookTester:
                 logger.info(f"Message: {data.get('message')}")
                 logger.info(f"Processed files: {data.get('processed_files')}")
                 return True
-            else:
-                logger.error(f"❌ Human member webhook test failed: {response.status_code}")
-                logger.error(f"Response: {response.text}")
-                return False
+            logger.error(f"❌ Human member webhook test failed: {response.status_code}")
+            logger.error(f"Response: {response.text}")
+            return False
 
         except Exception as e:
             logger.error(f"❌ Human member webhook test error: {e}")
@@ -205,10 +201,9 @@ class WebhookTester:
                 logger.info(f"Message: {data.get('message')}")
                 logger.info(f"Processed files: {data.get('processed_files')}")
                 return True
-            else:
-                logger.error(f"❌ Virtual member webhook test failed: {response.status_code}")
-                logger.error(f"Response: {response.text}")
-                return False
+            logger.error(f"❌ Virtual member webhook test failed: {response.status_code}")
+            logger.error(f"Response: {response.text}")
+            return False
 
         except Exception as e:
             logger.error(f"❌ Virtual member webhook test error: {e}")
@@ -240,11 +235,10 @@ class WebhookTester:
                 logger.info(f"Success: {data.get('success')}")
                 logger.info(f"Message: {data.get('message')}")
                 return True
-            else:
-                logger.warning(
-                    f"⚠️  Unexpected status code for invalid payload: {response.status_code}"
-                )
-                return True  # エラーハンドリングの実装によっては200が返る場合もある
+            logger.warning(
+                f"⚠️  Unexpected status code for invalid payload: {response.status_code}"
+            )
+            return True  # エラーハンドリングの実装によっては200が返る場合もある
 
         except Exception as e:
             logger.error(f"❌ Invalid webhook test error: {e}")
@@ -334,24 +328,22 @@ class WebhookTester:
                 if first_processed > 0 and second_processed == 0:
                     logger.info("✅ Duplicate detection is working correctly")
                     return True
-                elif first_processed > 0 and second_processed < first_processed:
+                if first_processed > 0 and second_processed < first_processed:
                     logger.info("✅ Duplicate detection appears to be working (some files skipped)")
                     return True
-                else:
-                    logger.warning("⚠️  Duplicate detection may not be working as expected")
-                    logger.warning(
-                        f"Expected: first > 0, second = 0, but got: first = {first_processed}, second = {second_processed}"
-                    )
-                    return False
-            elif response1.status_code == 400 and response2.status_code == 400:
+                logger.warning("⚠️  Duplicate detection may not be working as expected")
+                logger.warning(
+                    f"Expected: first > 0, second = 0, but got: first = {first_processed}, second = {second_processed}"
+                )
+                return False
+            if response1.status_code == 400 and response2.status_code == 400:
                 # 両方とも400エラーの場合、重複検出が動作している可能性
                 logger.info("✅ Both requests returned 400 (duplicate detection may be working)")
                 return True
-            else:
-                logger.error("❌ Duplicate webhook test failed")
-                logger.error(f"First request status: {response1.status_code}")
-                logger.error(f"Second request status: {response2.status_code}")
-                return False
+            logger.error("❌ Duplicate webhook test failed")
+            logger.error(f"First request status: {response1.status_code}")
+            logger.error(f"Second request status: {response2.status_code}")
+            return False
 
         except Exception as e:
             logger.error(f"❌ Duplicate webhook test error: {e}")

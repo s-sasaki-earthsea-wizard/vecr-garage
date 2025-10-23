@@ -112,8 +112,7 @@ def login():
             session.permanent = True
             flash("ログインしました", "success")
             return redirect(url_for("index"))
-        else:
-            flash("ユーザー名またはパスワードが間違っています", "error")
+        flash("ユーザー名またはパスワードが間違っています", "error")
 
     return render_template("login.html")
 
@@ -180,9 +179,8 @@ def table_detail_view(table_name):
             return render_template(
                 "table_detail.html", table_data=table_data, table_name=table_name
             )
-        else:
-            flash(f'テーブル "{table_name}" のデータ取得に失敗しました', "error")
-            return redirect(url_for("tables_view"))
+        flash(f'テーブル "{table_name}" のデータ取得に失敗しました', "error")
+        return redirect(url_for("tables_view"))
 
     except Exception as e:
         flash(f"テーブル詳細の取得中にエラーが発生: {str(e)}", "error")
@@ -216,7 +214,10 @@ def update_record(table_name, record_id):
             )
 
         # メンバーテーブルでYMLファイルURIを持つ場合はWebhookフローを使用
-        if table_name in ["human_members", "virtual_members"] and "yml_file_uri" in data:
+        if (
+            table_name in ["human_members", "virtual_members"]
+            and "yml_file_uri" in data
+        ):
             try:
                 from storage_client import StorageClient
                 from yaml_generator import YAMLGenerator
@@ -243,7 +244,9 @@ def update_record(table_name, record_id):
                     yaml_content = YAMLGenerator.generate_virtual_member_yaml(form_data)
 
                 # ストレージにアップロード（Webhookが自動的にDB更新を実行）
-                upload_result = storage_client.upload_yaml_file(yaml_content, yml_file_uri)
+                upload_result = storage_client.upload_yaml_file(
+                    yaml_content, yml_file_uri
+                )
 
                 return jsonify(
                     {
@@ -282,22 +285,27 @@ def update_record(table_name, record_id):
                             "data": result,
                         }
                     )
-                else:
-                    return (
-                        jsonify({"success": False, "error": "レコードの更新に失敗しました"}),
-                        500,
-                    )
+                return (
+                    jsonify(
+                        {"success": False, "error": "レコードの更新に失敗しました"}
+                    ),
+                    500,
+                )
             except Exception as e:
                 logger.error(f"Database update error: {str(e)}")
                 return (
-                    jsonify({"success": False, "error": f"データベース更新エラー: {str(e)}"}),
+                    jsonify(
+                        {"success": False, "error": f"データベース更新エラー: {str(e)}"}
+                    ),
                     500,
                 )
 
     except Exception as e:
         logger.error(f"Record update error: {str(e)}")
         return (
-            jsonify({"success": False, "error": f"レコード更新中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {"success": False, "error": f"レコード更新中にエラーが発生: {str(e)}"}
+            ),
             500,
         )
 
@@ -318,16 +326,17 @@ def delete_record(table_name, record_id):
                     "message": f"{table_name}テーブルのレコードが削除されました",
                 }
             )
-        else:
-            return (
-                jsonify({"success": False, "error": "レコードの削除に失敗しました"}),
-                500,
-            )
+        return (
+            jsonify({"success": False, "error": "レコードの削除に失敗しました"}),
+            500,
+        )
 
     except Exception as e:
         logger.error(f"Record deletion error: {str(e)}")
         return (
-            jsonify({"success": False, "error": f"レコード削除中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {"success": False, "error": f"レコード削除中にエラーが発生: {str(e)}"}
+            ),
             500,
         )
 
@@ -366,18 +375,17 @@ def test_database_connection():
                     "table_counts": table_counts,
                 }
             )
-        else:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "データベース接続失敗",
-                        "psycopg2_success": success,
-                        "sqlalchemy_success": sqlalchemy_success,
-                    }
-                ),
-                500,
-            )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "message": "データベース接続失敗",
+                    "psycopg2_success": success,
+                    "sqlalchemy_success": sqlalchemy_success,
+                }
+            ),
+            500,
+        )
 
     except Exception as e:
         return (
@@ -400,16 +408,15 @@ def get_database_table_data(table_name):
 
         if table_data:
             return jsonify({"success": True, "data": table_data})
-        else:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": f'テーブル "{table_name}" のデータ取得に失敗しました',
-                    }
-                ),
-                404,
-            )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "message": f'テーブル "{table_name}" のデータ取得に失敗しました',
+                }
+            ),
+            404,
+        )
 
     except Exception as e:
         return (
@@ -466,16 +473,15 @@ def get_table_data_api(table_name):
                     "data": [dict(row._mapping) for row in table_data.data],
                 }
             )
-        else:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "error": f'テーブル "{table_name}" のデータ取得に失敗しました',
-                    }
-                ),
-                404,
-            )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f'テーブル "{table_name}" のデータ取得に失敗しました',
+                }
+            ),
+            404,
+        )
 
     except Exception as e:
         return (
@@ -512,15 +518,16 @@ def create_table_record_api(table_name):
                     "data": result,
                 }
             )
-        else:
-            return (
-                jsonify({"success": False, "error": "レコードの作成に失敗しました"}),
-                500,
-            )
+        return (
+            jsonify({"success": False, "error": "レコードの作成に失敗しました"}),
+            500,
+        )
 
     except Exception as e:
         return (
-            jsonify({"success": False, "error": f"レコード作成中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {"success": False, "error": f"レコード作成中にエラーが発生: {str(e)}"}
+            ),
             500,
         )
 
@@ -609,7 +616,9 @@ def create_member():
     except Exception as e:
         logger.error(f"Member creation error: {str(e)}")
         return (
-            jsonify({"success": False, "message": f"メンバー作成中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {"success": False, "message": f"メンバー作成中にエラーが発生: {str(e)}"}
+            ),
             500,
         )
 

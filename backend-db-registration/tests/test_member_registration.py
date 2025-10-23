@@ -203,8 +203,7 @@ def mock_storage_with_real_files(monkeypatch, tmp_path):
                 if content is None:  # 空ファイルの場合
                     return None
                 return content
-            else:
-                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+            raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
     monkeypatch.setattr(
         "operations.member_registration.StorageClient", MockStorageClientForRealFiles
@@ -355,8 +354,7 @@ def test_yml_file_uri_based_upsert_human_member(db_session, monkeypatch):
                 if content is None:
                     return None
                 return content
-            else:
-                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+            raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
     monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
 
@@ -429,8 +427,7 @@ def test_yml_file_uri_based_upsert_virtual_member(db_session, monkeypatch):
                 if content is None:
                     return None
                 return content
-            else:
-                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+            raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
     monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
 
@@ -514,8 +511,7 @@ def test_profile_information_storage(db_session, monkeypatch):
                 if content is None:
                     return None
                 return content
-            else:
-                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+            raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
     monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
 

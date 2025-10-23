@@ -96,7 +96,11 @@ class YAMLGenerator:
 
         # その他のフィールドがあれば追加
         for key, value in form_data.items():
-            if key not in ["member_name", "llm_model", "custom_prompt"] and value and value.strip():
+            if (
+                key not in ["member_name", "llm_model", "custom_prompt"]
+                and value
+                and value.strip()
+            ):
                 yaml_data[key] = value.strip()
 
         # YAML文字列に変換
@@ -139,7 +143,9 @@ class YAMLGenerator:
         return f"data/{member_type}_members/{filename}"
 
     @staticmethod
-    def validate_form_data(form_data: dict[str, Any], member_type: str) -> dict[str, str]:
+    def validate_form_data(
+        form_data: dict[str, Any], member_type: str
+    ) -> dict[str, str]:
         """フォームデータのバリデーション
 
         Args:
@@ -156,9 +162,10 @@ class YAMLGenerator:
             errors["member_name"] = "メンバー名は必須です"
 
         # 仮想メンバーの追加チェック
-        if member_type == "virtual":
-            if not form_data.get("llm_model") or not form_data["llm_model"].strip():
-                errors["llm_model"] = "LLMモデルは必須です"
+        if member_type == "virtual" and (
+            not form_data.get("llm_model") or not form_data["llm_model"].strip()
+        ):
+            errors["llm_model"] = "LLMモデルは必須です"
 
         # 文字数制限チェック
         if form_data.get("member_name") and len(form_data["member_name"].strip()) > 50:
@@ -170,7 +177,12 @@ class YAMLGenerator:
         if form_data.get("llm_model") and len(form_data["llm_model"].strip()) > 50:
             errors["llm_model"] = "LLMモデル名は50文字以内で入力してください"
 
-        if form_data.get("custom_prompt") and len(form_data["custom_prompt"].strip()) > 5000:
-            errors["custom_prompt"] = "カスタムプロンプトは5000文字以内で入力してください"
+        if (
+            form_data.get("custom_prompt")
+            and len(form_data["custom_prompt"].strip()) > 5000
+        ):
+            errors["custom_prompt"] = (
+                "カスタムプロンプトは5000文字以内で入力してください"
+            )
 
         return errors
