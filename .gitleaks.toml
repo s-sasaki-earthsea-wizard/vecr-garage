@@ -1,0 +1,25 @@
+# Gitleaks Configuration
+# 汎用的な高エントロピー文字列検出により、あらゆるAPIキー/トークンを検出
+# プロバイダー固有のルールは不要
+
+title = "VECR Garage - Generic High-Entropy Secret Detection"
+
+# 汎用API Key/Token検出（キーワードベース + 高エントロピー）
+[[rules]]
+id = "generic-api-key"
+description = "Detected API Key or Token (generic)"
+regex = '''(?i)(api[_-]?key|apikey|api[_-]?token|token|secret|password)\s*[=:]\s*['\"]?([a-zA-Z0-9\-_]{32,})['\"]?'''
+secretGroup = 2
+entropy = 3.5
+keywords = [
+    "api_key",
+    "apikey",
+    "api-key",
+    "api_token",
+    "token",
+    "secret",
+    "password",
+    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
+    "AWS_SECRET_ACCESS_KEY",
+]

@@ -218,3 +218,6 @@ test_secrets*.txt
 test_secrets*.py
 test_secrets*.json
 test_secrets*.env
+
+# detect-secrets baseline (個人環境で生成されるため共有不要)
+.secrets.baseline

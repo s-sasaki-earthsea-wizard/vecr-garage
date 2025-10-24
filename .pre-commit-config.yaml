@@ -73,17 +73,23 @@ repos:
     rev: v1.4.0
     hooks:
       - id: detect-secrets
-        name: Secrets検知
+        name: Secrets検知 (detect-secrets)
         description: API キー、パスワード等の機密情報を検出
         args: ['--baseline', '.secrets.baseline']
-        exclude: |
-          (?x)^(
-            .*\.example\..*|
-            .*\.md|
-            .*\.txt|
-            .*/tests/.*|
-            makefiles/ci\.mk
-          )$
+        # 除外対象:
+        # - makefiles/ci.mk: 秘密鍵検出テスト用のUUID文字列が含まれるため
+        # - .gitleaks.toml: gitleaksルール定義内のキーワードによる誤検知を防止
+        exclude: (makefiles/ci\.mk|\.gitleaks\.toml)
+
+  # Secrets検知（gitleaks - 強力な検出）
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+        name: Gitleaks（強力な秘密鍵検知）
+        description: 900以上のパターンでAPI キー、トークン、パスワード等を検出
+        # makefiles/ci.mk: 秘密鍵検出テスト用のUUID文字列が含まれるため除外
+        exclude: makefiles/ci\.mk
 
   # Markdown: markdownlint (リンター・フォーマッター)
   - repo: https://github.com/igorshubovych/markdownlint-cli
