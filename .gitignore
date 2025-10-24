@@ -219,5 +219,9 @@ test_secrets*.py
 test_secrets*.json
 test_secrets*.env
 
-# detect-secrets baseline (個人環境で生成されるため共有不要)
-.secrets.baseline
+# detect-secrets baseline
+# チーム間でベースラインを共有してfalse-positiveを統一管理
+# ⚠️ 重要: ベースライン更新時は必ず内容を確認すること
+# - 本物の秘密鍵が含まれていないか慎重にチェック
+# - 疑わしい場合はコミットせず、チームで相談
+# - マージコンフリクト時: make secrets-baseline-merge

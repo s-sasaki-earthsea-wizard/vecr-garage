@@ -127,6 +127,7 @@ include makefiles/integration.mk
 include makefiles/backend-db-registration.mk
 include makefiles/backend-llm-response.mk
 include makefiles/ci.mk
+include makefiles/secrets.mk
 
 # 便利なエイリアスと後方互換性
 s3-cp-samples: samples-copy ## Copy normal sample files to MinIO storage

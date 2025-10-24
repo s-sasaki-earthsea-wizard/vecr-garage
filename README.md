@@ -568,6 +568,43 @@ make test-pre-commit-secrets
 - 完全なセキュリティガイドライン: [docs/security/secrets-management.md](docs/security/secrets-management.md)
 - 万が一コミットしてしまった場合の対処法も記載
 
+### .secrets.baseline 運用ガイドライン
+
+このプロジェクトでは`.secrets.baseline`をバージョニングして、チーム間でfalse-positiveを統一管理します。
+
+**基本ルール:**
+
+1. **ベースライン更新時は必ず内容を確認**
+
+   ```bash
+   make secrets-baseline-update
+   git diff .secrets.baseline  # 必ず確認！
+   ```
+
+2. **本物の秘密鍵が含まれていないか慎重にチェック**
+   - API キー、トークン、パスワードなどの実際の値が含まれていないか
+   - 疑わしい場合はコミットせず、チームで相談
+
+3. **マージコンフリクト時の対応**
+
+   ```bash
+   git pull  # コンフリクト発生
+   make secrets-baseline-merge  # 自動マージ
+   git add .secrets.baseline && git commit
+   ```
+
+**利用可能なコマンド:**
+
+```bash
+make secrets-help              # ヘルプ表示
+make secrets-baseline-update   # ベースライン更新
+make secrets-baseline-merge    # マージコンフリクト解決
+make secrets-check             # 秘密鍵チェック
+make secrets-audit             # ベースライン監査（四半期ごと推奨）
+```
+
+詳細: `make secrets-help` を実行してください
+
 ### 本番環境での設定
 
 本番環境で使用する際は、以下の設定を必ず変更してください：

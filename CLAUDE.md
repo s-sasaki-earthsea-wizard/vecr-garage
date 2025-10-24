@@ -221,6 +221,52 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 
 詳細: [認証システム](docs/integrations/authentication.md)
 
+### .secrets.baseline 運用ガイドライン
+
+このプロジェクトでは`.secrets.baseline`をバージョニングして、チーム間でfalse-positiveを統一管理します。
+
+#### 基本ルール
+
+1. **ベースライン更新時は必ず内容を確認**
+
+   ```bash
+   make secrets-baseline-update
+   git diff .secrets.baseline  # 必ず確認！
+   ```
+
+2. **本物の秘密鍵が含まれていないか慎重にチェック**
+   - API キー、トークン、パスワードなどの実際の値が含まれていないか
+   - 疑わしい場合はコミットせず、チームで相談
+
+3. **マージコンフリクト時の対応**
+
+   ```bash
+   git pull  # コンフリクト発生
+   make secrets-baseline-merge  # 自動マージ
+   git diff .secrets.baseline  # 結果を確認
+   git add .secrets.baseline
+   git commit
+   ```
+
+4. **定期監査（四半期ごと推奨）**
+
+   ```bash
+   make secrets-audit
+   # 各エントリを確認し、不要なものを削除
+   ```
+
+#### 利用可能なコマンド
+
+```bash
+make secrets-help              # ヘルプ表示
+make secrets-baseline-update   # ベースライン更新
+make secrets-baseline-merge    # マージコンフリクト解決
+make secrets-check             # 秘密鍵チェック
+make secrets-audit             # ベースライン監査
+```
+
+詳細: `make secrets-help` を実行してください
+
 ---
 
 ## 実装完了Phase記録
