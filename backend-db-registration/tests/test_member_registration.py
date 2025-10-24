@@ -10,6 +10,7 @@ from operations.member_registration import (
 )
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from validation.yaml_validator import ValidationError
 
 # 環境変数からデータベース接続情報を取得
 MEMBER_DB_HOST = os.getenv("MEMBER_DB_HOST", "db-member")
@@ -43,20 +44,15 @@ def db_session():
         conn.commit()
 
     # テスト用のセッションを作成
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    session = TestingSessionLocal()
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = testing_session_local()
 
     try:
         yield session
     finally:
         # テスト後にセッションをクローズ
         session.close()
-        # テーブル削除は依存関係があるため、エラーを無視して削除を試行
-        try:
-            Base.metadata.drop_all(engine)
-        except Exception as e:
-            print(f"テーブル削除時の警告: {e}")
-            # テーブル削除に失敗してもテストは続行
+        # テーブル構造は保持し、データのみクリアすることで統合テストとの互換性を保つ
 
 
 @pytest.fixture(scope="function")
@@ -139,7 +135,7 @@ def test_register_human_member_invalid_yaml(db_session, tmp_path, mock_storage_c
         yaml.dump(invalid_yaml, f, allow_unicode=True)
 
     # 無効なYAMLファイルで登録を試みる
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         register_human_member_from_yaml(str(invalid_yaml_path))
 
 
@@ -152,7 +148,7 @@ def test_register_virtual_member_invalid_yaml(db_session, tmp_path, mock_storage
         yaml.dump(invalid_yaml, f, allow_unicode=True)
 
     # 無効なYAMLファイルで登録を試みる
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         register_virtual_member_from_yaml(str(invalid_yaml_path))
 
 
