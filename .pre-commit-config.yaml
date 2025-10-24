@@ -75,11 +75,13 @@ repos:
       - id: detect-secrets
         name: Secrets検知 (detect-secrets)
         description: API キー、パスワード等の機密情報を検出
-        args: ['--baseline', '.secrets.baseline']
+        # baseline を使用しない（baseline更新は make secrets-baseline-update で手動実行）
+        # args: ['--baseline', '.secrets.baseline']
         # 除外対象:
         # - makefiles/ci.mk: 秘密鍵検出テスト用のUUID文字列が含まれるため
         # - .gitleaks.toml: gitleaksルール定義内のキーワードによる誤検知を防止
-        exclude: (makefiles/ci\.mk|\.gitleaks\.toml)
+        # - .secrets.baseline: baselineファイル自体は除外
+        exclude: (makefiles/ci\.mk|\.gitleaks\.toml|\.secrets\.baseline)
 
   # Secrets検知（gitleaks - 強力な検出）
   - repo: https://github.com/gitleaks/gitleaks

@@ -2,19 +2,14 @@
 """
 ロールバック機能とバリデーション機能をテストするスクリプト
 """
-import os
 import sys
 
-# プロジェクトのルートディレクトリをパスに追加
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
-
-from src.operations.member_registration import (
+from operations.member_registration import (
     register_human_member_from_yaml,
     register_virtual_member_from_yaml,
 )
-from src.utils.logging_config import setup_logging
-from src.validation.yaml_validator import ValidationError, YAMLValidator
+from utils.logging_config import setup_logging
+from validation.yaml_validator import ValidationError, YAMLValidator
 
 logger = setup_logging(__name__)
 

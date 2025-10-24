@@ -8,22 +8,15 @@ MinIO Webhook設定スクリプト
 
 import os
 import sys
-from pathlib import Path
 
 from dotenv import load_dotenv
-
-# プロジェクトルートをパスに追加
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from src.storage.storage_client import StorageClient
+from storage.storage_client import StorageClient
+from utils.logging_config import setup_logging
 
 # 環境変数を読み込み
 load_dotenv()
 
 # ログ設定
-from src.utils.logging_config import setup_logging
-
 logger = setup_logging(__name__)
 
 
@@ -180,9 +173,7 @@ def main():
     # 環境変数から設定を取得
     webhook_url = os.getenv("WEBHOOK_URL", os.getenv("WEBHOOK_FULL_URL"))
     if not webhook_url:
-        print(
-            "❌ Error: WEBHOOK_URL or WEBHOOK_FULL_URL environment variable is required"
-        )
+        print("❌ Error: WEBHOOK_URL or WEBHOOK_FULL_URL environment variable is required")
         sys.exit(1)
     bucket_name = os.getenv("MINIO_BUCKET_NAME")
     if not bucket_name:

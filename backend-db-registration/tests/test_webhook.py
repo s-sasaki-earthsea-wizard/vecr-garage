@@ -9,16 +9,9 @@ Webhook機能テストスクリプト
 import os
 import sys
 import time
-from pathlib import Path
 
 import requests
-
-# プロジェクトルートをパスに追加
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
-# ログ設定
-from src.utils.logging_config import setup_logging
+from utils.logging_config import setup_logging
 
 logger = setup_logging(__name__)
 
