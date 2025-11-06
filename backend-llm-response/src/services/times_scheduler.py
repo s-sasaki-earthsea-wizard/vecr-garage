@@ -9,7 +9,6 @@ import logging
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -59,7 +58,7 @@ class TimesScheduler:
         self.scheduler = AsyncIOScheduler(timezone=self.jst)
 
         # 1日1回投稿済みフラグ（日付ベース管理）
-        self.last_posted_date: Optional[str] = None
+        self.last_posted_date: str | None = None
 
         # 話題リスト読み込み
         self.topics = self._load_topics()
@@ -92,7 +91,7 @@ class TimesScheduler:
             )
 
         try:
-            with open(topics_file, encoding="utf-8") as f:
+            with topics_file.open(encoding="utf-8") as f:
                 data = json.load(f)
                 topics = data.get("topics", [])
 
@@ -103,7 +102,7 @@ class TimesScheduler:
                 return topics
 
         except json.JSONDecodeError as e:
-            raise ValueError(f"JSON形式が不正です: {e}")
+            raise ValueError(f"JSON形式が不正です: {e}") from e
 
     def start(self):
         """スケジューラー起動"""

@@ -112,12 +112,12 @@ class YAMLGenerator:
         return yaml_content
 
     @staticmethod
-    def generate_yaml_filename(member_name: str, member_type: str) -> str:
+    def generate_yaml_filename(member_name: str, _member_type: str) -> str:
         """メンバー名からYAMLファイル名を生成
 
         Args:
             member_name (str): メンバー名
-            member_type (str): メンバータイプ ('human' または 'virtual')
+            _member_type (str): メンバータイプ ('human' または 'virtual')（現在未使用）
 
         Returns:
             str: 生成されたファイル名

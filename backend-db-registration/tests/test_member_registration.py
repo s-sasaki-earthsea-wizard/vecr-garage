@@ -88,11 +88,15 @@ def mock_storage_client(monkeypatch):
                 return yaml.safe_load(f)
 
     # ストレージクライアントをモックに置き換え
-    monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
+    monkeypatch.setattr(
+        "operations.member_registration.StorageClient", MockStorageClient
+    )
     return MockStorageClient()
 
 
-def test_register_human_member_from_yaml(db_session, test_yaml_files, mock_storage_client):
+def test_register_human_member_from_yaml(
+    db_session, test_yaml_files, mock_storage_client
+):
     """YAMLファイルからの人間メンバー登録テスト"""
     # メンバーを登録
     member = register_human_member_from_yaml(test_yaml_files["human"])
@@ -109,7 +113,9 @@ def test_register_human_member_from_yaml(db_session, test_yaml_files, mock_stora
     assert saved_member.member_uuid == member.member_uuid
 
 
-def test_register_virtual_member_from_yaml(db_session, test_yaml_files, mock_storage_client):
+def test_register_virtual_member_from_yaml(
+    db_session, test_yaml_files, mock_storage_client
+):
     """YAMLファイルからの仮想メンバー登録テスト"""
     # メンバーを登録
     member = register_virtual_member_from_yaml(test_yaml_files["virtual"])
@@ -139,7 +145,9 @@ def test_register_human_member_invalid_yaml(db_session, tmp_path, mock_storage_c
         register_human_member_from_yaml(str(invalid_yaml_path))
 
 
-def test_register_virtual_member_invalid_yaml(db_session, tmp_path, mock_storage_client):
+def test_register_virtual_member_invalid_yaml(
+    db_session, tmp_path, mock_storage_client
+):
     """無効なYAMLファイルからの仮想メンバー登録テスト"""
     # 無効なYAMLファイルを作成
     invalid_yaml = {"invalid_field": "AIアシスタント"}
@@ -178,13 +186,19 @@ def mock_storage_with_real_files(monkeypatch, tmp_path):
             # llm_modelフィールドが意図的に欠損
         },
         "data/test_cases/human_members/invalid_empty_file.yml": None,  # 空ファイル
-        "data/samples/human_members/rin.yml": {"name": "Rin", "bio": "I'm a human member."},
+        "data/samples/human_members/rin.yml": {
+            "name": "Rin",
+            "bio": "I'm a human member.",
+        },
         "data/samples/virtual_members/darcy.yml": {
             "name": "Darcy",
             "custom_prompt": "I'm a virtual member.",
             "llm_model": "gpt-4o",
         },
-        "data/samples/human_members/syota.yml": {"name": "Syota", "bio": "I'm a human member."},
+        "data/samples/human_members/syota.yml": {
+            "name": "Syota",
+            "bio": "I'm a human member.",
+        },
         "data/samples/virtual_members/kasen.yml": {
             "name": "華扇",
             "custom_prompt": "私は華扇です。",
@@ -212,7 +226,9 @@ def test_human_member_missing_name_validation(db_session, mock_storage_with_real
     from validation.yaml_validator import ValidationError
 
     with pytest.raises(ValidationError) as exc_info:
-        register_human_member_from_yaml("data/test_cases/human_members/invalid_missing_bio.yml")
+        register_human_member_from_yaml(
+            "data/test_cases/human_members/invalid_missing_bio.yml"
+        )
 
     # 日本語エラーメッセージの検証
     assert "人間メンバーYAMLに必須フィールドが不足しています: name" in str(
@@ -226,7 +242,9 @@ def test_human_member_missing_name_original(db_session, mock_storage_with_real_f
     from validation.yaml_validator import ValidationError
 
     with pytest.raises(ValidationError) as exc_info:
-        register_human_member_from_yaml("data/test_cases/human_members/invalid_missing_name.yml")
+        register_human_member_from_yaml(
+            "data/test_cases/human_members/invalid_missing_name.yml"
+        )
 
     # 日本語エラーメッセージの検証
     assert "人間メンバーYAMLに必須フィールドが不足しています: name" in str(
@@ -235,7 +253,9 @@ def test_human_member_missing_name_original(db_session, mock_storage_with_real_f
     assert "name" in exc_info.value.missing_fields
 
 
-def test_virtual_member_missing_name_validation(db_session, mock_storage_with_real_files):
+def test_virtual_member_missing_name_validation(
+    db_session, mock_storage_with_real_files
+):
     """実際のテストケース: 仮想メンバーのname欠損でバリデーションエラー"""
     from validation.yaml_validator import ValidationError
 
@@ -251,7 +271,9 @@ def test_virtual_member_missing_name_validation(db_session, mock_storage_with_re
     assert "name" in exc_info.value.missing_fields
 
 
-def test_virtual_member_missing_model_validation(db_session, mock_storage_with_real_files):
+def test_virtual_member_missing_model_validation(
+    db_session, mock_storage_with_real_files
+):
     """実際のテストケース: 仮想メンバーのllm_model欠損でバリデーションエラー"""
     from validation.yaml_validator import ValidationError
 
@@ -263,14 +285,18 @@ def test_virtual_member_missing_model_validation(db_session, mock_storage_with_r
     # 日本語エラーメッセージの検証
     assert "仮想メンバーYAMLに必須フィールドが不足しています: llm_model" in str(
         exc_info.value
-    ) or "Required fields missing in virtual member YAML: llm_model" in str(exc_info.value)
+    ) or "Required fields missing in virtual member YAML: llm_model" in str(
+        exc_info.value
+    )
     assert "llm_model" in exc_info.value.missing_fields
 
 
 def test_human_member_empty_file_error(db_session, mock_storage_with_real_files):
     """実際のテストケース: 空ファイルでエラー"""
     with pytest.raises(Exception) as exc_info:
-        register_human_member_from_yaml("data/test_cases/human_members/invalid_empty_file.yml")
+        register_human_member_from_yaml(
+            "data/test_cases/human_members/invalid_empty_file.yml"
+        )
 
     # 'NoneType' object has no attribute 'get' エラーが発生することを確認
     assert "'NoneType' object has no attribute 'get'" in str(
@@ -295,7 +321,9 @@ def test_human_member_from_samples_directory(db_session, mock_storage_with_real_
     assert saved_member.member_name == "Rin"
 
 
-def test_virtual_member_from_samples_directory(db_session, mock_storage_with_real_files):
+def test_virtual_member_from_samples_directory(
+    db_session, mock_storage_with_real_files
+):
     """新しいディレクトリ構造: samplesディレクトリから仮想メンバー登録"""
     # Darcyファイルが正常に登録されることを確認
     member = register_virtual_member_from_yaml("data/samples/virtual_members/darcy.yml")
@@ -341,7 +369,10 @@ def test_yml_file_uri_based_upsert_human_member(db_session, monkeypatch):
 
     # テストファイル内容
     test_files = {}
-    test_files[test_uri] = {"name": "テストユーザー", "bio": "初回登録のプロフィールです"}
+    test_files[test_uri] = {
+        "name": "テストユーザー",
+        "bio": "初回登録のプロフィールです",
+    }
 
     class MockStorageClient:
         def read_yaml_from_minio(self, yaml_path):
@@ -352,7 +383,9 @@ def test_yml_file_uri_based_upsert_human_member(db_session, monkeypatch):
                 return content
             raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
-    monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
+    monkeypatch.setattr(
+        "operations.member_registration.StorageClient", MockStorageClient
+    )
 
     # 1. 新規作成
     member1 = register_human_member_from_yaml(test_uri)
@@ -378,7 +411,10 @@ def test_yml_file_uri_based_upsert_human_member(db_session, monkeypatch):
         session.close()
 
     # 2. 同じURIで更新（内容変更）
-    test_files[test_uri] = {"name": "テストユーザー更新", "bio": "更新されたプロフィールです"}
+    test_files[test_uri] = {
+        "name": "テストユーザー更新",
+        "bio": "更新されたプロフィールです",
+    }
 
     member2 = register_human_member_from_yaml(test_uri)
     assert member2 is not None
@@ -425,7 +461,9 @@ def test_yml_file_uri_based_upsert_virtual_member(db_session, monkeypatch):
                 return content
             raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
-    monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
+    monkeypatch.setattr(
+        "operations.member_registration.StorageClient", MockStorageClient
+    )
 
     # 1. 新規作成
     member1 = register_virtual_member_from_yaml(test_uri)
@@ -509,7 +547,9 @@ def test_profile_information_storage(db_session, monkeypatch):
                 return content
             raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
-    monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
+    monkeypatch.setattr(
+        "operations.member_registration.StorageClient", MockStorageClient
+    )
 
     # 人間メンバーの登録とプロフィール確認
     human_member = register_human_member_from_yaml(human_uri)
@@ -527,7 +567,10 @@ def test_profile_information_storage(db_session, monkeypatch):
             .first()
         )
         assert human_profile is not None
-        assert human_profile.bio == "詳細なプロフィール情報です。趣味はプログラミングです。"
+        assert (
+            human_profile.bio
+            == "詳細なプロフィール情報です。趣味はプログラミングです。"
+        )
         assert human_profile.member_id == human_member.member_id
         assert human_profile.member_uuid == human_member.member_uuid
     finally:

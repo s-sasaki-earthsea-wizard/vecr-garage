@@ -138,4 +138,4 @@ class YAMLValidator:
         except yaml.YAMLError as e:
             error_msg = f"Invalid YAML format: {str(e)}"
             logger.error(error_msg)
-            raise ValidationError(error_msg)
+            raise ValidationError(error_msg) from e

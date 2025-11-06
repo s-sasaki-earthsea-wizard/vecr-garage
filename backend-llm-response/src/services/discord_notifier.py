@@ -7,7 +7,7 @@ Discord Webhookを使用してメッセージを送信するサービスクラ�
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class DiscordNotifier:
     """Discord Webhook通知クラス（複数Webhook対応）"""
 
-    def __init__(self, webhooks_config: Optional[str] = None):
+    def __init__(self, webhooks_config: str | None = None):
         """
         初期化
 
@@ -82,8 +82,8 @@ class DiscordNotifier:
         self,
         webhook_name: str,
         content: str,
-        username: Optional[str] = None,
-        avatar_url: Optional[str] = None,
+        username: str | None = None,
+        avatar_url: str | None = None,
     ) -> dict[str, Any]:
         """
         指定されたWebhookにメッセージを送信
@@ -170,9 +170,9 @@ class DiscordNotifier:
     def broadcast_message(
         self,
         content: str,
-        username: Optional[str] = None,
-        avatar_url: Optional[str] = None,
-        webhook_names: Optional[list[str]] = None,
+        username: str | None = None,
+        avatar_url: str | None = None,
+        webhook_names: list[str] | None = None,
     ) -> dict[str, list[dict[str, Any]]]:
         """
         複数のWebhookに同時配信

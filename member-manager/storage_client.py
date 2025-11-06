@@ -6,6 +6,7 @@ MinIOストレージサービスへのファイルアップロード機能を提
 
 import logging
 import os
+from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin
 
@@ -64,7 +65,7 @@ class StorageClient:
 
         except Exception as e:
             logger.error(f"Failed to initialize S3 client: {str(e)}")
-            raise Exception(f"S3 client initialization failed: {str(e)}")
+            raise Exception(f"S3 client initialization failed: {str(e)}") from e
 
     def _ensure_bucket_exists(self):
         """バケットの存在確認と作成
@@ -89,12 +90,12 @@ class StorageClient:
                 except ClientError as create_error:
                     error_msg = f"Failed to create bucket '{self.bucket_name}': {str(create_error)}"
                     logger.error(error_msg)
-                    raise Exception(error_msg)
+                    raise Exception(error_msg) from create_error
             else:
                 # その他のエラー（認証エラーなど）
                 error_msg = f"Failed to check bucket '{self.bucket_name}': {str(e)}"
                 logger.error(error_msg)
-                raise Exception(error_msg)
+                raise Exception(error_msg) from e
 
     def upload_yaml_file(self, yaml_content: str, storage_path: str) -> dict[str, Any]:
         """YAMLファイルをMinIOストレージにアップロード
@@ -124,7 +125,7 @@ class StorageClient:
                 Key=storage_path,
                 Body=yaml_bytes,
                 ContentType="application/x-yaml",
-                ContentDisposition=f'attachment; filename="{os.path.basename(storage_path)}"',
+                ContentDisposition=f'attachment; filename="{Path(storage_path).name}"',
             )
 
             result = {
@@ -143,15 +144,15 @@ class StorageClient:
             error_code = e.response["Error"]["Code"]
             error_msg = f"MinIO upload failed ({error_code}): {str(e)}"
             logger.error(error_msg)
-            raise Exception(error_msg)
+            raise Exception(error_msg) from e
         except NoCredentialsError as e:
             error_msg = f"MinIO credentials not found: {str(e)}"
             logger.error(error_msg)
-            raise Exception(error_msg)
+            raise Exception(error_msg) from e
         except Exception as e:
             error_msg = f"Failed to upload YAML to {storage_path}: {str(e)}"
             logger.error(error_msg)
-            raise Exception(error_msg)
+            raise Exception(error_msg) from e
 
     def test_connection(self) -> bool:
         """ストレージサービスへの接続テスト

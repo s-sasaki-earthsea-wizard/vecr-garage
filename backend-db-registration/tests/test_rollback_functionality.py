@@ -21,7 +21,9 @@ def test_human_member_validation():
     # テストケース: 必須フィールドが欠けている場合（既存の無効なファイル）
     print("\n1. Testing missing required field (name) using invalid_missing_name.yml")
     try:
-        register_human_member_from_yaml("data/test_cases/human_members/invalid_missing_name.yml")
+        register_human_member_from_yaml(
+            "data/test_cases/human_members/invalid_missing_name.yml"
+        )
         print("❌ Test failed: Should have raised ValidationError")
     except ValidationError as e:
         print(f"✅ Test passed: ValidationError caught - {e.message}")
@@ -65,7 +67,9 @@ def test_successful_registration():
     # 仮想メンバーの正常な登録
     print("\n2. Testing successful virtual member registration")
     try:
-        result = register_virtual_member_from_yaml("data/samples/virtual_members/kasen.yml")
+        result = register_virtual_member_from_yaml(
+            "data/samples/virtual_members/kasen.yml"
+        )
         print(f"✅ Virtual member registration successful: {result.member_name}")
     except Exception as e:
         print(f"❌ Virtual member registration failed: {e}")
@@ -87,7 +91,10 @@ def test_validation_directly():
             print(f"   Missing fields: {', '.join(e.missing_fields)}")
 
     # 無効な仮想メンバーデータ（Darcy.ymlと同じ内容）
-    invalid_virtual_data = {"custom_prompt": "I'm a virtual member.", "llm_model": "gpt-4o"}
+    invalid_virtual_data = {
+        "custom_prompt": "I'm a virtual member.",
+        "llm_model": "gpt-4o",
+    }
     print("\n2. Testing invalid virtual member data directly (Darcy.yml content)")
     try:
         YAMLValidator.validate_virtual_member_yaml(invalid_virtual_data)

@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -11,8 +10,8 @@ class WebhookEvent(BaseModel):
     timestamp: datetime
     bucket_name: str
     object_name: str
-    etag: Optional[str] = None
-    size: Optional[int] = None
+    etag: str | None = None
+    size: int | None = None
 
 
 class MinIOWebhookPayload(BaseModel):

@@ -41,18 +41,18 @@ def main():
     # Output SQL file
     output_file = Path(__file__).parent.parent / "seed_data.sql"
 
-    with open(output_file, "w", encoding="utf-8") as f:
+    with output_file.open("w", encoding="utf-8") as f:
         # Process human members
         human_dir = profiles_dir / "human"
         for yaml_file in human_dir.glob("*.yaml"):
-            with open(yaml_file, encoding="utf-8") as yf:
+            with yaml_file.open(encoding="utf-8") as yf:
                 yaml_data = yaml.safe_load(yf)
                 f.write(generate_sql(yaml_data, "human"))
 
         # Process virtual members
         virtual_dir = profiles_dir / "virtual"
         for yaml_file in virtual_dir.glob("*.yaml"):
-            with open(yaml_file, encoding="utf-8") as yf:
+            with yaml_file.open(encoding="utf-8") as yf:
                 yaml_data = yaml.safe_load(yf)
                 f.write(generate_sql(yaml_data, "virtual"))
 

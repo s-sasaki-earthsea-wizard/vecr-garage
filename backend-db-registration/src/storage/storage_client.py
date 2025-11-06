@@ -61,7 +61,7 @@ class StorageClient:
             self.client.list_buckets()
             return True
         except Exception as e:
-            raise Exception(f"❌ Error connecting to storage: {e}")
+            raise Exception(f"❌ Error connecting to storage: {e}") from e
 
     def _check_bucket_exists(self, bucket_name=None):
         """指定されたバケットが存在するかを確認する（内部メソッド）
@@ -88,7 +88,9 @@ class StorageClient:
         try:
             return self.client.bucket_exists(bucket_name)
         except Exception as e:
-            raise Exception(f"❌ Error checking if bucket {bucket_name} exists: {e}")
+            raise Exception(
+                f"❌ Error checking if bucket {bucket_name} exists: {e}"
+            ) from e
 
     def list_yaml_files(self, prefix=""):
         """指定されたプレフィックスに一致するYAMLファイルの一覧を取得する
@@ -126,7 +128,9 @@ class StorageClient:
 
             return yaml_files
         except Exception as e:
-            raise Exception(f"❌ Error listing YAML files with prefix '{prefix}': {e}")
+            raise Exception(
+                f"❌ Error listing YAML files with prefix '{prefix}': {e}"
+            ) from e
 
     def read_yaml_from_minio(self, object_name: str) -> dict:
         """ストレージからYAMLファイルを読み込み、パースされた辞書オブジェクトを返す
@@ -173,7 +177,7 @@ class StorageClient:
         except Exception as e:
             raise Exception(
                 f"❌ Error reading {object_name} from {self.bucket_name}: {e}"
-            )
+            ) from e
 
 
 def main():
@@ -232,7 +236,7 @@ def main():
         print(f"Kasen data: {kasen_data}")
 
     except Exception as e:
-        raise Exception(f"❌ Error reading data from storage: {e}")
+        raise Exception(f"❌ Error reading data from storage: {e}") from e
 
 
 if __name__ == "__main__":

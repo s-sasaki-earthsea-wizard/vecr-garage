@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from models.webhook_models import WebhookResponse
 from services.webhook_file_watcher import WebhookFileWatcherService
+from storage.storage_monitor import StorageMonitor
 from utils.logging_config import setup_logging
 
 # Load environment variables
@@ -24,8 +25,6 @@ app = FastAPI(
 webhook_watcher = WebhookFileWatcherService()
 
 # Initialize storage monitor
-from storage.storage_monitor import StorageMonitor
-
 storage_monitor = StorageMonitor()
 
 
@@ -73,7 +72,9 @@ async def storage_monitor_health():
 
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Health check failed: {str(e)}"
+        ) from e
 
 
 @app.get("/health/storage-monitor/ready")
@@ -109,7 +110,7 @@ async def storage_monitor_ready():
         raise HTTPException(
             status_code=503,
             detail=f"Service not ready: storage_ok={storage_ok}, db_ok={db_ok}, error={str(e)}",
-        )
+        ) from e
 
 
 @app.get("/")
@@ -130,7 +131,9 @@ async def health_check():
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Health check failed: {str(e)}"
+        ) from e
 
 
 @app.post("/webhook/file-change", response_model=WebhookResponse)
@@ -174,7 +177,9 @@ async def get_webhook_status():
         return {"status": "success", "data": status}
     except Exception as e:
         logger.error(f"Failed to get webhook status: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get status: {str(e)}"
+        ) from e
 
 
 @app.post("/webhook/test")
@@ -206,7 +211,7 @@ async def test_webhook():
 
     except Exception as e:
         logger.error(f"Test webhook failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}") from e
 
 
 if __name__ == "__main__":

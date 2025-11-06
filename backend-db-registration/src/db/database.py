@@ -68,7 +68,7 @@ def create_human_member(db: Session, name: str, yml_file_uri: str = None):
     except Exception as e:
         error_msg = f"Failed to create human member '{name}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def save_human_member(db: Session, name: str, yml_file_uri: str = None):
@@ -103,7 +103,7 @@ def save_human_member(db: Session, name: str, yml_file_uri: str = None):
         db.rollback()
         error_msg = f"Failed to save human member '{name}': {str(e)}. Database transaction has been rolled back."
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def get_human_member_by_name(db: Session, name: str):
@@ -134,7 +134,7 @@ def get_human_member_by_name(db: Session, name: str):
     except Exception as e:
         error_msg = f"Failed to get human member '{name}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def get_human_member_by_uri(db: Session, yml_file_uri: str):
@@ -162,7 +162,7 @@ def get_human_member_by_uri(db: Session, yml_file_uri: str):
     except Exception as e:
         error_msg = f"Failed to get human member by URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def upsert_human_member(db: Session, name: str, yml_file_uri: str):
@@ -219,7 +219,7 @@ def upsert_human_member(db: Session, name: str, yml_file_uri: str):
             f"Failed to upsert human member '{name}' for URI '{yml_file_uri}': {str(e)}"
         )
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 # 仮想メンバー操作
@@ -254,7 +254,7 @@ def create_virtual_member(db: Session, name: str, yml_file_uri: str = None):
     except Exception as e:
         error_msg = f"Failed to create virtual member '{name}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def save_virtual_member(db: Session, name: str, yml_file_uri: str = None):
@@ -289,7 +289,7 @@ def save_virtual_member(db: Session, name: str, yml_file_uri: str = None):
         db.rollback()
         error_msg = f"Failed to save virtual member '{name}': {str(e)}. Database transaction has been rolled back."
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def get_virtual_member_by_name(db: Session, name: str):
@@ -320,7 +320,7 @@ def get_virtual_member_by_name(db: Session, name: str):
     except Exception as e:
         error_msg = f"Failed to get virtual member '{name}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def get_virtual_member_by_uri(db: Session, yml_file_uri: str):
@@ -348,7 +348,7 @@ def get_virtual_member_by_uri(db: Session, yml_file_uri: str):
     except Exception as e:
         error_msg = f"Failed to get virtual member by URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
@@ -403,7 +403,7 @@ def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
     except Exception as e:
         error_msg = f"Failed to upsert virtual member '{name}' for URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 # プロフィール操作
@@ -450,7 +450,7 @@ def upsert_human_member_profile(
             f"Failed to upsert human member profile for member {member_uuid}: {str(e)}"
         )
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def upsert_virtual_member_profile(
@@ -506,4 +506,4 @@ def upsert_virtual_member_profile(
         # NOTE: ロールバックは呼び出し元で実行
         error_msg = f"Failed to upsert virtual member profile for member {member_uuid}: {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
