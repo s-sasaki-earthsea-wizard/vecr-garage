@@ -33,7 +33,7 @@ typecheck: ## Run type checking for all services
 # フォーマットチェック（修正なし）
 format-check: ## Check code formatting without modifying files
 	@echo "🎨 Checking code format..."
-	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "black --check backend-* member-manager"
+	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "black --check backend-db-registration backend-llm-response member-manager"
 
 # CI全体実行（GitHub Actions相当） - すべてのチェックを実行してから結果をまとめて報告
 ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint + secrets-check)
