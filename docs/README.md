@@ -113,6 +113,7 @@ make example-command
 - [関連ドキュメント1](link1.md)
 - [関連ドキュメント2](link2.md)
 
+```text
 ```
 
 ## 🔍 ドキュメント検索のヒント

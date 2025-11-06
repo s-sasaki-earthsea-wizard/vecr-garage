@@ -29,7 +29,7 @@
 
 **ディレクトリ構造**:
 
-```
+```text
 vecr-garage-storage/
 ├── human_members/          # 人間メンバーYMLファイル
 │   ├── syota.yml
@@ -164,7 +164,7 @@ s3_client = boto3.client(
     's3',
     endpoint_url='http://localhost:9000',
     aws_access_key_id='minioadmin',
-    aws_secret_access_key='minioadmin',
+    aws_secret_access_key='minioadmin',  # pragma: allowlist secret
     region_name='us-east-1'
 )
 
@@ -257,7 +257,7 @@ MINIO_ROOT_USER=your-secure-username
 MINIO_ROOT_PASSWORD=your-secure-password-min-8-chars
 ```
 
-2. **HTTPS有効化**:
+1. **HTTPS有効化**:
 
 ```bash
 # 証明書配置
@@ -269,7 +269,7 @@ volumes:
   - /path/to/certs:/root/.minio/certs
 ```
 
-3. **アクセスポリシー設定**:
+1. **アクセスポリシー設定**:
 
 ```bash
 # 読み取り専用ポリシー作成
@@ -279,7 +279,7 @@ mc admin policy add myminio readonly-policy /path/to/readonly-policy.json
 mc admin policy set myminio readonly-policy user=readonly-user
 ```
 
-4. **監査ログ有効化**:
+1. **監査ログ有効化**:
 
 ```bash
 # docker-compose.yml

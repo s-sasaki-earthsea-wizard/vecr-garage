@@ -129,7 +129,7 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 
 ## Webhookイベント処理フロー
 
-```
+```text
 1. MinIOバケットへのファイルアップロード
    ↓
 2. S3イベント通知（s3:ObjectCreated:*）

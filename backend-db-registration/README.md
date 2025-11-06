@@ -277,12 +277,12 @@ SELECT * FROM human_members;
 
 --仮想メンバーの場合
 SELECT * FROM virtual_members;
-```
+```bash
 
 登録完了時、以下のような結果が返ってくる事を期待しています：
 
-```
- member_id |             member_uuid              | member_name |          created_at           |          updated_at           
+```text
+ member_id |             member_uuid              | member_name |          created_at           |          updated_at
 -----------+--------------------------------------+-------------+-------------------------------+-------------------------------
          1 | 13e60657-717e-40da-8900-c6ddbec796b0 | Syota       | 2025-04-29 15:47:41.417381+00 | 2025-04-29 15:47:41.417409+00
 (1 row)
@@ -327,7 +327,7 @@ make test-rollback-functionality
 
 **エラー例:**
 
-```
+```text
 ❌ Validation error for human member registration from data/human_members/invalid_human.yml: Required fields missing in human member YAML: name
    Missing fields: name
 
@@ -350,11 +350,11 @@ make backend-db-registration-test
 
 ```bash
 make test
-```
+```bash
 
 どちらも以下のような結果が返ってくることを期待しています：
 
-```
+```text
 ============================================================================= test session starts ==============================================================================
 platform linux -- Python 3.12.11, pytest-8.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
 cachedir: .pytest_cache

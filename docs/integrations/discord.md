@@ -24,7 +24,7 @@ VECR Garageプロジェクトは、2つのDiscord統合機能を提供してい�
 
 **ファイル構成**:
 
-```
+```text
 config/
 ├── discord_webhooks.json          # 実際のWebhook URL（.gitignore対象）
 └── discord_webhooks.example.json  # サンプル（リポジトリ管理）

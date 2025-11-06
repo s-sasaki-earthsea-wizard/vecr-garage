@@ -141,20 +141,24 @@ def is_prime(n: int) -> bool:
 
 ...
 
+```text
 ```
 
 ### ✨ 実装の特徴
 
 **セキュリティ**:
+
 - APIキーは`.env`で管理（.gitignore保護）
 - コンテナに環境変数として渡される
 - ログにAPIキーが出力されないよう配慮
 
 **シンプル**:
+
 - ホストマシンからmakeコマンドで直接実行
 - docker execによるコンテナ内Python実行
 
 **拡張性**:
+
 - 将来的なAPIエンドポイント化の基盤
 - Discord Botとの統合済み
 - システムプロンプト、温度パラメータのカスタマイズ可能
@@ -162,12 +166,14 @@ def is_prime(n: int) -> bool:
 ### 🧪 テスト結果
 
 **実装確認**:
+
 - ✅ ClaudeClient初期化成功
 - ✅ テストメッセージ送信成功（自己紹介応答）
 - ✅ カスタムプロンプト送信成功（コード生成応答）
 - ✅ makeターゲットからの呼び出し成功
 
 **Discord Bot統合**:
+
 - ✅ Mention Mode: @メンション応答でClaude API使用
 - ✅ AutoThread Mode: 会話履歴を含むプロンプト送信
 - ✅ Times Mode: 話題リストからランダム選択→Claude API応答生成

@@ -134,7 +134,7 @@ aws_services:
 
 **アーキテクチャ図**:
 
-```
+```text
 [ユーザー]
   ↓ HTTPS
 [ALB (SSL/TLS Termination)]

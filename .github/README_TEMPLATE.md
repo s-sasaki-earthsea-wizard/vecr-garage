@@ -18,7 +18,7 @@
 インストール方法を書いてください。
 以下のようなコマンドを書くなどすると手順がわかりやすくなるでしょう。
 
-```
+```bash
 make install
 ```
 
@@ -53,7 +53,7 @@ Write about the development environment. The following is an example.
 Write down the installation procedure.
 Commands will be useful to make clear as:
 
-```
+```bash
 make install
 ```
 

@@ -86,7 +86,7 @@ http://localhost:8000
 
 ## ディレクトリ構造
 
-```
+```text
 member-manager/
 ├── app.py                 # Flaskアプリケーション本体
 ├── requirements.txt       # Python依存パッケージ
@@ -239,19 +239,19 @@ ADMIN_PASSWORD=vecr_secure_2025
 
 ### テーブル一覧取得
 
-```
+```http
 GET /api/tables
 ```
 
 ### テーブルデータ取得
 
-```
+```http
 GET /api/table/<table_name>
 ```
 
 ### レコード追加
 
-```
+```http
 POST /api/table/<table_name>/record
 Content-Type: application/json
 
@@ -263,7 +263,7 @@ Content-Type: application/json
 
 ### レコード更新
 
-```
+```http
 PUT /api/table/<table_name>/record/<record_id>
 Content-Type: application/json
 
@@ -275,7 +275,7 @@ Content-Type: application/json
 
 ### レコード削除
 
-```
+```http
 DELETE /api/table/<table_name>/record/<record_id>
 ```
 

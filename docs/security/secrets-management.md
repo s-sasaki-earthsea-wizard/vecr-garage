@@ -130,7 +130,7 @@ pre-commit run --all-files
 
 ```bash
 # テスト: 機密情報を含むファイルをコミット試行
-echo "ANTHROPIC_API_KEY=sk-ant-real-key-12345" > test_secret.txt
+echo "ANTHROPIC_API_KEY=sk-ant-real-key-12345" > test_secret.txt  # pragma: allowlist secret
 git add test_secret.txt
 git commit -m "test"
 
@@ -195,7 +195,7 @@ git push origin --force --all
 
 ### チームメンバーへの周知内容
 
-```
+```text
 【重要】Gitリポジトリ履歴の書き換えを実施しました
 
 機密情報漏洩のため、Gitリポジトリ履歴を書き換えました。

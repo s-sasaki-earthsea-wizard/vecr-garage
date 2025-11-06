@@ -141,7 +141,7 @@ VECR Garageプロジェクトは、以下の6つのコンテナサービスで�
 
 ## サービス依存関係
 
-```
+```text
 db-member (healthy)
   ├─→ backend-db-registration
   └─→ member-manager
