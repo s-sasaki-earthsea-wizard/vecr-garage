@@ -3,7 +3,7 @@
 # コード品質チェックとフォーマット自動化
 # ============================================================
 
-.PHONY: ci-build lint format lint-fix typecheck ci-all ci-shell ci-help ci-pre-commit-run ci-pre-commit-run-staged ci-pre-commit-install markdown-lint markdown-fix
+.PHONY: ci-build lint format lint-fix typecheck ci-all ci-full ci-shell ci-help ci-pre-commit-run ci-pre-commit-run-staged ci-pre-commit-install markdown-lint markdown-fix
 
 # CI/CDコンテナのビルド
 ci-build: ## Build CI/CD container image
@@ -36,24 +36,27 @@ format-check: ## Check code formatting without modifying files
 	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "black --check backend-* member-manager"
 
 # CI全体実行（GitHub Actions相当） - すべてのチェックを実行してから結果をまとめて報告
-ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint)
+ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint + secrets-check)
 	@echo ""
 	@echo "============================================================"
 	@echo "🚀 Running all CI checks..."
 	@echo "============================================================"
 	@echo ""
 	@EXIT_CODE=0; \
-	echo "📋 [1/4] Running linters..."; \
+	echo "📋 [1/5] Running linters..."; \
 	$(MAKE) lint || EXIT_CODE=$$((EXIT_CODE + 1)); \
 	echo ""; \
-	echo "📋 [2/4] Checking code format..."; \
+	echo "📋 [2/5] Checking code format..."; \
 	$(MAKE) format-check || EXIT_CODE=$$((EXIT_CODE + 2)); \
 	echo ""; \
-	echo "📋 [3/4] Running type checker..."; \
+	echo "📋 [3/5] Running type checker..."; \
 	$(MAKE) typecheck || EXIT_CODE=$$((EXIT_CODE + 4)); \
 	echo ""; \
-	echo "📋 [4/4] Checking Markdown..."; \
+	echo "📋 [4/5] Checking Markdown..."; \
 	$(MAKE) markdown-lint || EXIT_CODE=$$((EXIT_CODE + 8)); \
+	echo ""; \
+	echo "📋 [5/5] Checking secrets..."; \
+	$(MAKE) secrets-check || EXIT_CODE=$$((EXIT_CODE + 16)); \
 	echo ""; \
 	echo "============================================================"; \
 	if [ $$EXIT_CODE -eq 0 ]; then \
@@ -66,9 +69,28 @@ ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint)
 		[ $$((EXIT_CODE & 2)) -ne 0 ] && echo "   ❌ Format check failed"; \
 		[ $$((EXIT_CODE & 4)) -ne 0 ] && echo "   ❌ Type check failed"; \
 		[ $$((EXIT_CODE & 8)) -ne 0 ] && echo "   ❌ Markdown check failed"; \
+		[ $$((EXIT_CODE & 16)) -ne 0 ] && echo "   ❌ Secrets check failed"; \
 		echo "============================================================"; \
 		exit 1; \
 	fi
+
+# CI全体実行 + 統合テスト（包括的チェック）
+ci-full: ## Run all CI checks + integration tests (comprehensive)
+	@echo ""
+	@echo "============================================================"
+	@echo "🚀 Running full CI checks + integration tests..."
+	@echo "============================================================"
+	@echo ""
+	@echo "📋 Step 1/2: Running CI checks..."
+	@$(MAKE) ci-all
+	@echo ""
+	@echo "📋 Step 2/2: Running integration tests..."
+	@$(MAKE) test-integration
+	@echo ""
+	@echo "============================================================"
+	@echo "✅ All CI checks and integration tests passed!"
+	@echo "============================================================"
+	@echo ""
 
 # ============================================================
 # Markdown リント・フォーマット（CI Runnerコンテナで実行）
@@ -124,7 +146,9 @@ ci-help: ## Show CI/CD commands help
 	@echo "  make typecheck                 - Run type checker (mypy)"
 	@echo "  make markdown-lint             - Check Markdown formatting"
 	@echo "  make markdown-fix              - Auto-fix Markdown formatting"
-	@echo "  make ci-all                    - Run all CI checks ⭐"
+	@echo "  make secrets-check             - Check for secrets (detect-secrets)"
+	@echo "  make ci-all                    - Run all CI checks (static analysis) ⭐"
+	@echo "  make ci-full                   - Run ci-all + integration tests 🚀"
 	@echo ""
 	@echo "🐳 Pre-commit Hooks (ci-runner container):"
 	@echo ""
@@ -148,8 +172,9 @@ ci-help: ## Show CI/CD commands help
 	@echo "  1. make format                 - Auto-format your code"
 	@echo "  2. make lint-fix               - Auto-fix linting issues"
 	@echo "  3. make markdown-fix           - Auto-fix Markdown"
-	@echo "  4. make ci-all                 - Run all checks ⭐"
-	@echo "  5. git commit                  - Hooks run automatically!"
+	@echo "  4. make ci-all                 - Run all checks (quick) ⭐"
+	@echo "  5. make ci-full                - Run all checks + tests (comprehensive) 🚀"
+	@echo "  6. git commit                  - Hooks run automatically!"
 	@echo ""
 	@echo "============================================================"
 	@echo "ℹ️  All commands run in ci-runner container for consistency"
