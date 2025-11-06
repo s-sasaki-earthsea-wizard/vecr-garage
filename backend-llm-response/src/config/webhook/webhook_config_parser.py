@@ -7,6 +7,7 @@ Webhook設定パーサー
 import json
 import logging
 import os
+from pathlib import Path
 
 from .webhook_validator import WebhookValidator
 
@@ -35,15 +36,14 @@ class WebhookConfigParser:
             ValueError: JSONパースまたはバリデーションエラー
         """
         try:
-            with open(file_path, encoding="utf-8") as f:
-                config = json.load(f)
-        except FileNotFoundError:
+            config = json.loads(Path(file_path).read_text(encoding="utf-8"))
+        except FileNotFoundError as e:
             raise FileNotFoundError(
                 f"Webhook設定ファイルが見つかりません: {file_path}\n"
                 f"config/discord_webhooks.example.json をコピーして作成してください"
-            )
+            ) from e
         except json.JSONDecodeError as e:
-            raise ValueError(f"JSONファイルのパースに失敗: {file_path}\n{e}")
+            raise ValueError(f"JSONファイルのパースに失敗: {file_path}\n{e}") from e
 
         # バリデーション
         is_valid, error_msg = WebhookValidator.validate_webhook_config(config)
@@ -166,7 +166,7 @@ class WebhookConfigParser:
         except json.JSONDecodeError as e:
             raise ValueError(
                 f"Webhook設定のJSONパースに失敗しました: {e}\n" f"入力値: {cleaned_str[:100]}..."
-            )
+            ) from e
 
     @staticmethod
     def get_webhook_url(config: dict[str, str], webhook_name: str) -> str:
