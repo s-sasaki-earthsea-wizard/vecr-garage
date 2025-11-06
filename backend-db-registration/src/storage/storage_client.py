@@ -88,9 +88,7 @@ class StorageClient:
         try:
             return self.client.bucket_exists(bucket_name)
         except Exception as e:
-            raise Exception(
-                f"❌ Error checking if bucket {bucket_name} exists: {e}"
-            ) from e
+            raise Exception(f"❌ Error checking if bucket {bucket_name} exists: {e}") from e
 
     def list_yaml_files(self, prefix=""):
         """指定されたプレフィックスに一致するYAMLファイルの一覧を取得する
@@ -116,21 +114,15 @@ class StorageClient:
         """
         try:
             yaml_files = []
-            objects = self.client.list_objects(
-                self.bucket_name, prefix=prefix, recursive=True
-            )
+            objects = self.client.list_objects(self.bucket_name, prefix=prefix, recursive=True)
 
             for obj in objects:
-                if obj.object_name.endswith(".yml") or obj.object_name.endswith(
-                    ".yaml"
-                ):
+                if obj.object_name.endswith(".yml") or obj.object_name.endswith(".yaml"):
                     yaml_files.append(obj.object_name)
 
             return yaml_files
         except Exception as e:
-            raise Exception(
-                f"❌ Error listing YAML files with prefix '{prefix}': {e}"
-            ) from e
+            raise Exception(f"❌ Error listing YAML files with prefix '{prefix}': {e}") from e
 
     def read_yaml_from_minio(self, object_name: str) -> dict:
         """ストレージからYAMLファイルを読み込み、パースされた辞書オブジェクトを返す
@@ -175,9 +167,7 @@ class StorageClient:
 
             return data
         except Exception as e:
-            raise Exception(
-                f"❌ Error reading {object_name} from {self.bucket_name}: {e}"
-            ) from e
+            raise Exception(f"❌ Error reading {object_name} from {self.bucket_name}: {e}") from e
 
 
 def main():
@@ -225,12 +215,8 @@ def main():
             print(f"  {file}")
 
         # Read specific files
-        syota_data = storage_client.read_yaml_from_minio(
-            "data/samples/human_members/syota.yml"
-        )
-        kasen_data = storage_client.read_yaml_from_minio(
-            "data/samples/virtual_members/kasen.yml"
-        )
+        syota_data = storage_client.read_yaml_from_minio("data/samples/human_members/syota.yml")
+        kasen_data = storage_client.read_yaml_from_minio("data/samples/virtual_members/kasen.yml")
 
         print(f"\nSyota data: {syota_data}")
         print(f"Kasen data: {kasen_data}")

@@ -31,18 +31,14 @@ class DiscordConfigValidator:
             )
 
         for bot_name, bot_config in config.items():
-            is_valid, error_msg = DiscordConfigValidator.validate_bot_config(
-                bot_name, bot_config
-            )
+            is_valid, error_msg = DiscordConfigValidator.validate_bot_config(bot_name, bot_config)
             if not is_valid:
                 return False, error_msg
 
         return True, ""
 
     @staticmethod
-    def validate_bot_config(
-        bot_name: str, bot_config: dict[str, Any]
-    ) -> tuple[bool, str]:
+    def validate_bot_config(bot_name: str, bot_config: dict[str, Any]) -> tuple[bool, str]:
         """
         個別Bot設定をバリデーション
 

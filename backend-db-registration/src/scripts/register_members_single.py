@@ -66,15 +66,9 @@ def main():
         python register_members_single.py --human           # 人間メンバーのみ
         python register_members_single.py --virtual         # 仮想メンバーのみ
     """
-    parser = argparse.ArgumentParser(
-        description="Register members from YAML files (Single Mode)"
-    )
-    parser.add_argument(
-        "--human", action="store_true", help="Register human members only"
-    )
-    parser.add_argument(
-        "--virtual", action="store_true", help="Register virtual members only"
-    )
+    parser = argparse.ArgumentParser(description="Register members from YAML files (Single Mode)")
+    parser.add_argument("--human", action="store_true", help="Register human members only")
+    parser.add_argument("--virtual", action="store_true", help="Register virtual members only")
     args = parser.parse_args()
 
     try:
@@ -91,9 +85,7 @@ def main():
             # 人間メンバーのみ登録
             if not human_files:
                 print("❌ No human member YAML files found in storage.")
-                print(
-                    "Please ensure human member YAML files are uploaded to data/human_members/"
-                )
+                print("Please ensure human member YAML files are uploaded to data/human_members/")
                 return
 
             print("=== Processing Human Members (Single Mode) ===")
@@ -236,9 +228,7 @@ def main():
         error_msg = f"Error getting YAML files from storage: {e}"
         logger.error(error_msg)
         print(f"❌ {error_msg}")
-        print(
-            "Please check your storage connection and ensure YAML files are available."
-        )
+        print("Please check your storage connection and ensure YAML files are available.")
         raise
 
 

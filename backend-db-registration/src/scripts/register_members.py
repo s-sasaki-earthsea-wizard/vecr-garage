@@ -72,12 +72,8 @@ def main():
         - 既存メンバーが存在する場合は新規作成せず、既存オブジェクトを返します
     """
     parser = argparse.ArgumentParser(description="Register members from YAML files")
-    parser.add_argument(
-        "--human", action="store_true", help="Register human members only"
-    )
-    parser.add_argument(
-        "--virtual", action="store_true", help="Register virtual members only"
-    )
+    parser.add_argument("--human", action="store_true", help="Register human members only")
+    parser.add_argument("--virtual", action="store_true", help="Register virtual members only")
     args = parser.parse_args()
 
     try:
@@ -94,9 +90,7 @@ def main():
             # 人間メンバーのみ登録
             if not human_files:
                 print("❌ No human member YAML files found in storage.")
-                print(
-                    "Please ensure human member YAML files are uploaded to data/human_members/"
-                )
+                print("Please ensure human member YAML files are uploaded to data/human_members/")
                 return
 
             print("=== Processing Human Members (Batch Mode) ===")
@@ -106,9 +100,7 @@ def main():
 
             try:
                 created_members = register_human_members_batch(human_files)
-                print(
-                    f"✅ Successfully processed {len(created_members)} human members."
-                )
+                print(f"✅ Successfully processed {len(created_members)} human members.")
             except Exception as e:
                 print(f"❌ Batch registration failed: {e}")
                 return
@@ -129,9 +121,7 @@ def main():
 
             try:
                 created_members = register_virtual_members_batch(virtual_files)
-                print(
-                    f"✅ Successfully processed {len(created_members)} virtual members."
-                )
+                print(f"✅ Successfully processed {len(created_members)} virtual members.")
             except Exception as e:
                 print(f"❌ Batch registration failed: {e}")
                 return
@@ -153,9 +143,7 @@ def main():
 
                 try:
                     created_members = register_human_members_batch(human_files)
-                    print(
-                        f"✅ Successfully processed {len(created_members)} human members."
-                    )
+                    print(f"✅ Successfully processed {len(created_members)} human members.")
                     human_success = True
                     human_count = len(created_members)
                 except Exception as e:
@@ -173,9 +161,7 @@ def main():
 
                 try:
                     created_members = register_virtual_members_batch(virtual_files)
-                    print(
-                        f"✅ Successfully processed {len(created_members)} virtual members."
-                    )
+                    print(f"✅ Successfully processed {len(created_members)} virtual members.")
                     virtual_success = True
                     virtual_count = len(created_members)
                 except Exception as e:
@@ -190,22 +176,16 @@ def main():
             if human_success and virtual_success:
                 print("🎉 All processing completed successfully!")
                 print(f"   Human members: {human_count}/{len(human_files)} processed")
-                print(
-                    f"   Virtual members: {virtual_count}/{len(virtual_files)} processed"
-                )
+                print(f"   Virtual members: {virtual_count}/{len(virtual_files)} processed")
                 print(f"   Total: {total_success}/{total_files} members processed")
             elif human_success or virtual_success:
                 print("⚠️  Partial processing completed:")
                 if human_success:
-                    print(
-                        f"   ✅ Human members: {human_count}/{len(human_files)} processed"
-                    )
+                    print(f"   ✅ Human members: {human_count}/{len(human_files)} processed")
                 else:
                     print("   ❌ Human members: Failed")
                 if virtual_success:
-                    print(
-                        f"   ✅ Virtual members: {virtual_count}/{len(virtual_files)} processed"
-                    )
+                    print(f"   ✅ Virtual members: {virtual_count}/{len(virtual_files)} processed")
                 else:
                     print("   ❌ Virtual members: Failed")
                 print(f"   Total: {total_success}/{total_files} members processed")
@@ -219,9 +199,7 @@ def main():
         error_msg = f"Error getting YAML files from storage: {e}"
         logger.error(error_msg)
         print(f"❌ {error_msg}")
-        print(
-            "Please check your storage connection and ensure YAML files are available."
-        )
+        print("Please check your storage connection and ensure YAML files are available.")
         raise
 
 

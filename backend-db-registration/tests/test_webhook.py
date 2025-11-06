@@ -194,9 +194,7 @@ class WebhookTester:
                 logger.info(f"Message: {data.get('message')}")
                 logger.info(f"Processed files: {data.get('processed_files')}")
                 return True
-            logger.error(
-                f"❌ Virtual member webhook test failed: {response.status_code}"
-            )
+            logger.error(f"❌ Virtual member webhook test failed: {response.status_code}")
             logger.error(f"Response: {response.text}")
             return False
 
@@ -230,9 +228,7 @@ class WebhookTester:
                 logger.info(f"Success: {data.get('success')}")
                 logger.info(f"Message: {data.get('message')}")
                 return True
-            logger.warning(
-                f"⚠️  Unexpected status code for invalid payload: {response.status_code}"
-            )
+            logger.warning(f"⚠️  Unexpected status code for invalid payload: {response.status_code}")
             return True  # エラーハンドリングの実装によっては200が返る場合もある
 
         except Exception as e:
@@ -310,12 +306,8 @@ class WebhookTester:
                 data2 = response2.json()
 
                 logger.info("✅ Duplicate webhook test completed")
-                logger.info(
-                    f"First request - Processed files: {data1.get('processed_files')}"
-                )
-                logger.info(
-                    f"Second request - Processed files: {data2.get('processed_files')}"
-                )
+                logger.info(f"First request - Processed files: {data1.get('processed_files')}")
+                logger.info(f"Second request - Processed files: {data2.get('processed_files')}")
 
                 # 重複検出が正しく動作している場合、2回目のリクエストでは処理されるファイルが0になる
                 first_processed = len(data1.get("processed_files", []))
@@ -328,9 +320,7 @@ class WebhookTester:
                     logger.info("✅ Duplicate detection is working correctly")
                     return True
                 if first_processed > 0 and second_processed < first_processed:
-                    logger.info(
-                        "✅ Duplicate detection appears to be working (some files skipped)"
-                    )
+                    logger.info("✅ Duplicate detection appears to be working (some files skipped)")
                     return True
                 logger.warning("⚠️  Duplicate detection may not be working as expected")
                 logger.warning(
@@ -339,9 +329,7 @@ class WebhookTester:
                 return False
             if response1.status_code == 400 and response2.status_code == 400:
                 # 両方とも400エラーの場合、重複検出が動作している可能性
-                logger.info(
-                    "✅ Both requests returned 400 (duplicate detection may be working)"
-                )
+                logger.info("✅ Both requests returned 400 (duplicate detection may be working)")
                 return True
             logger.error("❌ Duplicate webhook test failed")
             logger.error(f"First request status: {response1.status_code}")
