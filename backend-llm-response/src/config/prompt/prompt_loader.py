@@ -6,8 +6,7 @@ Bot用のシステムプロンプトをファイルから読み込む機能を�
 """
 
 import logging
-import os
-from typing import Optional
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ class PromptLoader:
     PROMPT_DIR = "prompts/bot_characters"
 
     @staticmethod
-    def load_from_file(bot_name: str) -> Optional[str]:
+    def load_from_file(bot_name: str) -> str | None:
         """
         ファイルからプロンプトを読み込み
 
@@ -28,9 +27,9 @@ class PromptLoader:
         Returns:
             プロンプト文字列。ファイルが存在しない場合はNone
         """
-        prompt_file = f"{PromptLoader.PROMPT_DIR}/{bot_name}.txt"
+        prompt_file = Path(f"{PromptLoader.PROMPT_DIR}/{bot_name}.txt")
 
-        if not os.path.exists(prompt_file):
+        if not prompt_file.exists():
             logger.warning(f"⚠️ システムプロンプトファイルが見つかりません: {prompt_file}")
             logger.info(
                 f"💡 デフォルトプロンプトなしで起動します。"
@@ -39,8 +38,7 @@ class PromptLoader:
             return None
 
         try:
-            with open(prompt_file, encoding="utf-8") as f:
-                prompt = f.read().strip()
+            prompt = prompt_file.read_text(encoding="utf-8").strip()
 
             logger.info(f"✅ システムプロンプト読み込み成功: {prompt_file}")
             logger.debug(f"📝 プロンプト内容 ({len(prompt)}文字): {prompt[:100]}...")
@@ -55,7 +53,7 @@ class PromptLoader:
             return None
 
     @staticmethod
-    def load_from_db(bot_name: str) -> Optional[str]:
+    def load_from_db(_bot_name: str) -> str | None:
         """
         データベースからプロンプトを読み込み（将来実装）
 

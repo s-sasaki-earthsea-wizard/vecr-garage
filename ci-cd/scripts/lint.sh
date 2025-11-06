@@ -28,8 +28,14 @@ for SERVICE in "${SERVICES[@]}"; do
     if [ -d "/workspace/${SERVICE}" ]; then
         cd "/workspace/${SERVICE}"
 
-        # Ruff lintチェック
-        if ruff check . ; then
+        # Ruff lintチェック（srcディレクトリがあればそれを、なければカレントディレクトリをチェック）
+        if [ -d "src" ]; then
+            LINT_TARGET="src"
+        else
+            LINT_TARGET="."
+        fi
+
+        if ruff check "$LINT_TARGET" ; then
             echo "✅ ${SERVICE}: Ruff check passed"
         else
             echo "❌ ${SERVICE}: Ruff check failed"

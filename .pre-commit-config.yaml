@@ -53,10 +53,10 @@ repos:
     hooks:
       - id: black
         name: Black (Python フォーマッター)
-        description: Python コードを自動整形（PEP 8準拠）
+        description: Python コードのフォーマットチェック（修正なし）
         language_version: python3.11
+        args: [--check]
         files: ^(backend-.*|member-manager)/.*\.py$
-        exclude: ^.*/tests/.*$
 
   # Python: Ruff (高速リンター)
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -64,8 +64,7 @@ repos:
     hooks:
       - id: ruff
         name: Ruff (Python リンター)
-        description: Python コードの品質チェック（高速）
-        args: [--fix, --exit-non-zero-on-fix]
+        description: Python コードの品質チェック（修正なし）
         files: ^(backend-.*|member-manager)/.*\.py$
 
   # Secrets検知（強化版）
