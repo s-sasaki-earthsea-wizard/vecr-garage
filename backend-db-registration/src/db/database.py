@@ -30,14 +30,14 @@ class DatabaseError(Exception):
         original_error (Exception): 元の例外オブジェクト（デバッグ用）
     """
 
-    def __init__(self, message: str, original_error: Exception = None):
+    def __init__(self, message: str, original_error: Exception | None = None):
         self.message = message
         self.original_error = original_error
         super().__init__(self.message)
 
 
 # 人間メンバー操作
-def create_human_member(db: Session, name: str, yml_file_uri: str = None):
+def create_human_member(db: Session, name: str, yml_file_uri: str | None = None):
     """人間メンバーのデータベースオブジェクトを作成する
 
     新しいUUIDを生成し、指定された名前でHumanMemberオブジェクトを作成します。
@@ -71,7 +71,7 @@ def create_human_member(db: Session, name: str, yml_file_uri: str = None):
         raise DatabaseError(error_msg, e) from e
 
 
-def save_human_member(db: Session, name: str, yml_file_uri: str = None):
+def save_human_member(db: Session, name: str, yml_file_uri: str | None = None):
     """人間メンバーを作成してデータベースに保存する（完全なトランザクション管理）
 
     人間メンバーオブジェクトを作成し、データベースに保存します。
@@ -223,7 +223,7 @@ def upsert_human_member(db: Session, name: str, yml_file_uri: str):
 
 
 # 仮想メンバー操作
-def create_virtual_member(db: Session, name: str, yml_file_uri: str = None):
+def create_virtual_member(db: Session, name: str, yml_file_uri: str | None = None):
     """仮想メンバーのデータベースオブジェクトを作成する
 
     新しいUUIDを生成し、指定された名前でVirtualMemberオブジェクトを作成します。
@@ -257,7 +257,7 @@ def create_virtual_member(db: Session, name: str, yml_file_uri: str = None):
         raise DatabaseError(error_msg, e) from e
 
 
-def save_virtual_member(db: Session, name: str, yml_file_uri: str = None):
+def save_virtual_member(db: Session, name: str, yml_file_uri: str | None = None):
     """仮想メンバーを作成してデータベースに保存する（完全なトランザクション管理）
 
     仮想メンバーオブジェクトを作成し、データベースに保存します。
@@ -408,7 +408,7 @@ def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
 
 # プロフィール操作
 def upsert_human_member_profile(
-    db: Session, member_id: int, member_uuid: str, bio: str = None
+    db: Session, member_id: int, member_uuid: str, bio: str | None = None
 ):
     """人間メンバープロフィールのUPSERT処理（ON CONFLICT DO UPDATE使用）"""
     try:
@@ -458,7 +458,7 @@ def upsert_virtual_member_profile(
     member_id: int,
     member_uuid: str,
     llm_model: str,
-    custom_prompt: str = None,
+    custom_prompt: str | None = None,
 ):
     """仮想メンバープロフィールのUPSERT処理（ON CONFLICT DO UPDATE使用）"""
     try:

@@ -48,6 +48,8 @@ def register_human_member_from_yaml(yaml_path: str):
 
         # YAMLからデータを取得
         name = yaml_data.get("name")
+        if not name or not isinstance(name, str):
+            raise ValidationError("Name is required and must be a string")
 
         # DBセッションを開始
         db = SessionLocal()
@@ -155,6 +157,8 @@ def register_virtual_member_from_yaml(yaml_path: str):
 
         # YAMLからデータを取得
         name = yaml_data.get("name")
+        if not name or not isinstance(name, str):
+            raise ValidationError("Name is required and must be a string")
 
         # DBセッションを開始
         db = SessionLocal()
@@ -288,6 +292,8 @@ def register_human_members_batch(yaml_paths: list):
         # 全てのバリデーションが成功した場合のみ、データベース操作を実行
         for yaml_path, yaml_data in yaml_data_list:
             name = yaml_data.get("name")
+            if not name or not isinstance(name, str):
+                raise ValidationError("Name is required and must be a string")
 
             # UPSERT操作でメンバーを登録または更新（まだコミットしない）
             member = upsert_human_member(db, name, yaml_path)
@@ -368,6 +374,8 @@ def register_virtual_members_batch(yaml_paths: list):
         # 全てのバリデーションが成功した場合のみ、データベース操作を実行
         for yaml_path, yaml_data in yaml_data_list:
             name = yaml_data.get("name")
+            if not name or not isinstance(name, str):
+                raise ValidationError("Name is required and must be a string")
 
             # UPSERT操作でメンバーを登録または更新（まだコミットしない）
             member = upsert_virtual_member(db, name, yaml_path)

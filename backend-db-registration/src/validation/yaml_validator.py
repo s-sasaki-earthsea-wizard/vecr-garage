@@ -16,7 +16,7 @@ class ValidationError(Exception):
         missing_fields (List[str]): 欠落している必須フィールドのリスト
     """
 
-    def __init__(self, message: str, missing_fields: list[str] = None):
+    def __init__(self, message: str, missing_fields: list[str] | None = None):
         self.message = message
         self.missing_fields = missing_fields or []
         super().__init__(self.message)

@@ -5,7 +5,7 @@ Discord Bot設定パーサー（ファサード）
 """
 
 import logging
-from typing import Optional
+from typing import Any
 
 from .config_loader import DiscordConfigLoader
 from .config_validator import DiscordConfigValidator
@@ -17,7 +17,7 @@ class DiscordConfigParser:
     """Discord Bot設定パーサー（公開API）"""
 
     @staticmethod
-    def load_and_validate(file_path: Optional[str] = None) -> dict[str, dict[str, any]]:
+    def load_and_validate(file_path: str | None = None) -> dict[str, dict[str, Any]]:
         """
         設定を読み込みバリデーション
 
@@ -40,7 +40,7 @@ class DiscordConfigParser:
         return config
 
     @staticmethod
-    def get_bot_token(bot_name: str, config: Optional[dict] = None) -> str:
+    def get_bot_token(bot_name: str, config: dict | None = None) -> str:
         """
         Bot名からTokenを取得
 
@@ -68,7 +68,7 @@ class DiscordConfigParser:
 
     @staticmethod
     def get_bot_config(
-        bot_name: str, config: Optional[dict] = None
+        bot_name: str, config: dict | None = None
     ) -> tuple[str, list[int], list[int], list[int]]:
         """
         Bot名からTokenとモード別チャンネルIDリストを取得
@@ -104,7 +104,7 @@ class DiscordConfigParser:
         return token, mention_channels, auto_thread_channels, times_channels
 
     @staticmethod
-    def list_bots(config: Optional[dict] = None) -> list[str]:
+    def list_bots(config: dict | None = None) -> list[str]:
         """
         登録されているBot名のリストを取得
 

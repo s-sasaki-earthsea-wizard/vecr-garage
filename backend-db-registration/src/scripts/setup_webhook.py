@@ -28,7 +28,9 @@ class WebhookSetup:
         self.storage_client = StorageClient()
         self.minio_client = self.storage_client.client
 
-    def create_webhook_config(self, webhook_url: str, bucket_name: str = None) -> bool:
+    def create_webhook_config(
+        self, webhook_url: str, bucket_name: str | None = None
+    ) -> bool:
         """Webhook設定を作成する
 
         Args:
@@ -133,7 +135,7 @@ class WebhookSetup:
 
             logger.info("📋 Current webhook configurations:")
             # 仮の実装
-            configs = []
+            configs: list[dict] = []
             logger.info("No webhook configurations found")
 
             return configs

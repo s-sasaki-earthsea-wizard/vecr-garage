@@ -5,6 +5,7 @@ Bot設定の構造とフィールドをバリデーションします。
 """
 
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ class DiscordConfigValidator:
     """Discord Bot設定のバリデーター"""
 
     @staticmethod
-    def validate_config(config: dict[str, dict[str, any]]) -> tuple[bool, str]:
+    def validate_config(config: dict[str, dict[str, Any]]) -> tuple[bool, str]:
         """
         設定全体をバリデーション
 
@@ -40,7 +41,7 @@ class DiscordConfigValidator:
 
     @staticmethod
     def validate_bot_config(
-        bot_name: str, bot_config: dict[str, any]
+        bot_name: str, bot_config: dict[str, Any]
     ) -> tuple[bool, str]:
         """
         個別Bot設定をバリデーション
@@ -78,7 +79,7 @@ class DiscordConfigValidator:
                     f"Bot '{bot_name}' の channels.mention_mode は配列である必要があります",
                 )
             for idx, channel_id in enumerate(channels["mention_mode"]):
-                if not isinstance(channel_id, (str, int)):
+                if not isinstance(channel_id, str | int):
                     return False, (
                         f"Bot '{bot_name}' の channels.mention_mode[{idx}] は文字列または数値である必要があります"
                     )
@@ -91,7 +92,7 @@ class DiscordConfigValidator:
                     f"Bot '{bot_name}' の channels.auto_thread_mode は配列である必要があります",
                 )
             for idx, channel_id in enumerate(channels["auto_thread_mode"]):
-                if not isinstance(channel_id, (str, int)):
+                if not isinstance(channel_id, str | int):
                     return False, (
                         f"Bot '{bot_name}' の channels.auto_thread_mode[{idx}] は文字列または数値である必要があります"
                     )
@@ -104,7 +105,7 @@ class DiscordConfigValidator:
                     f"Bot '{bot_name}' の channels.times_mode は配列である必要があります",
                 )
             for idx, channel_id in enumerate(channels["times_mode"]):
-                if not isinstance(channel_id, (str, int)):
+                if not isinstance(channel_id, str | int):
                     return False, (
                         f"Bot '{bot_name}' の channels.times_mode[{idx}] は文字列または数値である必要があります"
                     )

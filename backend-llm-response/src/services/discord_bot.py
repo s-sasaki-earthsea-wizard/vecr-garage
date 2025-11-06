@@ -209,7 +209,7 @@ class DiscordBot:
         Returns:
             会話履歴のプロンプト文字列
         """
-        history_messages = []
+        history_messages: list[str] = []
 
         # Discord APIで履歴を取得（最新メッセージの前まで）
         async for msg in current_message.channel.history(
