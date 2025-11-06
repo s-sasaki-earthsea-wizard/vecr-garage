@@ -293,15 +293,15 @@ def test_virtual_member_missing_model_validation(
 
 def test_human_member_empty_file_error(db_session, mock_storage_with_real_files):
     """実際のテストケース: 空ファイルでエラー"""
-    with pytest.raises(Exception) as exc_info:
+    from validation.yaml_validator import ValidationError
+
+    with pytest.raises(ValidationError) as exc_info:
         register_human_member_from_yaml(
             "data/test_cases/human_members/invalid_empty_file.yml"
         )
 
-    # 'NoneType' object has no attribute 'get' エラーが発生することを確認
-    assert "'NoneType' object has no attribute 'get'" in str(
-        exc_info.value
-    ) or "ValidationError" in str(exc_info.type)
+    # 空ファイル（None）でValidationErrorが発生することを確認
+    assert "YAML content must be a dictionary and not None" in str(exc_info.value)
 
 
 # 新しいディレクトリ構造（samples/）を使用した正常系テスト

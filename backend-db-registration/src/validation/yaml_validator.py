@@ -35,6 +35,21 @@ class YAMLValidator:
     """
 
     @staticmethod
+    def _validate_yaml_data_type(yaml_data: dict[str, Any] | None) -> None:
+        """YAMLデータが辞書型であることを検証する（内部用ヘルパーメソッド）
+
+        Args:
+            yaml_data: 検証対象のYAMLデータ
+
+        Raises:
+            ValidationError: yaml_dataがNoneまたは辞書でない場合
+        """
+        if yaml_data is None or not isinstance(yaml_data, dict):
+            error_msg = "YAML content must be a dictionary and not None"
+            logger.error(error_msg)
+            raise ValidationError(error_msg)
+
+    @staticmethod
     def validate_human_member_yaml(yaml_data: dict[str, Any]) -> None:
         """人間メンバーのYAMLデータを検証する
 
@@ -52,15 +67,14 @@ class YAMLValidator:
             >>> data = {"age": 30}
             >>> YAMLValidator.validate_human_member_yaml(data)  # ValidationError発生
         """
+        # yaml_dataがNoneまたは辞書でない場合のチェック
+        YAMLValidator._validate_yaml_data_type(yaml_data)
+
         required_fields = ["name"]
         missing_fields = []
 
         for field in required_fields:
-            if (
-                field not in yaml_data
-                or yaml_data[field] is None
-                or yaml_data[field] == ""
-            ):
+            if field not in yaml_data or yaml_data[field] is None or yaml_data[field] == "":
                 missing_fields.append(field)
 
         if missing_fields:
@@ -89,19 +103,20 @@ class YAMLValidator:
             >>> data = {"name": "AI助手"}
             >>> YAMLValidator.validate_virtual_member_yaml(data)  # ValidationError発生
         """
+        # yaml_dataがNoneまたは辞書でない場合のチェック
+        YAMLValidator._validate_yaml_data_type(yaml_data)
+
         required_fields = ["name", "llm_model"]
         missing_fields = []
 
         for field in required_fields:
-            if (
-                field not in yaml_data
-                or yaml_data[field] is None
-                or yaml_data[field] == ""
-            ):
+            if field not in yaml_data or yaml_data[field] is None or yaml_data[field] == "":
                 missing_fields.append(field)
 
         if missing_fields:
-            error_msg = f"Required fields missing in virtual member YAML: {', '.join(missing_fields)}"
+            error_msg = (
+                f"Required fields missing in virtual member YAML: {', '.join(missing_fields)}"
+            )
             logger.error(error_msg)
             raise ValidationError(error_msg, missing_fields)
 

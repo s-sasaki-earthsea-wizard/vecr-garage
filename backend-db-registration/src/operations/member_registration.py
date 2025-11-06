@@ -46,16 +46,14 @@ def register_human_member_from_yaml(yaml_path: str):
         storage_client = StorageClient()
         yaml_data = storage_client.read_yaml_from_minio(yaml_path)
 
-        # YAMLからデータを取得
-        name = yaml_data.get("name")
-        if not name or not isinstance(name, str):
-            raise ValidationError("Name is required and must be a string")
+        # 人間メンバーの必須フィールドを検証（DBセッション前に実行）
+        YAMLValidator.validate_human_member_yaml(yaml_data)
+
+        # バリデーション済みなので型は保証されている
+        name: str = yaml_data["name"]  # type: ignore[assignment]
 
         # DBセッションを開始
         db = SessionLocal()
-
-        # 人間メンバーの必須フィールドを検証
-        YAMLValidator.validate_human_member_yaml(yaml_data)
 
         # UPSERT操作でメンバーを登録または更新
         member = upsert_human_member(db, name, yaml_path)
@@ -64,9 +62,7 @@ def register_human_member_from_yaml(yaml_path: str):
         bio = yaml_data.get("bio", "")
         if not bio:  # bioが存在しない場合はロールバック
             db.rollback()
-            error_msg = (
-                f"Bio field is required for human member registration from {yaml_path}"
-            )
+            error_msg = f"Bio field is required for human member registration from {yaml_path}"
             logger.error(error_msg)
             print(f"❌ {error_msg}")
             raise ValidationError(error_msg, ["bio"])
@@ -155,16 +151,14 @@ def register_virtual_member_from_yaml(yaml_path: str):
         storage_client = StorageClient()
         yaml_data = storage_client.read_yaml_from_minio(yaml_path)
 
-        # YAMLからデータを取得
-        name = yaml_data.get("name")
-        if not name or not isinstance(name, str):
-            raise ValidationError("Name is required and must be a string")
+        # 仮想メンバーの必須フィールドを検証（DBセッション前に実行）
+        YAMLValidator.validate_virtual_member_yaml(yaml_data)
+
+        # バリデーション済みなので型は保証されている
+        name: str = yaml_data["name"]  # type: ignore[assignment]
 
         # DBセッションを開始
         db = SessionLocal()
-
-        # 仮想メンバーの必須フィールドを検証
-        YAMLValidator.validate_virtual_member_yaml(yaml_data)
 
         # UPSERT操作でメンバーを登録または更新
         member = upsert_virtual_member(db, name, yaml_path)
@@ -176,14 +170,18 @@ def register_virtual_member_from_yaml(yaml_path: str):
         # llm_modelは必須、custom_promptも必須
         if not llm_model:
             db.rollback()
-            error_msg = f"LLM model field is required for virtual member registration from {yaml_path}"
+            error_msg = (
+                f"LLM model field is required for virtual member registration from {yaml_path}"
+            )
             logger.error(error_msg)
             print(f"❌ {error_msg}")
             raise ValidationError(error_msg, ["llm_model"])
 
         if not custom_prompt:
             db.rollback()
-            error_msg = f"Custom prompt field is required for virtual member registration from {yaml_path}"
+            error_msg = (
+                f"Custom prompt field is required for virtual member registration from {yaml_path}"
+            )
             logger.error(error_msg)
             print(f"❌ {error_msg}")
             raise ValidationError(error_msg, ["custom_prompt"])
@@ -204,7 +202,9 @@ def register_virtual_member_from_yaml(yaml_path: str):
         # バリデーションエラーでもロールバックを実行
         if db:
             db.rollback()
-        error_msg = f"Validation error for virtual member registration from {yaml_path}: {e.message}"
+        error_msg = (
+            f"Validation error for virtual member registration from {yaml_path}: {e.message}"
+        )
         if e.missing_fields:
             error_msg += f" Missing fields: {', '.join(e.missing_fields)}"
         logger.error(error_msg)
@@ -229,7 +229,9 @@ def register_virtual_member_from_yaml(yaml_path: str):
             logger.error(error_msg)
             print(f"❌ {error_msg}")
         else:
-            error_msg = f"Unexpected error for virtual member registration from {yaml_path}: {str(e)}"
+            error_msg = (
+                f"Unexpected error for virtual member registration from {yaml_path}: {str(e)}"
+            )
             logger.error(error_msg)
             print(f"❌ {error_msg}")
         raise
@@ -291,9 +293,8 @@ def register_human_members_batch(yaml_paths: list):
 
         # 全てのバリデーションが成功した場合のみ、データベース操作を実行
         for yaml_path, yaml_data in yaml_data_list:
-            name = yaml_data.get("name")
-            if not name or not isinstance(name, str):
-                raise ValidationError("Name is required and must be a string")
+            # バリデーション済みなので型は保証されている
+            name: str = yaml_data["name"]  # type: ignore[assignment]
 
             # UPSERT操作でメンバーを登録または更新（まだコミットしない）
             member = upsert_human_member(db, name, yaml_path)
@@ -373,9 +374,8 @@ def register_virtual_members_batch(yaml_paths: list):
 
         # 全てのバリデーションが成功した場合のみ、データベース操作を実行
         for yaml_path, yaml_data in yaml_data_list:
-            name = yaml_data.get("name")
-            if not name or not isinstance(name, str):
-                raise ValidationError("Name is required and must be a string")
+            # バリデーション済みなので型は保証されている
+            name: str = yaml_data["name"]  # type: ignore[assignment]
 
             # UPSERT操作でメンバーを登録または更新（まだコミットしない）
             member = upsert_virtual_member(db, name, yaml_path)
