@@ -130,7 +130,7 @@ pre-commit run --all-files
 
 ```bash
 # テスト: 機密情報を含むファイルをコミット試行
-echo "ANTHROPIC_API_KEY=sk-ant-real-key-12345" > test_secret.txt  # pragma: allowlist secret
+echo "ANTHROPIC_API_KEY=sk-ant-api-xxxxxxxxxxxxxxxxxxxxx" > test_secret.txt
 git add test_secret.txt
 git commit -m "test"
 
