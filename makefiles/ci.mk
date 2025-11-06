@@ -35,12 +35,40 @@ format-check: ## Check code formatting without modifying files
 	@echo "🎨 Checking code format..."
 	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "black --check backend-* member-manager"
 
-# CI全体実行（GitHub Actions相当）
-ci-all: lint format-check typecheck markdown-lint ## Run all CI checks (lint + format-check + typecheck + markdown-lint)
+# CI全体実行（GitHub Actions相当） - すべてのチェックを実行してから結果をまとめて報告
+ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint)
 	@echo ""
 	@echo "============================================================"
-	@echo "✅ All CI checks passed!"
+	@echo "🚀 Running all CI checks..."
 	@echo "============================================================"
+	@echo ""
+	@EXIT_CODE=0; \
+	echo "📋 [1/4] Running linters..."; \
+	$(MAKE) lint || EXIT_CODE=$$((EXIT_CODE + 1)); \
+	echo ""; \
+	echo "📋 [2/4] Checking code format..."; \
+	$(MAKE) format-check || EXIT_CODE=$$((EXIT_CODE + 2)); \
+	echo ""; \
+	echo "📋 [3/4] Running type checker..."; \
+	$(MAKE) typecheck || EXIT_CODE=$$((EXIT_CODE + 4)); \
+	echo ""; \
+	echo "📋 [4/4] Checking Markdown..."; \
+	$(MAKE) markdown-lint || EXIT_CODE=$$((EXIT_CODE + 8)); \
+	echo ""; \
+	echo "============================================================"; \
+	if [ $$EXIT_CODE -eq 0 ]; then \
+		echo "✅ All CI checks passed!"; \
+		echo "============================================================"; \
+		exit 0; \
+	else \
+		echo "❌ Some CI checks failed:"; \
+		[ $$((EXIT_CODE & 1)) -ne 0 ] && echo "   ❌ Lint check failed"; \
+		[ $$((EXIT_CODE & 2)) -ne 0 ] && echo "   ❌ Format check failed"; \
+		[ $$((EXIT_CODE & 4)) -ne 0 ] && echo "   ❌ Type check failed"; \
+		[ $$((EXIT_CODE & 8)) -ne 0 ] && echo "   ❌ Markdown check failed"; \
+		echo "============================================================"; \
+		exit 1; \
+	fi
 
 # ============================================================
 # Markdown リント・フォーマット（CI Runnerコンテナで実行）
