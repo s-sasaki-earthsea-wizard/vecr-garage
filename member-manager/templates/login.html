@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ログイン - VECR Garage Member Manager</title>
-    <!-- 将来的にはJinjaテンプレートでCSSファイルを管理 -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ログイン - VECR Garage Member Manager</title>
+        <!-- 将来的にはJinjaテンプレートでCSSファイルを管理 -->
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/style.css') }}">
+        <style>
         /* ログインページ専用スタイル */
         .login-container {
             min-height: 100vh;
@@ -169,85 +170,77 @@
             outline-offset: 2px;
             border-radius: 4px;
         }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <h1>VECR Garage</h1>
-                <p class="login-subtitle">Member Manager - モックアップ版</p>
-            </div>
-
-            <!-- エラーメッセージ表示 -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <form method="POST" action="{{ url_for('login') }}">
-                <!-- 将来的にはCSRF保護を実装 (Flask-WTF) -->
-                <!-- <input type="hidden" name="csrf_token" value="CSRF_TOKEN"/> -->
-
-                <div class="form-group">
-                    <label for="username">ユーザー名</label>
-                    <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        class="form-control"
-                        required
-                        autocomplete="username"
-                        value="{{ request.form.username or '' }}"
-                    >
+        </style>
+    </head>
+    <body>
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>VECR Garage</h1>
+                    <p class="login-subtitle">Member Manager - モックアップ版</p>
                 </div>
-
-                <div class="form-group">
-                    <label for="password">パスワード</label>
-                    <div class="password-input-wrapper">
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            class="form-control password-input"
-                            required
-                            autocomplete="current-password"
-                        >
-                        <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()">
-                            <span id="password-toggle-icon">👁️</span>
-                        </button>
+                <!-- エラーメッセージ表示 -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                <form method="POST" action="{{ url_for("login") }}">
+                    <!-- 将来的にはCSRF保護を実装 (Flask-WTF) -->
+                    <!-- <input type="hidden" name="csrf_token" value="CSRF_TOKEN" /> -->
+                    <div class="form-group">
+                        <label for="username">ユーザー名</label>
+                        <input type="text"
+                               id="username"
+                               name="username"
+                               class="form-control"
+                               required
+                               autocomplete="username"
+                               value="{{ request.form.username or '' }}">
                     </div>
+                    <div class="form-group">
+                        <label for="password">パスワード</label>
+                        <div class="password-input-wrapper">
+                            <input type="password"
+                                   id="password"
+                                   name="password"
+                                   class="form-control password-input"
+                                   required
+                                   autocomplete="current-password">
+                            <button type="button"
+                                    class="password-toggle-btn"
+                                    onclick="togglePasswordVisibility()">
+                                <span id="password-toggle-icon">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-login">ログイン</button>
+                </form>
+                <div class="login-footer">
+                    <p>※ このアプリケーションはモックアップです</p>
+                    <p>本番環境では適切な認証システムを実装します</p>
                 </div>
-
-                <button type="submit" class="btn-login">
-                    ログイン
-                </button>
-            </form>
-
-            <div class="login-footer">
-                <p>※ このアプリケーションはモックアップです</p>
-                <p>本番環境では適切な認証システムを実装します</p>
-            </div>
-
-            <div class="security-notice">
-                <h4>🔒 本番環境での認証方式</h4>
-                <ul>
-                    <li><strong>Phase 2</strong>: Flask-Login + bcrypt</li>
-                    <li><strong>Phase 3</strong>: AWS Cognito統合</li>
-                    <li><strong>将来</strong>: MFA・ソーシャルログイン対応</li>
-                </ul>
+                <div class="security-notice">
+                    <h4>🔒 本番環境での認証方式</h4>
+                    <ul>
+                        <li>
+                            <strong>Phase 2</strong>: Flask-Login + bcrypt
+                        </li>
+                        <li>
+                            <strong>Phase 3</strong>: AWS Cognito統合
+                        </li>
+                        <li>
+                            <strong>将来</strong>: MFA・ソーシャルログイン対応
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- ログインページは独立しているため、main.jsは読み込まない -->
-    <!-- 将来的には認証状態管理用のJavaScriptを実装 -->
-    <script>
+        <!-- ログインページは独立しているため、main.jsは読み込まない -->
+        <!-- 将来的には認証状態管理用のJavaScriptを実装 -->
+        <script>
         /**
          * パスワード表示/非表示切り替え機能
          * 将来的にはTypeScriptで実装することを検討
@@ -278,6 +271,6 @@
                 });
             });
         });
-    </script>
-</body>
+        </script>
+    </body>
 </html>
