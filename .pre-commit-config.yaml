@@ -101,6 +101,19 @@ repos:
         description: Markdownファイルのフォーマットチェックと自動修正
         args: ['--fix']
 
+  # Makefile: checkmake (構文チェッカー)
+  # ローカル環境で使用する場合は checkmake をインストールしてください:
+  #   Debian/Ubuntu: apt-get install golang-go && go install github.com/mrtazz/checkmake/cmd/checkmake@latest
+  #   macOS: brew install checkmake
+  - repo: local
+    hooks:
+      - id: checkmake
+        name: Makefile lint (checkmake)
+        description: Makefile構文チェックとベストプラクティス検証
+        entry: checkmake --config=.checkmake
+        language: system
+        files: ^(Makefile|makefiles/.*\.mk)$
+
 # ============================================================
 # 実行設定
 # ============================================================

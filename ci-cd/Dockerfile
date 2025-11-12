@@ -12,10 +12,16 @@ WORKDIR /workspace
 RUN apt-get update && apt-get install -y \
     git \
     libatomic1 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Git safe directory設定（Dockerコンテナ内での実行用）
 RUN git config --global --add safe.directory /workspace
+
+# Makefile lint（checkmake）
+RUN curl -sSfL https://github.com/mrtazz/checkmake/releases/download/0.2.2/checkmake-0.2.2.linux.amd64 \
+    -o /usr/local/bin/checkmake && \
+    chmod +x /usr/local/bin/checkmake
 
 # CI/CDツールのインストール
 COPY requirements.txt .

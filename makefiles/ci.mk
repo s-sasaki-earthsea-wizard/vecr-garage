@@ -3,7 +3,7 @@
 # コード品質チェックとフォーマット自動化
 # ============================================================
 
-.PHONY: ci-build lint format lint-fix typecheck ci-all ci-full ci-shell ci-help ci-pre-commit-run ci-pre-commit-run-staged ci-pre-commit-install markdown-lint markdown-fix
+.PHONY: ci-build lint format lint-fix typecheck ci-all ci-full ci-shell ci-help ci-pre-commit-run ci-pre-commit-run-staged ci-pre-commit-install markdown-lint markdown-fix ci-lint-makefile
 
 # CI/CDコンテナのビルド
 ci-build: ## Build CI/CD container image
@@ -36,27 +36,30 @@ format-check: ## Check code formatting without modifying files
 	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner /ci-scripts/format-check.sh
 
 # CI全体実行（GitHub Actions相当） - すべてのチェックを実行してから結果をまとめて報告
-ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint + secrets-check)
+ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint + makefile-lint + secrets-check)
 	@echo ""
 	@echo "============================================================"
 	@echo "🚀 Running all CI checks..."
 	@echo "============================================================"
 	@echo ""
 	@EXIT_CODE=0; \
-	echo "📋 [1/5] Running linters..."; \
+	echo "📋 [1/6] Running linters..."; \
 	$(MAKE) lint || EXIT_CODE=$$((EXIT_CODE + 1)); \
 	echo ""; \
-	echo "📋 [2/5] Checking code format..."; \
+	echo "📋 [2/6] Checking code format..."; \
 	$(MAKE) format-check || EXIT_CODE=$$((EXIT_CODE + 2)); \
 	echo ""; \
-	echo "📋 [3/5] Running type checker..."; \
+	echo "📋 [3/6] Running type checker..."; \
 	$(MAKE) typecheck || EXIT_CODE=$$((EXIT_CODE + 4)); \
 	echo ""; \
-	echo "📋 [4/5] Checking Markdown..."; \
+	echo "📋 [4/6] Checking Markdown..."; \
 	$(MAKE) markdown-lint || EXIT_CODE=$$((EXIT_CODE + 8)); \
 	echo ""; \
-	echo "📋 [5/5] Checking secrets..."; \
-	$(MAKE) secrets-check || EXIT_CODE=$$((EXIT_CODE + 16)); \
+	echo "📋 [5/6] Checking Makefile syntax..."; \
+	$(MAKE) ci-lint-makefile || EXIT_CODE=$$((EXIT_CODE + 16)); \
+	echo ""; \
+	echo "📋 [6/6] Checking secrets..."; \
+	$(MAKE) secrets-check || EXIT_CODE=$$((EXIT_CODE + 32)); \
 	echo ""; \
 	echo "============================================================"; \
 	if [ $$EXIT_CODE -eq 0 ]; then \
@@ -69,7 +72,8 @@ ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint + 
 		[ $$((EXIT_CODE & 2)) -ne 0 ] && echo "   ❌ Format check failed"; \
 		[ $$((EXIT_CODE & 4)) -ne 0 ] && echo "   ❌ Type check failed"; \
 		[ $$((EXIT_CODE & 8)) -ne 0 ] && echo "   ❌ Markdown check failed"; \
-		[ $$((EXIT_CODE & 16)) -ne 0 ] && echo "   ❌ Secrets check failed"; \
+		[ $$((EXIT_CODE & 16)) -ne 0 ] && echo "   ❌ Makefile check failed"; \
+		[ $$((EXIT_CODE & 32)) -ne 0 ] && echo "   ❌ Secrets check failed"; \
 		echo "============================================================"; \
 		exit 1; \
 	fi
@@ -104,6 +108,17 @@ markdown-fix: ## Auto-fix Markdown files formatting (ci-runner container)
 	@echo "🔧 Fixing Markdown formatting in CI container..."
 	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "pre-commit run markdownlint --all-files || true"
 	@echo "✅ Markdown formatting fixed!"
+
+# ============================================================
+# Makefile リント（CI Runnerコンテナで実行）
+# ============================================================
+
+ci-lint-makefile: ## Check Makefile syntax (checkmake)
+	@echo "🔍 Checking Makefile syntax..."
+	@$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "\
+		checkmake --config=/workspace/.checkmake Makefile && \
+		find makefiles -name '*.mk' -exec checkmake --config=/workspace/.checkmake {} \;" && \
+	echo "✅ All Makefile syntax checks passed!"
 
 # CI/CDコンテナのシェル起動（デバッグ用）
 ci-shell: ## Open a shell in CI/CD container for debugging
@@ -146,6 +161,7 @@ ci-help: ## Show CI/CD commands help
 	@echo "  make typecheck                 - Run type checker (mypy)"
 	@echo "  make markdown-lint             - Check Markdown formatting"
 	@echo "  make markdown-fix              - Auto-fix Markdown formatting"
+	@echo "  make ci-lint-makefile          - Check Makefile syntax (checkmake)"
 	@echo "  make secrets-check             - Check for secrets (detect-secrets)"
 	@echo "  make ci-all                    - Run all CI checks (static analysis) ⭐"
 	@echo "  make ci-full                   - Run ci-all + integration tests 🚀"

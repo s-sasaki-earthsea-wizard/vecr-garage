@@ -6,7 +6,7 @@ export
 SHELL := /bin/bash
 
 # Define the Phony targets
-.PHONY: docker-build docker-up docker-down docker-build-up docker-restart docker-logs docker-ps docker-clean member-manager-shell member-manager-start member-manager-stop member-manager-restart member-database-shell member-database-start member-database-stop member-database-restart storage-shell storage-start storage-stop storage-restart member-manager-shell s3-cp s3-cp-sample s3-ls s3-setup-profile
+.PHONY: default docker-build docker-up docker-down docker-build-up docker-restart docker-logs docker-ps docker-clean member-manager-shell member-manager-start member-manager-stop member-manager-restart member-database-shell member-database-start member-database-stop member-database-restart storage-shell storage-start storage-stop storage-restart member-manager-shell s3-cp s3-cp-sample s3-ls s3-setup-profile
 
 # Define the default target
 default: help
