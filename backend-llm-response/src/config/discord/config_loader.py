@@ -5,9 +5,9 @@ JSONファイルからBot設定を読み込みます。
 """
 
 import json
-import os
-from typing import Dict
 import logging
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class DiscordConfigLoader:
     DEFAULT_CONFIG_FILE = "config/discord_tokens.json"
 
     @staticmethod
-    def load_config(file_path: str = None) -> Dict[str, Dict[str, any]]:
+    def load_config(file_path: str | None = None) -> dict[str, dict[str, Any]]:
         """
         JSONファイルから設定を読み込み
 
@@ -41,21 +41,22 @@ class DiscordConfigLoader:
         if file_path is None:
             file_path = DiscordConfigLoader.DEFAULT_CONFIG_FILE
 
-        if not os.path.exists(file_path):
+        config_path = Path(file_path)
+        if not config_path.exists():
             raise FileNotFoundError(
                 f"Discord Bot設定ファイルが見つかりません: {file_path}\n"
                 f"config/discord_tokens.example.json を参考に作成してください"
             )
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with config_path.open(encoding="utf-8") as f:
                 config = json.load(f)
         except json.JSONDecodeError as e:
             raise json.JSONDecodeError(
                 f"Discord Bot設定ファイルのJSON形式が不正です: {file_path}",
                 e.doc,
                 e.pos,
-            )
+            ) from e
 
         logger.info(f"Discord Bot設定を読み込みました: {len(config)}個のBot")
         return config

@@ -93,8 +93,7 @@ def test_storage_connection():
 def main():
     """メイン関数"""
     try:
-        success = test_storage_connection()
-        return success
+        return test_storage_connection()
     except Exception as e:
         print(f"\n💥 予期しないエラーが発生: {e}")
         return False

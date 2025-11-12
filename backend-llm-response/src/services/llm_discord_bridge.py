@@ -4,7 +4,7 @@ LLM-Discord統合サービス
 LLM APIからの応答をDiscord Webhookに投稿する機能を提供します。
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from services.discord_notifier import DiscordNotifier
 from services.llm_client import LLMClient
@@ -22,7 +22,7 @@ class LLMDiscordBridge:
         self,
         webhook_name: str,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 1.0,
         include_prompt: bool = True,
     ) -> dict[str, Any]:

@@ -8,22 +8,15 @@ MinIO Webhook設定スクリプト
 
 import os
 import sys
-from pathlib import Path
 
 from dotenv import load_dotenv
-
-# プロジェクトルートをパスに追加
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from src.storage.storage_client import StorageClient
+from storage.storage_client import StorageClient
+from utils.logging_config import setup_logging
 
 # 環境変数を読み込み
 load_dotenv()
 
 # ログ設定
-from src.utils.logging_config import setup_logging
-
 logger = setup_logging(__name__)
 
 
@@ -35,7 +28,7 @@ class WebhookSetup:
         self.storage_client = StorageClient()
         self.minio_client = self.storage_client.client
 
-    def create_webhook_config(self, webhook_url: str, bucket_name: str = None) -> bool:
+    def create_webhook_config(self, webhook_url: str, bucket_name: str | None = None) -> bool:
         """Webhook設定を作成する
 
         Args:
@@ -120,10 +113,9 @@ class WebhookSetup:
                 logger.info("✅ Webhook connection test successful")
                 logger.info(f"Response: {response.json()}")
                 return True
-            else:
-                logger.error(f"❌ Webhook connection test failed: {response.status_code}")
-                logger.error(f"Response: {response.text}")
-                return False
+            logger.error(f"❌ Webhook connection test failed: {response.status_code}")
+            logger.error(f"Response: {response.text}")
+            return False
 
         except Exception as e:
             logger.error(f"❌ Webhook connection test error: {e}")
@@ -141,7 +133,7 @@ class WebhookSetup:
 
             logger.info("📋 Current webhook configurations:")
             # 仮の実装
-            configs = []
+            configs: list[dict] = []
             logger.info("No webhook configurations found")
 
             return configs

@@ -11,7 +11,12 @@ from unittest.mock import patch
 import pytest
 import yaml
 from db.database import DatabaseError, SessionLocal
-from models.members import HumanMember, HumanMemberProfile, VirtualMember, VirtualMemberProfile
+from models.members import (
+    HumanMember,
+    HumanMemberProfile,
+    VirtualMember,
+    VirtualMemberProfile,
+)
 from operations.member_registration import (
     register_human_member_from_yaml,
     register_virtual_member_from_yaml,
@@ -32,7 +37,7 @@ def db_session():
     # テスト分離のためのクリーンアップは最小限に
     try:
         db.rollback()  # 未完了のトランザクションをロールバック
-    except:
+    except Exception:
         pass
     finally:
         db.close()

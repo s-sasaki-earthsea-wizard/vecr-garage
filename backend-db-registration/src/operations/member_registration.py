@@ -46,14 +46,14 @@ def register_human_member_from_yaml(yaml_path: str):
         storage_client = StorageClient()
         yaml_data = storage_client.read_yaml_from_minio(yaml_path)
 
-        # YAMLからデータを取得
-        name = yaml_data.get("name")
+        # 人間メンバーの必須フィールドを検証（DBセッション前に実行）
+        YAMLValidator.validate_human_member_yaml(yaml_data)
+
+        # バリデーション済みなので型は保証されている
+        name: str = yaml_data["name"]  # type: ignore[assignment]
 
         # DBセッションを開始
         db = SessionLocal()
-
-        # 人間メンバーの必須フィールドを検証
-        YAMLValidator.validate_human_member_yaml(yaml_data)
 
         # UPSERT操作でメンバーを登録または更新
         member = upsert_human_member(db, name, yaml_path)
@@ -69,16 +69,10 @@ def register_human_member_from_yaml(yaml_path: str):
 
         from db.database import upsert_human_member_profile
 
-        profile = upsert_human_member_profile(db, member.member_id, member.member_uuid, bio)
+        upsert_human_member_profile(db, member.member_id, member.member_uuid, bio)
 
         # 全ての処理が成功した場合のみコミット
         db.commit()
-
-        # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
-        member_name = member.member_name
-        member_uuid = member.member_uuid
-        yml_file_uri = member.yml_file_uri
-        member_id = member.member_id
 
         logger.info(f"Human member {name} upserted successfully from {yaml_path}")
         return member
@@ -157,14 +151,14 @@ def register_virtual_member_from_yaml(yaml_path: str):
         storage_client = StorageClient()
         yaml_data = storage_client.read_yaml_from_minio(yaml_path)
 
-        # YAMLからデータを取得
-        name = yaml_data.get("name")
+        # 仮想メンバーの必須フィールドを検証（DBセッション前に実行）
+        YAMLValidator.validate_virtual_member_yaml(yaml_data)
+
+        # バリデーション済みなので型は保証されている
+        name: str = yaml_data["name"]  # type: ignore[assignment]
 
         # DBセッションを開始
         db = SessionLocal()
-
-        # 仮想メンバーの必須フィールドを検証
-        YAMLValidator.validate_virtual_member_yaml(yaml_data)
 
         # UPSERT操作でメンバーを登録または更新
         member = upsert_virtual_member(db, name, yaml_path)
@@ -194,18 +188,12 @@ def register_virtual_member_from_yaml(yaml_path: str):
 
         from db.database import upsert_virtual_member_profile
 
-        profile = upsert_virtual_member_profile(
+        upsert_virtual_member_profile(
             db, member.member_id, member.member_uuid, llm_model, custom_prompt
         )
 
         # 全ての処理が成功した場合のみコミット
         db.commit()
-
-        # セッション閉じる前に必要な属性を読み込む（DetachedInstanceError対策）
-        member_name = member.member_name
-        member_uuid = member.member_uuid
-        yml_file_uri = member.yml_file_uri
-        member_id = member.member_id
 
         logger.info(f"Virtual member {name} upserted successfully from {yaml_path}")
         return member
@@ -305,7 +293,8 @@ def register_human_members_batch(yaml_paths: list):
 
         # 全てのバリデーションが成功した場合のみ、データベース操作を実行
         for yaml_path, yaml_data in yaml_data_list:
-            name = yaml_data.get("name")
+            # バリデーション済みなので型は保証されている
+            name: str = yaml_data["name"]  # type: ignore[assignment]
 
             # UPSERT操作でメンバーを登録または更新（まだコミットしない）
             member = upsert_human_member(db, name, yaml_path)
@@ -385,7 +374,8 @@ def register_virtual_members_batch(yaml_paths: list):
 
         # 全てのバリデーションが成功した場合のみ、データベース操作を実行
         for yaml_path, yaml_data in yaml_data_list:
-            name = yaml_data.get("name")
+            # バリデーション済みなので型は保証されている
+            name: str = yaml_data["name"]  # type: ignore[assignment]
 
             # UPSERT操作でメンバーを登録または更新（まだコミットしない）
             member = upsert_virtual_member(db, name, yaml_path)

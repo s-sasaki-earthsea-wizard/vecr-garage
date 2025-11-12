@@ -1,7 +1,15 @@
 import datetime
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -51,7 +59,10 @@ class HumanMemberProfile(Base):
     profile_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     member_id = Column(Integer, ForeignKey("human_members.member_id"), nullable=False)
     member_uuid = Column(
-        UUID(as_uuid=True), ForeignKey("human_members.member_uuid"), nullable=False, unique=True
+        UUID(as_uuid=True),
+        ForeignKey("human_members.member_uuid"),
+        nullable=False,
+        unique=True,
     )
     bio = Column(Text)
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
@@ -75,7 +86,10 @@ class VirtualMemberProfile(Base):
     profile_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     member_id = Column(Integer, ForeignKey("virtual_members.member_id"), nullable=False)
     member_uuid = Column(
-        UUID(as_uuid=True), ForeignKey("virtual_members.member_uuid"), nullable=False, unique=True
+        UUID(as_uuid=True),
+        ForeignKey("virtual_members.member_uuid"),
+        nullable=False,
+        unique=True,
     )
     llm_model = Column(String(50), nullable=False)
     custom_prompt = Column(Text)
@@ -111,7 +125,10 @@ class MemberRelationship(Base):
     # ユニーク制約の追加
     __table_args__ = (
         UniqueConstraint(
-            "from_member_uuid", "to_member_uuid", "relationship_type", name="unique_relationship"
+            "from_member_uuid",
+            "to_member_uuid",
+            "relationship_type",
+            name="unique_relationship",
         ),
     )
 

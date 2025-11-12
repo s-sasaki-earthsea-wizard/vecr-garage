@@ -43,7 +43,7 @@ backend-db-registration-register-members: ## Register members from YAML files (b
 	docker exec vecr-garage-backend-db-registration python -m src.scripts.register_members
 	@echo "Batch registration completed!"
 
-backend-db-registration-register-members-single: ## Register members from YAML files (individual mode)  
+backend-db-registration-register-members-single: ## Register members from YAML files (individual mode)
 	@echo "Registering members in individual mode..."
 	docker exec vecr-garage-backend-db-registration python -m src.scripts.register_members_single
 	@echo "Individual registration completed!"
@@ -53,7 +53,7 @@ backend-db-registration-register-human: ## Register human members only (batch mo
 	docker exec vecr-garage-backend-db-registration python -m src.scripts.register_members --human
 	@echo "Human member registration completed!"
 
-backend-db-registration-register-virtual: ## Register virtual members only (batch mode) 
+backend-db-registration-register-virtual: ## Register virtual members only (batch mode)
 	@echo "Registering virtual members only..."
 	docker exec vecr-garage-backend-db-registration python -m src.scripts.register_members --virtual
 	@echo "Virtual member registration completed!"

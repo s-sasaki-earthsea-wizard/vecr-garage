@@ -5,7 +5,6 @@
 """
 
 import logging
-from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ class PromptValidator:
     MAX_PROMPT_LENGTH = 100000
 
     @staticmethod
-    def validate(prompt: Optional[str]) -> Tuple[bool, str]:
+    def validate(prompt: str | None) -> tuple[bool, str]:
         """
         プロンプトをバリデーション
 

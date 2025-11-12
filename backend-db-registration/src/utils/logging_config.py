@@ -12,7 +12,10 @@ from pathlib import Path
 
 
 def setup_logging(
-    module_name: str = None, log_level: str = None, log_format: str = None, log_file: str = None
+    module_name: str | None = None,
+    log_level: str | None = None,
+    log_format: str | None = None,
+    log_file: str | None = None,
 ) -> logging.Logger:
     """
     統一されたロギング設定を行う
@@ -89,7 +92,7 @@ def setup_logging(
     return logger
 
 
-def get_logger(module_name: str = None) -> logging.Logger:
+def get_logger(module_name: str | None = None) -> logging.Logger:
     """
     既存のロガーを取得する（setup_loggingが既に呼ばれている場合）
 

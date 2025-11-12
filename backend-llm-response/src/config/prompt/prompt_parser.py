@@ -5,7 +5,6 @@
 """
 
 import logging
-from typing import Optional
 
 from config.prompt.prompt_loader import PromptLoader
 from config.prompt.prompt_validator import PromptValidator
@@ -17,7 +16,7 @@ class PromptParser:
     """プロンプトパーサー（公開API - Facade）"""
 
     @staticmethod
-    def get_prompt(bot_name: str, source: str = "file") -> Optional[str]:
+    def get_prompt(bot_name: str, source: str = "file") -> str | None:
         """
         Bot名からシステムプロンプトを取得
 

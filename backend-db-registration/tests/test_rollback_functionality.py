@@ -2,19 +2,14 @@
 """
 ロールバック機能とバリデーション機能をテストするスクリプト
 """
-import os
 import sys
 
-# プロジェクトのルートディレクトリをパスに追加
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
-
-from src.operations.member_registration import (
+from operations.member_registration import (
     register_human_member_from_yaml,
     register_virtual_member_from_yaml,
 )
-from src.utils.logging_config import setup_logging
-from src.validation.yaml_validator import ValidationError, YAMLValidator
+from utils.logging_config import setup_logging
+from validation.yaml_validator import ValidationError, YAMLValidator
 
 logger = setup_logging(__name__)
 
@@ -92,7 +87,10 @@ def test_validation_directly():
             print(f"   Missing fields: {', '.join(e.missing_fields)}")
 
     # 無効な仮想メンバーデータ（Darcy.ymlと同じ内容）
-    invalid_virtual_data = {"custom_prompt": "I'm a virtual member.", "llm_model": "gpt-4o"}
+    invalid_virtual_data = {
+        "custom_prompt": "I'm a virtual member.",
+        "llm_model": "gpt-4o",
+    }
     print("\n2. Testing invalid virtual member data directly (Darcy.yml content)")
     try:
         YAMLValidator.validate_virtual_member_yaml(invalid_virtual_data)

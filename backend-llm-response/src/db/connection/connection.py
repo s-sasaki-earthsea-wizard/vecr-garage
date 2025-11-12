@@ -30,11 +30,11 @@ class DBMemberConnection:
 
     def db_member_connection_check(self) -> Session:
         try:
-            Session = sessionmaker(bind=self.engine)
+            session_maker = sessionmaker(bind=self.engine)
             print("✅ Database connection established successfully.")
-            return Session()
+            return session_maker()
         except Exception as e:
-            raise Exception(f"❌ Error establishing database connection: {e}")
+            raise Exception(f"❌ Error establishing database connection: {e}") from e
 
 
 def main():

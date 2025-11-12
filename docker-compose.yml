@@ -140,7 +140,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-  
+
   minio-setup:
     image: minio/mc
     environment:
@@ -273,4 +273,3 @@ volumes:
   data:
     name: ${VOLUME_NAME}
     driver: local
-

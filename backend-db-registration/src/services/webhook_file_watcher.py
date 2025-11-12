@@ -286,13 +286,18 @@ class WebhookFileWatcherService:
                 message += f", {len(errors)} errors occurred"
 
             return WebhookResponse(
-                success=success, message=message, processed_files=processed_files, errors=errors
+                success=success,
+                message=message,
+                processed_files=processed_files,
+                errors=errors,
             )
 
         except Exception as e:
             logger.error(f"💥 Error handling webhook: {e}")
             return WebhookResponse(
-                success=False, message=f"Error handling webhook: {str(e)}", errors=[str(e)]
+                success=False,
+                message=f"Error handling webhook: {str(e)}",
+                errors=[str(e)],
             )
 
     def _cleanup_processed_events(self, max_events: int = 1000):

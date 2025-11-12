@@ -65,7 +65,7 @@ class DatabaseManager:
 
             # 接続テスト
             with self.engine.connect() as conn:
-                result = conn.execute(text("SELECT 1"))
+                conn.execute(text("SELECT 1"))
                 logger.info("✅ SQLAlchemy接続成功")
                 return True
 
@@ -271,7 +271,7 @@ class DatabaseManager:
 
                 # SQL文を動的に生成
                 set_clauses = []
-                for col in filtered_data.keys():
+                for col in filtered_data:
                     if col == "updated_at" and filtered_data[col] == "NOW()":
                         set_clauses.append(f"{col} = NOW()")
                     else:
@@ -367,12 +367,11 @@ class DatabaseManager:
         # 主キーが見つからない場合は、一般的な命名規則で推測
         if table_name.endswith("_members"):
             return "member_id"
-        elif table_name.endswith("_profiles"):
+        if table_name.endswith("_profiles"):
             return "profile_id"
-        elif table_name.endswith("_relationships"):
+        if table_name.endswith("_relationships"):
             return "relationship_id"
-        else:
-            return "id"  # デフォルト
+        return "id"  # デフォルト
 
     def sync_related_tables(self, table_name, record_id, updated_data):
         """メンバーテーブル更新時に関連するプロファイルテーブルも同期更新"""
@@ -409,7 +408,7 @@ class DatabaseManager:
                         if profile_updates:
                             profile_updates["updated_at"] = "NOW()"
                             set_clauses = []
-                            for col in profile_updates.keys():
+                            for col in profile_updates:
                                 if col == "updated_at":
                                     set_clauses.append(f"{col} = NOW()")
                                 else:
@@ -498,9 +497,8 @@ def test_database_connection():
             logger.info(f"テーブル '{table}': {count} 件")
 
         return True
-    else:
-        logger.error("💥 接続テストが失敗しました")
-        return False
+    logger.error("💥 接続テストが失敗しました")
+    return False
 
 
 if __name__ == "__main__":

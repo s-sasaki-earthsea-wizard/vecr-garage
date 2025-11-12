@@ -2,7 +2,12 @@ import logging
 import os
 import uuid
 
-from models.members import HumanMember, HumanMemberProfile, VirtualMember, VirtualMemberProfile
+from models.members import (
+    HumanMember,
+    HumanMemberProfile,
+    VirtualMember,
+    VirtualMemberProfile,
+)
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -25,14 +30,14 @@ class DatabaseError(Exception):
         original_error (Exception): 元の例外オブジェクト（デバッグ用）
     """
 
-    def __init__(self, message: str, original_error: Exception = None):
+    def __init__(self, message: str, original_error: Exception | None = None):
         self.message = message
         self.original_error = original_error
         super().__init__(self.message)
 
 
 # 人間メンバー操作
-def create_human_member(db: Session, name: str, yml_file_uri: str = None):
+def create_human_member(db: Session, name: str, yml_file_uri: str | None = None):
     """人間メンバーのデータベースオブジェクトを作成する
 
     新しいUUIDを生成し、指定された名前でHumanMemberオブジェクトを作成します。
@@ -63,10 +68,10 @@ def create_human_member(db: Session, name: str, yml_file_uri: str = None):
     except Exception as e:
         error_msg = f"Failed to create human member '{name}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
-def save_human_member(db: Session, name: str, yml_file_uri: str = None):
+def save_human_member(db: Session, name: str, yml_file_uri: str | None = None):
     """人間メンバーを作成してデータベースに保存する（完全なトランザクション管理）
 
     人間メンバーオブジェクトを作成し、データベースに保存します。
@@ -98,7 +103,7 @@ def save_human_member(db: Session, name: str, yml_file_uri: str = None):
         db.rollback()
         error_msg = f"Failed to save human member '{name}': {str(e)}. Database transaction has been rolled back."
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def get_human_member_by_name(db: Session, name: str):
@@ -129,7 +134,7 @@ def get_human_member_by_name(db: Session, name: str):
     except Exception as e:
         error_msg = f"Failed to get human member '{name}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def get_human_member_by_uri(db: Session, yml_file_uri: str):
@@ -153,7 +158,7 @@ def get_human_member_by_uri(db: Session, yml_file_uri: str):
     except Exception as e:
         error_msg = f"Failed to get human member by URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def upsert_human_member(db: Session, name: str, yml_file_uri: str):
@@ -208,11 +213,11 @@ def upsert_human_member(db: Session, name: str, yml_file_uri: str):
     except Exception as e:
         error_msg = f"Failed to upsert human member '{name}' for URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 # 仮想メンバー操作
-def create_virtual_member(db: Session, name: str, yml_file_uri: str = None):
+def create_virtual_member(db: Session, name: str, yml_file_uri: str | None = None):
     """仮想メンバーのデータベースオブジェクトを作成する
 
     新しいUUIDを生成し、指定された名前でVirtualMemberオブジェクトを作成します。
@@ -243,10 +248,10 @@ def create_virtual_member(db: Session, name: str, yml_file_uri: str = None):
     except Exception as e:
         error_msg = f"Failed to create virtual member '{name}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
-def save_virtual_member(db: Session, name: str, yml_file_uri: str = None):
+def save_virtual_member(db: Session, name: str, yml_file_uri: str | None = None):
     """仮想メンバーを作成してデータベースに保存する（完全なトランザクション管理）
 
     仮想メンバーオブジェクトを作成し、データベースに保存します。
@@ -278,7 +283,7 @@ def save_virtual_member(db: Session, name: str, yml_file_uri: str = None):
         db.rollback()
         error_msg = f"Failed to save virtual member '{name}': {str(e)}. Database transaction has been rolled back."
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def get_virtual_member_by_name(db: Session, name: str):
@@ -309,7 +314,7 @@ def get_virtual_member_by_name(db: Session, name: str):
     except Exception as e:
         error_msg = f"Failed to get virtual member '{name}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def get_virtual_member_by_uri(db: Session, yml_file_uri: str):
@@ -333,7 +338,7 @@ def get_virtual_member_by_uri(db: Session, yml_file_uri: str):
     except Exception as e:
         error_msg = f"Failed to get virtual member by URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
@@ -388,11 +393,13 @@ def upsert_virtual_member(db: Session, name: str, yml_file_uri: str):
     except Exception as e:
         error_msg = f"Failed to upsert virtual member '{name}' for URI '{yml_file_uri}': {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 # プロフィール操作
-def upsert_human_member_profile(db: Session, member_id: int, member_uuid: str, bio: str = None):
+def upsert_human_member_profile(
+    db: Session, member_id: int, member_uuid: str, bio: str | None = None
+):
     """人間メンバープロフィールのUPSERT処理（ON CONFLICT DO UPDATE使用）"""
     try:
         sql = text(
@@ -429,11 +436,15 @@ def upsert_human_member_profile(db: Session, member_id: int, member_uuid: str, b
         # NOTE: ロールバックは呼び出し元で実行
         error_msg = f"Failed to upsert human member profile for member {member_uuid}: {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e
 
 
 def upsert_virtual_member_profile(
-    db: Session, member_id: int, member_uuid: str, llm_model: str, custom_prompt: str = None
+    db: Session,
+    member_id: int,
+    member_uuid: str,
+    llm_model: str,
+    custom_prompt: str | None = None,
 ):
     """仮想メンバープロフィールのUPSERT処理（ON CONFLICT DO UPDATE使用）"""
     try:
@@ -481,4 +492,4 @@ def upsert_virtual_member_profile(
         # NOTE: ロールバックは呼び出し元で実行
         error_msg = f"Failed to upsert virtual member profile for member {member_uuid}: {str(e)}"
         logger.error(error_msg)
-        raise DatabaseError(error_msg, e)
+        raise DatabaseError(error_msg, e) from e

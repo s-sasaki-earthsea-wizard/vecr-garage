@@ -9,7 +9,6 @@ import logging
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -59,7 +58,7 @@ class TimesScheduler:
         self.scheduler = AsyncIOScheduler(timezone=self.jst)
 
         # 1日1回投稿済みフラグ（日付ベース管理）
-        self.last_posted_date: Optional[str] = None
+        self.last_posted_date: str | None = None
 
         # 話題リスト読み込み
         self.topics = self._load_topics()
@@ -88,7 +87,7 @@ class TimesScheduler:
             raise FileNotFoundError(f"話題リストファイルが見つかりません: {topics_file}")
 
         try:
-            with open(topics_file, encoding="utf-8") as f:
+            with topics_file.open(encoding="utf-8") as f:
                 data = json.load(f)
                 topics = data.get("topics", [])
 
@@ -99,7 +98,7 @@ class TimesScheduler:
                 return topics
 
         except json.JSONDecodeError as e:
-            raise ValueError(f"JSON形式が不正です: {e}")
+            raise ValueError(f"JSON形式が不正です: {e}") from e
 
     def start(self):
         """スケジューラー起動"""
@@ -121,7 +120,10 @@ class TimesScheduler:
             logger.info(f"🧪 テストモード有効: {log_msg}")
 
         self.scheduler.add_job(
-            self._post_random_topic, trigger=trigger, id="times_mode_daily_post", name=job_name
+            self._post_random_topic,
+            trigger=trigger,
+            id="times_mode_daily_post",
+            name=job_name,
         )
 
         self.scheduler.start()
@@ -130,7 +132,7 @@ class TimesScheduler:
     def _create_production_trigger(self):
         """本番モード用のトリガーを作成（平日のみ9:00、jitter 9時間）"""
         return CronTrigger(
-            day_of_week='mon-fri',  # 月曜日〜金曜日のみ実行
+            day_of_week="mon-fri",  # 月曜日〜金曜日のみ実行
             hour=9,
             minute=0,
             second=0,
@@ -152,11 +154,10 @@ class TimesScheduler:
         today = datetime.now(self.jst).strftime("%Y-%m-%d")
 
         # 本番モードのみ1日1回制御を実施
-        if not self.test_mode:
+        if not self.test_mode and self.last_posted_date == today:
             # 今日既に投稿済みならスキップ
-            if self.last_posted_date == today:
-                logger.info(f"⏭️ 本日({today})は既に投稿済みのためスキップ")
-                return
+            logger.info(f"⏭️ 本日({today})は既に投稿済みのためスキップ")
+            return
 
         logger.info(f"📝 Times Mode投稿開始: {today}")
 
@@ -188,7 +189,8 @@ class TimesScheduler:
 
                 except Exception as e:
                     logger.error(
-                        f"❌ Times Mode投稿エラー (チャンネルID: {channel_id}): {e}", exc_info=True
+                        f"❌ Times Mode投稿エラー (チャンネルID: {channel_id}): {e}",
+                        exc_info=True,
                     )
 
             # 投稿済みフラグ更新

@@ -108,12 +108,12 @@ class YAMLGenerator:
         return yaml_content
 
     @staticmethod
-    def generate_yaml_filename(member_name: str, member_type: str) -> str:
+    def generate_yaml_filename(member_name: str, _member_type: str) -> str:
         """メンバー名からYAMLファイル名を生成
 
         Args:
             member_name (str): メンバー名
-            member_type (str): メンバータイプ ('human' または 'virtual')
+            _member_type (str): メンバータイプ ('human' または 'virtual')（現在未使用）
 
         Returns:
             str: 生成されたファイル名
@@ -156,9 +156,10 @@ class YAMLGenerator:
             errors["member_name"] = "メンバー名は必須です"
 
         # 仮想メンバーの追加チェック
-        if member_type == "virtual":
-            if not form_data.get("llm_model") or not form_data["llm_model"].strip():
-                errors["llm_model"] = "LLMモデルは必須です"
+        if member_type == "virtual" and (
+            not form_data.get("llm_model") or not form_data["llm_model"].strip()
+        ):
+            errors["llm_model"] = "LLMモデルは必須です"
 
         # 文字数制限チェック
         if form_data.get("member_name") and len(form_data["member_name"].strip()) > 50:

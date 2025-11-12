@@ -4,12 +4,6 @@
 member-managerサービスがdb-memberサービスに接続できるかをテスト
 """
 
-import os
-import sys
-
-# 親ディレクトリをパスに追加してdatabaseモジュールをインポート
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from database import DatabaseManager
 
 

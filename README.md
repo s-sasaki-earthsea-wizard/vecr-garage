@@ -43,35 +43,38 @@ rm -rf aws awscliv2.zip
 ### プロジェクトのセットアップ
 
 1. リポジトリをクローン
-```bash
-git clone https://github.com/s-sasaki-earthsea-wizard/vecr-garage.git
-cd vecr-garage
-```
 
-2. 環境変数ファイルの作成
-```bash
-cp .env.example .env
-```
+   ```bash
+   git clone https://github.com/s-sasaki-earthsea-wizard/vecr-garage.git
+   cd vecr-garage
+   ```
 
-- 環境変数は実際のものに書き換えてください
+1. 環境変数ファイルの作成
 
-3. Discord Webhook設定（オプション）
-```bash
-# Webhook設定ファイルを作成
-cp config/discord_webhooks.example.json config/discord_webhooks.json
+   ```bash
+   cp .env.example .env
+   ```
 
-# Webhook URLを実際のものに書き換える
-# config/discord_webhooks.json を編集
+   - 環境変数は実際のものに書き換えてください
 
-# .envrcファイルをコピー（自動読み込み用）
-cp .envrc.example .envrc
-```
+1. Discord Webhook設定（オプション）
 
-4. コンテナのビルドと起動
+   ```bash
+   # Webhook設定ファイルを作成
+   cp config/discord_webhooks.example.json config/discord_webhooks.json
 
-```bash
-make docker-build-up
-```
+   # Webhook URLを実際のものに書き換える
+   # config/discord_webhooks.json を編集
+
+   # .envrcファイルをコピー（自動読み込み用）
+   cp .envrc.example .envrc
+   ```
+
+1. コンテナのビルドと起動
+
+   ```bash
+   make docker-build-up
+   ```
 
 **Note**: `.envrc`が存在する場合、`make docker-up`/`docker-build-up`実行時に自動的にDiscord Webhook設定が読み込まれます。
 
@@ -128,7 +131,7 @@ make s3-ls
 
 ##### テストケース構造
 
-**新しいディレクトリ構造**: 
+**新しいディレクトリ構造**:
 
 - `data/samples/`: 正常系テストファイル（実際の登録用データ）
   - `human_members/`: 人間メンバー（rin.yml, syota.yml）
@@ -154,6 +157,7 @@ Tests completed!
 ```
 
 **テストケース概要**:
+
 - 正常系: 4つのサンプルファイルからの正常な登録テスト
 - 異常系: 5つの異常系ファイルでのバリデーションエラー検証テスト
 - 合計25テストケース（既存16 + 新規9）が全て成功
@@ -188,6 +192,7 @@ db-member-psql
 メンバー管理のWebインターフェースです。認証システム付きで以下の機能を提供：
 
 **アクセス方法:**
+
 ```bash
 # ブラウザでアクセス（認証が必要）
 http://localhost:8000/
@@ -200,10 +205,12 @@ http://localhost:8000/login
 `.env.example`ファイルの`ADMIN_USERNAME`と`ADMIN_PASSWORD`を参照してください。
 
 デフォルト:
+
 - ユーザー名: `Admin`
 - パスワード: `SamplePassword`
 
 **機能:**
+
 - メンバーデータのテーブル表示・編集
 - レコードの追加・更新・削除
 - 認証システム（ログイン/ログアウト）
@@ -214,6 +221,7 @@ http://localhost:8000/login
 Discord Webhookを使用してメッセージを送信する機能を提供しています。
 
 **セットアップ:**
+
 ```bash
 # 1. Webhook設定ファイルを作成
 cp config/discord_webhooks.example.json config/discord_webhooks.json
@@ -229,6 +237,7 @@ make docker-up
 ```
 
 **使用可能なコマンド:**
+
 ```bash
 # Webhook一覧表示
 make discord-webhooks-list
@@ -255,12 +264,14 @@ make test-integration
 ```
 
 **セキュリティ:**
+
 - `config/discord_webhooks.json`は`.gitignore`で保護
 - `.envrc`も`.gitignore`で保護
 - コンテナにはファイルをマウントせず、環境変数として渡す
 - AWS Secrets Managerへの移行準備完了
 
 **統合テスト:**
+
 - `make test-integration`でDiscord Webhookテストも自動実行
 - HTTP 204レスポンス確認（送信成功）
 - 実際のメッセージ到達は各Discordチャンネルで目視確認推奨
@@ -270,6 +281,7 @@ make test-integration
 Claude APIを使用してプロンプトを送信し、応答を取得する機能を提供しています。
 
 **セットアップ:**
+
 ```bash
 # 1. .envファイルにAPIキーを設定
 ANTHROPIC_API_KEY=sk-ant-xxxxx
@@ -282,6 +294,7 @@ make docker-up
 ```
 
 **使用可能なコマンド:**
+
 ```bash
 # 接続テスト
 make claude-test
@@ -294,6 +307,7 @@ make claude-help
 ```
 
 **実行例:**
+
 ```bash
 $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてください"
 🤖 Claude APIにプロンプトを送信中...
@@ -304,6 +318,7 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 ```
 
 **セキュリティ:**
+
 - APIキーは`.env`で管理（.gitignore保護）
 - コンテナに環境変数として渡される
 
@@ -312,6 +327,7 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 Discordチャンネルで@メンションを検知し、Claude APIで自動応答するBot機能を提供しています。
 
 **セットアップ:**
+
 ```bash
 # 1. Discord Developer Portalで以下を設定:
 #    - Botの作成とToken取得
@@ -334,6 +350,7 @@ make docker-build-up
 ```
 
 **使用可能なコマンド:**
+
 ```bash
 # Bot起動ログ確認
 make discord-bot-logs
@@ -349,11 +366,13 @@ make discord-bot-help
 ```
 
 **使い方:**
+
 1. Discordチャンネルで `@🤖🍡華扇 質問内容` とメンション
-2. BotがClaude APIを使用して自動応答
-3. 2000文字制限に対応（超過時は省略表示）
+1. BotがClaude APIを使用して自動応答
+1. 2000文字制限に対応（超過時は省略表示）
 
 **カスタムプロンプト設定:**
+
 ```bash
 # 1. プロンプトファイルを作成（Bot名と一致させる）
 vim backend-llm-response/prompts/bot_characters/🤖🍡華扇.txt
@@ -369,55 +388,41 @@ make docker-restart
 ```
 
 **プロンプトファイル構造:**
+
 - `backend-llm-response/prompts/bot_characters/🤖🍡華扇.txt`: 華扇のキャラクター定義
 - `backend-llm-response/prompts/bot_characters/example.txt`: テンプレート
 - ファイル名はconfig/discord_tokens.jsonのBot名と一致させる
 
 **動作要件:**
+
 - Discord Developer PortalでMESSAGE CONTENT INTENTを有効化（必須）
 - Bot Permissions: View Channels, Send Messages, Create Public Threads
 - 対象チャンネルは`config/discord_tokens.json`で設定
 
 **セキュリティ:**
+
 - Bot Tokenは`config/discord_tokens.json`で管理（.gitignore保護）
 - プロンプトファイルはGit管理対象（チーム共有）
 - コンテナにread-onlyでマウント
 
 ### CI/CD（コード品質管理）
 
-Docker化されたCI/CDツールで全Pythonサービスのコード品質チェックを実行できます。
+🐳 **Docker化されたCI/CD環境で完全な再現性を実現**
 
-**利用可能なコマンド:**
+すべてのコード品質チェックは`ci-runner`コンテナ内で実行されるため、全開発者が同一環境でチェックできます。
+
+#### 初回セットアップ
+
 ```bash
-# CI/CDコンテナのビルド（初回のみ）
+# 1. CI/CDコンテナのビルド
 make ci-build
 
-# コードの自動フォーマット
-make format
-
-# Lintチェック
-make lint
-
-# Lint問題の自動修正
-make lint-fix
-
-# 型チェック
-make typecheck
-
-# フォーマットチェック（修正なし）
-make format-check
-
-# 全チェック実行（PR前推奨）
-make ci-all
-
-# CI/CDコンテナのシェル起動（デバッグ用）
-make ci-shell
-
-# コマンド一覧表示
-make ci-help
+# 2. Git Hooksのインストール（推奨）
+make ci-pre-commit-install
 ```
 
-**推奨ワークフロー:**
+#### 開発ワークフロー（推奨）
+
 ```bash
 # 1. コードを自動整形
 make format
@@ -425,37 +430,82 @@ make format
 # 2. Lint問題を自動修正
 make lint-fix
 
-# 3. 全チェック実行
+# 3. Markdownを自動修正
+make markdown-fix
+
+# 4. 全チェック実行（⭐PR前に必須）
 make ci-all
 
-# 4. 問題なければコミット
+# 5. コミット（Git Hooksが自動実行）
 git commit
 ```
 
-**チェック内容:**
+#### 利用可能なコマンド
+
+**コード品質チェック（すべてci-runnerコンテナで実行）:**
+
+```bash
+make lint            # Ruff linterチェック
+make format          # Black自動フォーマット
+make lint-fix        # Lint問題の自動修正
+make format-check    # フォーマットチェック（修正なし）
+make typecheck       # mypy型チェック
+make markdown-lint   # Markdownフォーマットチェック
+make markdown-fix    # Markdown自動修正
+make ci-all          # 全チェック実行（⭐推奨）
+```
+
+**Pre-commit Hooks（ci-runnerコンテナ統合）:**
+
+```bash
+make ci-pre-commit-install     # Git Hooksインストール（推奨）
+make ci-pre-commit-run         # Pre-commit全ファイル実行
+make ci-pre-commit-run-staged  # Pre-commitステージファイルのみ実行
+```
+
+**デバッグ:**
+
+```bash
+make ci-shell   # ci-runnerコンテナのシェル起動
+make ci-help    # コマンド一覧表示
+```
+
+#### チェック内容
+
 - **Black**: Pythonコードの自動フォーマット（PEP 8準拠）
 - **Ruff**: 高速リンター（import整列、命名規則、バグ検出等）
 - **mypy**: 型チェック（backend-db-registration、backend-llm-response）
-- **Pre-commit Hooks（オプション）**: ローカル環境でのコミット前自動チェック
+- **markdownlint**: Markdown記法チェック
+- **detect-secrets**: 機密情報検出（APIキー、トークン等）
+- **その他**: YAML/JSON構文チェック、末尾空白削除、etc.
 
-**Pre-commit Hooks（任意）:**
+#### Git Hooks（機密情報保護）
 
-Docker経由の実行を推奨していますが、ローカル環境でコミット前に自動チェックしたい場合:
+`make ci-pre-commit-install`でインストール後、`git commit`時に自動実行：
 
-```bash
-# ホスト環境にインストール（任意）
-pip install pre-commit
-pre-commit install
+**検出対象:**
 
-# 以降はgit commit時に自動実行される
-```
+- ✅ Anthropic API Keys (`sk-ant-xxxxx`)
+- ✅ Discord Bot Tokens (`MTxxxxxxxxxx...`)
+- ✅ Discord Webhook URLs (`discord.com/api/webhooks/...`)
+- ✅ SSH Private Keys
+- ✅ AWS Access Keys
+- ✅ データベースパスワード（非.envファイル）
+
+**動作:**
+
+- 機密情報を検出した場合はコミットをブロック
+- `.example`ファイルは自動除外
+- すべてci-runnerコンテナ内で実行（環境差異なし）
 
 **対象サービス:**
+
 - backend-db-registration
 - backend-llm-response
 - member-manager
 
 **設定ファイル:**
+
 - `.pre-commit-config.yaml`: Pre-commit hooks設定
 - `backend-*/pyproject.toml`: Black/Ruff/mypy設定
 - `ci-cd/Dockerfile`: CI/CDツールコンテナ定義
@@ -463,7 +513,6 @@ pre-commit install
 #### TBD
 
 - バックエンドサービス(LLM応答): `make backend-llm-response-shell`
-
 
 ## ネットワーク構成
 
@@ -473,43 +522,118 @@ pre-commit install
     - データベース操作やプロンプト生成、LLMからの応答の送受信を行います。
   - member-database
     - メンバー情報のデータベース、PostgreSQLを利用
-  - storage 
+  - storage
     - ユーザーのアイコン画像やカスタムプロンプトを保存するストレージ、将来的なS3への以降を見越してMinIOを利用
-  - chat-log-database 
+  - chat-log-database
     - メンバー間のチャットログのデータベース, 暫定的にlocalstack/DynamoDBを使用 (予定)
   - member-manager
-      - ブラウザ操作でメンバー管理を行うWebインターフェース。認証システム付き。
+    - ブラウザ操作でメンバー管理を行うWebインターフェース。認証システム付き。
 
 各サービスはDocker Composeのネットワーク機能により、プロジェクト名をプレフィックスとしたネットワーク内で通信可能です。
 
 ## セキュリティ注意事項
+
+### 機密情報管理（重要）
+
+このプロジェクトでは、API キー、トークン、Webhook URL等の機密情報を適切に管理するため、以下の仕組みを実装しています。
+
+**保護対象の機密情報:**
+
+- Anthropic API Key (`ANTHROPIC_API_KEY`)
+- Discord Bot Token (`config/discord_tokens.json`)
+- Discord Webhook URL (`config/discord_webhooks.json`)
+- データベース認証情報 (`.env`)
+- MinIO認証情報 (`.env`)
+
+**Pre-commit Hooksによる保護:**
+
+コミット前に自動的に機密情報を検出してブロックします。
+
+```bash
+# 1. Pre-commit hooksのインストール（初回のみ）
+make test-pre-commit-install
+
+# 2. 動作確認テスト
+make test-pre-commit-secrets
+```
+
+**インストール後:**
+
+- `git commit`実行時に自動チェック
+- 機密情報が検出された場合はコミットをブロック
+- `.example`ファイルは除外される（ダミー値のため）
+
+**詳細情報:**
+
+- 完全なセキュリティガイドライン: [docs/security/secrets-management.md](docs/security/secrets-management.md)
+- 万が一コミットしてしまった場合の対処法も記載
+
+### .secrets.baseline 運用ガイドライン
+
+このプロジェクトでは`.secrets.baseline`をバージョニングして、チーム間でfalse-positiveを統一管理します。
+
+**基本ルール:**
+
+1. **ベースライン更新時は必ず内容を確認**
+
+   ```bash
+   make secrets-baseline-update
+   git diff .secrets.baseline  # 必ず確認！
+   ```
+
+2. **本物の秘密鍵が含まれていないか慎重にチェック**
+   - API キー、トークン、パスワードなどの実際の値が含まれていないか
+   - 疑わしい場合はコミットせず、チームで相談
+
+3. **マージコンフリクト時の対応**
+
+   ```bash
+   git pull  # コンフリクト発生
+   make secrets-baseline-merge  # 自動マージ
+   git add .secrets.baseline && git commit
+   ```
+
+**利用可能なコマンド:**
+
+```bash
+make secrets-help              # ヘルプ表示
+make secrets-baseline-update   # ベースライン更新
+make secrets-baseline-merge    # マージコンフリクト解決
+make secrets-check             # 秘密鍵チェック
+make secrets-audit             # ベースライン監査（四半期ごと推奨）
+```
+
+詳細: `make secrets-help` を実行してください
 
 ### 本番環境での設定
 
 本番環境で使用する際は、以下の設定を必ず変更してください：
 
 1. **認証情報の変更**
+
    ```bash
    # .envファイルで以下を変更
    MEMBER_DB_PASSWORD=your-secure-password
    MINIO_ROOT_USER=your-secure-username
    MINIO_ROOT_PASSWORD=your-secure-password
    WEBHOOK_AUTH_TOKEN=your-secure-webhook-token
+   ANTHROPIC_API_KEY=sk-ant-your-real-api-key
    ```
 
-2. **Webhook認証の有効化**
+1. **Webhook認証の有効化**
    - `WEBHOOK_AUTH_TOKEN`を設定してWebhook認証を有効化
    - 未設定の場合は認証なしで動作（開発環境のみ推奨）
 
-3. **ネットワークセキュリティ**
+1. **ネットワークセキュリティ**
    - 本番環境では適切なファイアウォール設定
    - 必要に応じてVPNやプライベートネットワークの使用
 
 ### 開発環境
 
 - 現在の設定は開発環境用です
-- `.env`ファイルはGitにコミットされません
+- `.env`、`.envrc`、`config/*.json`ファイルはGitにコミットされません
 - 実際の認証情報は環境変数で管理されています
+- Pre-commit Hooksで機密情報の誤コミットを防止
 
 ## その他
 
@@ -564,24 +688,24 @@ rm -rf aws awscliv2.zip
 
 1. Clone the repository
 
-```bash
-git clone https://github.com/s-sasaki-earthsea-wizard/vecr-office.git
-cd vecr-office
-```
+   ```bash
+   git clone https://github.com/s-sasaki-earthsea-wizard/vecr-office.git
+   cd vecr-office
+   ```
 
-2. Create the environment variable file
+1. Create the environment variable file
 
-```bash
-cp .env.example .env
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-- Replace the environment variables with actual values.
+   - Replace the environment variables with actual values.
 
-3. Build and start the containers
+1. Build and start the containers
 
-```bash
-make docker-build-up
-```
+   ```bash
+   make docker-build-up
+   ```
 
 ## Usage
 
@@ -610,7 +734,7 @@ make docker-build-up
   - storage
     - Stores user icon images and custom prompts, using MinIO with future migration to S3 in mind.
   - chat-log-database
-   - Uses localstack/DynamoDB temporarily for chat logs between members (planned).
+  - Uses localstack/DynamoDB temporarily for chat logs between members (planned).
   - member-manager
     - Allows DB operations and file uploads via the backend service using a browser (planned).
 

@@ -6,7 +6,7 @@ LLM（Large Language Model）APIを使用してプロンプトを送信し、応
 """
 
 import os
-from typing import Any, Optional
+from typing import Any
 
 from anthropic import Anthropic
 
@@ -16,9 +16,9 @@ class LLMClient:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        model: Optional[str] = None,
-        max_tokens: Optional[int] = None,
+        api_key: str | None = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
     ):
         """
         LLMClientを初期化（現在はClaude API使用）
@@ -40,7 +40,7 @@ class LLMClient:
     def send_message(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 1.0,
     ) -> str:
         """
@@ -83,7 +83,7 @@ class LLMClient:
             return ""
 
         except Exception as e:
-            raise Exception(f"LLM API呼び出しエラー: {str(e)}")
+            raise Exception(f"LLM API呼び出しエラー: {str(e)}") from e
 
     def send_test_message(self) -> dict[str, Any]:
         """

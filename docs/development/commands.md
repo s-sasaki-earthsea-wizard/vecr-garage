@@ -181,6 +181,89 @@ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ�
 make claude-help
 ```
 
+## CI/CD（コード品質管理）
+
+### 初回セットアップ
+
+```bash
+# 1. CI/CDコンテナのビルド
+make ci-build
+
+# 2. Git Hooksのインストール（推奨）
+make ci-pre-commit-install
+```
+
+### 開発ワークフロー
+
+```bash
+# 1. コードを自動整形
+make format
+
+# 2. Lint問題を自動修正
+make lint-fix
+
+# 3. Markdownを自動修正
+make markdown-fix
+
+# 4. 全チェック実行（PR前に必須）
+make ci-all
+
+# 5. コミット（Git Hooksが自動実行）
+git commit
+```
+
+### Pre-commit実行
+
+```bash
+# 全ファイルに対して実行
+make ci-pre-commit-run
+
+# ステージ済みファイルのみ実行
+make ci-pre-commit-run-staged
+
+# Git Hooksインストール
+make ci-pre-commit-install
+
+# Git Hooksアンインストール
+make ci-pre-commit-uninstall
+```
+
+### 個別チェック
+
+```bash
+# Pythonコード整形
+make format
+
+# Pythonコードlint
+make lint
+
+# 型チェック
+make type-check
+
+# Markdownチェック
+make markdown-lint
+
+# Markdown自動修正
+make markdown-fix
+
+# セキュリティチェック（detect-secrets）
+make ci-pre-commit-run  # pre-commitフックに統合済み
+```
+
+### ヘルプ表示
+
+```bash
+# CI/CD関連コマンド一覧
+make ci-help
+```
+
+### 注意事項
+
+- **すべてのチェックはci-runnerコンテナ内で実行されます**
+- ローカル環境にPython/Node.jsをインストールする必要はありません
+- Git Hooksをインストールすると、コミット時に自動でチェックが実行されます
+- `make ci-all`を実行すると、すべてのコード品質チェックが一度に実行されます
+
 ## YMLファイル操作
 
 ### Sample Files（正常系）
@@ -324,11 +407,14 @@ docker logs vecr-garage-backend-db-registration
 make docker-restart
 ```
 
-## ヘルプ表示
+## すべてのヘルプコマンド
 
 ```bash
 # Makefile全体のヘルプ
 make help
+
+# CI/CD関連コマンド
+make ci-help
 
 # Discord関連コマンド
 make discord-help

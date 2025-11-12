@@ -16,7 +16,7 @@ class ValidationError(Exception):
         missing_fields (List[str]): 欠落している必須フィールドのリスト
     """
 
-    def __init__(self, message: str, missing_fields: list[str] = None):
+    def __init__(self, message: str, missing_fields: list[str] | None = None):
         self.message = message
         self.missing_fields = missing_fields or []
         super().__init__(self.message)
@@ -33,6 +33,21 @@ class YAMLValidator:
     - 仮想メンバーYAMLの必須フィールド検証
     - YAML構造の基本的な検証
     """
+
+    @staticmethod
+    def _validate_yaml_data_type(yaml_data: dict[str, Any] | None) -> None:
+        """YAMLデータが辞書型であることを検証する（内部用ヘルパーメソッド）
+
+        Args:
+            yaml_data: 検証対象のYAMLデータ
+
+        Raises:
+            ValidationError: yaml_dataがNoneまたは辞書でない場合
+        """
+        if yaml_data is None or not isinstance(yaml_data, dict):
+            error_msg = "YAML content must be a dictionary and not None"
+            logger.error(error_msg)
+            raise ValidationError(error_msg)
 
     @staticmethod
     def validate_human_member_yaml(yaml_data: dict[str, Any]) -> None:
@@ -52,6 +67,9 @@ class YAMLValidator:
             >>> data = {"age": 30}
             >>> YAMLValidator.validate_human_member_yaml(data)  # ValidationError発生
         """
+        # yaml_dataがNoneまたは辞書でない場合のチェック
+        YAMLValidator._validate_yaml_data_type(yaml_data)
+
         required_fields = ["name"]
         missing_fields = []
 
@@ -85,6 +103,9 @@ class YAMLValidator:
             >>> data = {"name": "AI助手"}
             >>> YAMLValidator.validate_virtual_member_yaml(data)  # ValidationError発生
         """
+        # yaml_dataがNoneまたは辞書でない場合のチェック
+        YAMLValidator._validate_yaml_data_type(yaml_data)
+
         required_fields = ["name", "llm_model"]
         missing_fields = []
 
@@ -132,4 +153,4 @@ class YAMLValidator:
         except yaml.YAMLError as e:
             error_msg = f"Invalid YAML format: {str(e)}"
             logger.error(error_msg)
-            raise ValidationError(error_msg)
+            raise ValidationError(error_msg) from e

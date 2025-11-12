@@ -43,20 +43,15 @@ def db_session():
         conn.commit()
 
     # テスト用のセッションを作成
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    session = TestingSessionLocal()
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = testing_session_local()
 
     try:
         yield session
     finally:
         # テスト後にセッションをクローズ
         session.close()
-        # テーブル削除は依存関係があるため、エラーを無視して削除を試行
-        try:
-            Base.metadata.drop_all(engine)
-        except Exception as e:
-            print(f"テーブル削除時の警告: {e}")
-            # テーブル削除に失敗してもテストは続行
+        # テーブル構造は保持し、データのみクリアすることで統合テストとの互換性を保つ
 
 
 def test_create_human_member(db_session):

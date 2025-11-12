@@ -10,6 +10,7 @@ from operations.member_registration import (
 )
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from validation.yaml_validator import ValidationError
 
 # 環境変数からデータベース接続情報を取得
 MEMBER_DB_HOST = os.getenv("MEMBER_DB_HOST", "db-member")
@@ -43,20 +44,15 @@ def db_session():
         conn.commit()
 
     # テスト用のセッションを作成
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    session = TestingSessionLocal()
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = testing_session_local()
 
     try:
         yield session
     finally:
         # テスト後にセッションをクローズ
         session.close()
-        # テーブル削除は依存関係があるため、エラーを無視して削除を試行
-        try:
-            Base.metadata.drop_all(engine)
-        except Exception as e:
-            print(f"テーブル削除時の警告: {e}")
-            # テーブル削除に失敗してもテストは続行
+        # テーブル構造は保持し、データのみクリアすることで統合テストとの互換性を保つ
 
 
 @pytest.fixture(scope="function")
@@ -139,7 +135,7 @@ def test_register_human_member_invalid_yaml(db_session, tmp_path, mock_storage_c
         yaml.dump(invalid_yaml, f, allow_unicode=True)
 
     # 無効なYAMLファイルで登録を試みる
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         register_human_member_from_yaml(str(invalid_yaml_path))
 
 
@@ -152,7 +148,7 @@ def test_register_virtual_member_invalid_yaml(db_session, tmp_path, mock_storage
         yaml.dump(invalid_yaml, f, allow_unicode=True)
 
     # 無効なYAMLファイルで登録を試みる
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         register_virtual_member_from_yaml(str(invalid_yaml_path))
 
 
@@ -182,13 +178,19 @@ def mock_storage_with_real_files(monkeypatch, tmp_path):
             # llm_modelフィールドが意図的に欠損
         },
         "data/test_cases/human_members/invalid_empty_file.yml": None,  # 空ファイル
-        "data/samples/human_members/rin.yml": {"name": "Rin", "bio": "I'm a human member."},
+        "data/samples/human_members/rin.yml": {
+            "name": "Rin",
+            "bio": "I'm a human member.",
+        },
         "data/samples/virtual_members/darcy.yml": {
             "name": "Darcy",
             "custom_prompt": "I'm a virtual member.",
             "llm_model": "gpt-4o",
         },
-        "data/samples/human_members/syota.yml": {"name": "Syota", "bio": "I'm a human member."},
+        "data/samples/human_members/syota.yml": {
+            "name": "Syota",
+            "bio": "I'm a human member.",
+        },
         "data/samples/virtual_members/kasen.yml": {
             "name": "華扇",
             "custom_prompt": "私は華扇です。",
@@ -203,8 +205,7 @@ def mock_storage_with_real_files(monkeypatch, tmp_path):
                 if content is None:  # 空ファイルの場合
                     return None
                 return content
-            else:
-                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+            raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
     monkeypatch.setattr(
         "operations.member_registration.StorageClient", MockStorageClientForRealFiles
@@ -274,13 +275,13 @@ def test_virtual_member_missing_model_validation(db_session, mock_storage_with_r
 
 def test_human_member_empty_file_error(db_session, mock_storage_with_real_files):
     """実際のテストケース: 空ファイルでエラー"""
-    with pytest.raises(Exception) as exc_info:
+    from validation.yaml_validator import ValidationError
+
+    with pytest.raises(ValidationError) as exc_info:
         register_human_member_from_yaml("data/test_cases/human_members/invalid_empty_file.yml")
 
-    # 'NoneType' object has no attribute 'get' エラーが発生することを確認
-    assert "'NoneType' object has no attribute 'get'" in str(
-        exc_info.value
-    ) or "ValidationError" in str(exc_info.type)
+    # 空ファイル（None）でValidationErrorが発生することを確認
+    assert "YAML content must be a dictionary and not None" in str(exc_info.value)
 
 
 # 新しいディレクトリ構造（samples/）を使用した正常系テスト
@@ -346,7 +347,10 @@ def test_yml_file_uri_based_upsert_human_member(db_session, monkeypatch):
 
     # テストファイル内容
     test_files = {}
-    test_files[test_uri] = {"name": "テストユーザー", "bio": "初回登録のプロフィールです"}
+    test_files[test_uri] = {
+        "name": "テストユーザー",
+        "bio": "初回登録のプロフィールです",
+    }
 
     class MockStorageClient:
         def read_yaml_from_minio(self, yaml_path):
@@ -355,8 +359,7 @@ def test_yml_file_uri_based_upsert_human_member(db_session, monkeypatch):
                 if content is None:
                     return None
                 return content
-            else:
-                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+            raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
     monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
 
@@ -384,7 +387,10 @@ def test_yml_file_uri_based_upsert_human_member(db_session, monkeypatch):
         session.close()
 
     # 2. 同じURIで更新（内容変更）
-    test_files[test_uri] = {"name": "テストユーザー更新", "bio": "更新されたプロフィールです"}
+    test_files[test_uri] = {
+        "name": "テストユーザー更新",
+        "bio": "更新されたプロフィールです",
+    }
 
     member2 = register_human_member_from_yaml(test_uri)
     assert member2 is not None
@@ -429,8 +435,7 @@ def test_yml_file_uri_based_upsert_virtual_member(db_session, monkeypatch):
                 if content is None:
                     return None
                 return content
-            else:
-                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+            raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
     monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
 
@@ -514,8 +519,7 @@ def test_profile_information_storage(db_session, monkeypatch):
                 if content is None:
                     return None
                 return content
-            else:
-                raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
+            raise FileNotFoundError(f"テストファイルが見つかりません: {yaml_path}")
 
     monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
 

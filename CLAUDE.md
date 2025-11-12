@@ -221,6 +221,52 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 
 詳細: [認証システム](docs/integrations/authentication.md)
 
+### .secrets.baseline 運用ガイドライン
+
+このプロジェクトでは`.secrets.baseline`をバージョニングして、チーム間でfalse-positiveを統一管理します。
+
+#### 基本ルール
+
+1. **ベースライン更新時は必ず内容を確認**
+
+   ```bash
+   make secrets-baseline-update
+   git diff .secrets.baseline  # 必ず確認！
+   ```
+
+2. **本物の秘密鍵が含まれていないか慎重にチェック**
+   - API キー、トークン、パスワードなどの実際の値が含まれていないか
+   - 疑わしい場合はコミットせず、チームで相談
+
+3. **マージコンフリクト時の対応**
+
+   ```bash
+   git pull  # コンフリクト発生
+   make secrets-baseline-merge  # 自動マージ
+   git diff .secrets.baseline  # 結果を確認
+   git add .secrets.baseline
+   git commit
+   ```
+
+4. **定期監査（四半期ごと推奨）**
+
+   ```bash
+   make secrets-audit
+   # 各エントリを確認し、不要なものを削除
+   ```
+
+#### 利用可能なコマンド
+
+```bash
+make secrets-help              # ヘルプ表示
+make secrets-baseline-update   # ベースライン更新
+make secrets-baseline-merge    # マージコンフリクト解決
+make secrets-check             # 秘密鍵チェック
+make secrets-audit             # ベースライン監査
+```
+
+詳細: `make secrets-help` を実行してください
+
 ---
 
 ## 実装完了Phase記録
@@ -228,13 +274,12 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ MinIO Webhook自動化システム（クリックで展開）</summary>
 
-### 実装概要
-
 **実装目的**: リポジトリクローン時の完全な再現性確保と手動設定の完全排除
 
 **達成状況**: ✅ 完全達成 - 手動作業ゼロで環境が完全再現される
 
 **3段階自動化アーキテクチャ**:
+
 1. **minio-setup**: MinIO基本設定、サンプルデータコピー、webhook設定適用
 2. **minio-restarter**: MinIO再起動（設定反映のため）
 3. **webhook-configurator**: イベント設定とテスト実行
@@ -246,11 +291,10 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ 包括的テストシステム（クリックで展開）</summary>
 
-### 実装概要
-
 **実装目的**: ユニットテストからE2Eテストまでを統合した包括的品質保証システム
 
 **テスト結果**:
+
 - **Unit Tests**: 25 tests passed（pytest container execution）
 - **Sample Processing**: Human & Virtual member DB registration confirmed
 - **Error Handling**: HTTP 400 validation errors properly handled
@@ -263,14 +307,14 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ Discord統合（Webhook + Bot）（クリックで展開）</summary>
 
-### 実装概要
-
 **Discord Webhook通知システム**:
+
 - セキュアなWebhook管理（JSONファイル + 環境変数）
 - REST API エンドポイント
 - Make ターゲット統合
 
 **Discord Bot統合**:
+
 - **Mention Mode**: @メンション応答
 - **AutoThread Mode**: 新着投稿自動応答
 - **Times Mode**: 1日1回自動投稿（本番/テストモード切り替え対応）
@@ -282,14 +326,14 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ Claude API連携（クリックで展開）</summary>
 
-### 実装概要
-
 **ClaudeClient実装**:
+
 - Anthropic公式Pythonライブラリ使用
 - 環境変数による設定管理
 - Discord Botとの統合
 
 **利用可能なコマンド**:
+
 - `make claude-test` - 接続テスト
 - `make claude-prompt PROMPT="テキスト"` - カスタムプロンプト送信
 
@@ -300,11 +344,10 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ YMLファイル操作統合システム（クリックで展開）</summary>
 
-### 実装概要
-
 **実装目的**: samples.mkとtest-cases.mkの重複排除とファイル操作の一元化
 
 **統合効果**:
+
 - AWS S3操作コードの共通化
 - 1ファイルでの統一管理
 - 既存コマンドの完全互換
@@ -316,19 +359,48 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 <details>
 <summary>✅ 認証システム（モックアップ版）（クリックで展開）</summary>
 
-### 実装概要
-
 **Phase 1: モックアップ認証**:
+
 - 環境変数ベースの簡易認証
 - Flask-Session によるセッション管理
 - ログイン/ログアウト機能
 - パスワード表示切り替えボタン
 
 **将来の実装計画**:
+
 - Phase 2: Flask-Login + bcrypt + Redis
 - Phase 3: AWS Cognito + MFA + JWT
 
 詳細: [認証システム](docs/integrations/authentication.md)
+
+</details>
+
+<details>
+<summary>✅ CI/CD Docker化システム（クリックで展開）</summary>
+
+**実装目的**: 開発環境の完全な再現性確保とローカル依存の排除
+
+**達成状況**: ✅ 完全達成 - すべてのコード品質チェックをci-runnerコンテナで実行
+
+**実装内容**:
+
+1. **ci-runnerコンテナ統合**: 既存のci-runnerサービスを活用
+2. **pre-commitフック自動化**: Git Hooks経由でコンテナ内実行
+3. **レガシーターゲット削除**: ローカル環境依存のMakeターゲットを完全削除
+4. **スクリプト管理**: ci-cd/scripts/配下に実行スクリプトを配置
+
+**利用可能なコマンド**:
+
+- `make ci-pre-commit-run` - 全ファイルに対してpre-commit実行
+- `make ci-pre-commit-run-staged` - ステージ済みファイルのみ実行
+- `make ci-pre-commit-install` - Git Hooksインストール
+
+**検証内容**:
+
+- Black, Ruff, mypy, markdownlint
+- detect-secrets（API Key漏洩検知）
+- Gitコンテナ内実行（safe.directory設定）
+- Node.js依存解決（libatomic1追加）
 
 </details>
 
@@ -341,11 +413,13 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 **実装目的**: ETag重複チェック問題の解決とDBリセット後の再登録対応
 
 **現在の動作**:
+
 - 同名メンバーが存在する場合: `updated_at`フィールドを現在時刻で更新
 - 存在しない場合: 新規作成
 - ETag制御によりDBリセット後の再処理が可能
 
 **将来の実装計画**:
+
 - file_uri（ファイルパス）をプライマリーキーとした本格的なUPSERT
 - PostgreSQLの`ON CONFLICT DO UPDATE`句の活用
 - ファイル単位での厳密な重複管理
@@ -357,6 +431,7 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 ## 今後の開発予定
 
 ### 実装完了
+
 - [x] member-managerのモックUI実装
 - [x] 認証システム（モックアップ版）実装
 - [x] name-based UPSERT処理（暫定実装）
@@ -372,8 +447,10 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 - [x] Discord Bot AutoThreadモード実装（新着投稿自動応答＋会話履歴管理）
 - [x] Discord Bot Timesモード実装（1日1回自動投稿＋APScheduler統合）
 - [x] Discord Bot Times Modeテスト機能実装（本番/テストモード切り替え）
+- [x] CI/CD Docker化システム実装（完全コンテナベース実行）
 
 ### 実装予定
+
 - [ ] Discord Bot Times Mode話題管理の改善（データベース化、カテゴリ分類等）
 - [ ] Discord Bot会話履歴管理の改善（DynamoDB統合、トピック検出等）
 - [ ] file_uri-based UPSERT処理（本格実装）
@@ -396,9 +473,13 @@ WEBHOOK_AUTO_SETUP_ENABLED=true
 ```bash
 # ヘルプ表示
 make help
+make ci-help
 make discord-help
 make discord-bot-help
 make claude-help
+
+# CI/CDコード品質チェック
+make ci-pre-commit-run
 
 # 統合テスト
 make test-integration

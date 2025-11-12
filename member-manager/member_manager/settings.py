@@ -5,7 +5,10 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-your-secret-key-here"
+# 開発環境用のプレースホルダー。本番環境では環境変数から取得すること。
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", "django-insecure-development-only-placeholder-change-in-production"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -5,7 +5,6 @@ Webhook URLとデータ構造の妥当性を検証
 """
 
 import re
-from typing import Dict, Tuple
 from urllib.parse import urlparse
 
 
@@ -41,7 +40,7 @@ class WebhookValidator:
         return bool(WebhookValidator.DISCORD_WEBHOOK_PATTERN.match(url))
 
     @staticmethod
-    def validate_webhook_config(config: Dict[str, str]) -> Tuple[bool, str]:
+    def validate_webhook_config(config: dict[str, str]) -> tuple[bool, str]:
         """
         Webhook設定辞書全体を検証
 
@@ -54,7 +53,10 @@ class WebhookValidator:
         """
         # 辞書型チェック
         if not isinstance(config, dict):
-            return False, f"設定は辞書型である必要があります（現在: {type(config).__name__}）"
+            return (
+                False,
+                f"設定は辞書型である必要があります（現在: {type(config).__name__}）",
+            )
 
         # 空チェック
         if not config:
@@ -79,7 +81,7 @@ class WebhookValidator:
         return True, ""
 
     @staticmethod
-    def validate_webhook_name(config: Dict[str, str], webhook_name: str) -> Tuple[bool, str]:
+    def validate_webhook_name(config: dict[str, str], webhook_name: str) -> tuple[bool, str]:
         """
         指定されたWebhook名の存在を検証
 

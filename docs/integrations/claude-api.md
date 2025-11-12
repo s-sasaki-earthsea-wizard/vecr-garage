@@ -11,11 +11,13 @@
 **実装ファイル**: `backend-llm-response/src/services/claude_client.py`
 
 **主な機能**:
+
 - 環境変数からAPIキー、モデル、max_tokensを読み込み
 - `send_message(prompt, system_prompt, temperature)`: プロンプト送信と応答取得
 - `send_test_message()`: 動作確認用のテストメッセージ送信
 
 **クラス構造**:
+
 ```python
 class ClaudeClient:
     def __init__(self):
@@ -73,7 +75,7 @@ ANTHROPIC_MAX_TOKENS=4096
 
 #### APIキーの取得方法
 
-1. https://console.anthropic.com/ にアクセス
+1. <https://console.anthropic.com/> にアクセス
 2. ログインまたはアカウント作成
 3. 「API Keys」→「Create Key」
 4. 生成されたAPIキーをコピー
@@ -97,6 +99,7 @@ make claude-prompt PROMPT="テキスト"
 #### 実行例
 
 **接続テスト**:
+
 ```bash
 $ make claude-test
 🤖 Claude API接続テスト中...
@@ -107,6 +110,7 @@ $ make claude-test
 ```
 
 **カスタムプロンプト送信**:
+
 ```bash
 $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてください"
 🤖 Claude APIにプロンプトを送信中...
@@ -134,21 +138,27 @@ def is_prime(n: int) -> bool:
             return False
     return True
 ```
+
 ...
+
+```text
 ```
 
 ### ✨ 実装の特徴
 
 **セキュリティ**:
+
 - APIキーは`.env`で管理（.gitignore保護）
 - コンテナに環境変数として渡される
 - ログにAPIキーが出力されないよう配慮
 
 **シンプル**:
+
 - ホストマシンからmakeコマンドで直接実行
 - docker execによるコンテナ内Python実行
 
 **拡張性**:
+
 - 将来的なAPIエンドポイント化の基盤
 - Discord Botとの統合済み
 - システムプロンプト、温度パラメータのカスタマイズ可能
@@ -156,12 +166,14 @@ def is_prime(n: int) -> bool:
 ### 🧪 テスト結果
 
 **実装確認**:
+
 - ✅ ClaudeClient初期化成功
 - ✅ テストメッセージ送信成功（自己紹介応答）
 - ✅ カスタムプロンプト送信成功（コード生成応答）
 - ✅ makeターゲットからの呼び出し成功
 
 **Discord Bot統合**:
+
 - ✅ Mention Mode: @メンション応答でClaude API使用
 - ✅ AutoThread Mode: 会話履歴を含むプロンプト送信
 - ✅ Times Mode: 話題リストからランダム選択→Claude API応答生成
@@ -230,7 +242,7 @@ async def post_times_message(self):
 - **Tier 2**: 1,000 requests/minute, 80,000 tokens/minute
 - **Tier 3+**: より高いレート
 
-詳細: https://docs.anthropic.com/claude/reference/rate-limits
+詳細: <https://docs.anthropic.com/claude/reference/rate-limits>
 
 #### エラーハンドリング例
 
@@ -272,10 +284,12 @@ logger.info(f"トークン使用量: {total_tokens} (入力: {input_tokens}, 出
 #### 料金見積もり
 
 **Claude Sonnet 4.5** (2025年1月時点):
+
 - 入力: $3.00 / million tokens
 - 出力: $15.00 / million tokens
 
 例: 1,000回のリクエスト（平均2,000トークン/リクエスト）
+
 - 入力: 1,000 * 1,000 tokens = 1M tokens → $3.00
 - 出力: 1,000 * 1,000 tokens = 1M tokens → $15.00
 - **合計**: $18.00
@@ -285,6 +299,7 @@ logger.info(f"トークン使用量: {total_tokens} (入力: {input_tokens}, 出
 詳細は [トラブルシューティング](../development/troubleshooting.md#claude-api関連) を参照
 
 **よくあるエラー**:
+
 - `AuthenticationError`: APIキーが無効または未設定
 - `RateLimitError`: レート制限超過
 - `APIConnectionError`: ネットワーク接続問題

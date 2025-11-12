@@ -1,4 +1,3 @@
-
 import pytest
 from storage.storage_client import StorageClient
 
@@ -52,7 +51,8 @@ def mock_storage_client(monkeypatch):
 
     # MinioClientをモックに置き換え
     monkeypatch.setattr(
-        "storage.storage_client.Minio", lambda *args, **kwargs: MockMinioClient(test_yaml_data)
+        "storage.storage_client.Minio",
+        lambda *args, **kwargs: MockMinioClient(test_yaml_data),
     )
 
     # 環境変数を設定
