@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
-# VECR Garage - Lint Check Script
-# 全Pythonサービスのlintチェックを実行
+# VECR Garage - Python Lint Check Script
+# 全Pythonサービスのlintチェックを実行（Ruff）
 # ============================================================
 
 set -e  # エラー時に即座に終了
