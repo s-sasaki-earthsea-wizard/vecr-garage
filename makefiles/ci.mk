@@ -3,7 +3,7 @@
 # コード品質チェックとフォーマット自動化
 # ============================================================
 
-.PHONY: ci-build lint lint-python lint-makefile lint-markdown format lint-fix typecheck ci-all ci-full ci-shell ci-help ci-pre-commit-run ci-pre-commit-run-staged ci-pre-commit-install markdown-fix
+.PHONY: ci-build lint lint-python lint-makefile lint-markdown lint-frontend format lint-fix typecheck ci-all ci-full ci-shell ci-help ci-pre-commit-run ci-pre-commit-run-staged ci-pre-commit-install markdown-fix
 
 # CI/CDコンテナのビルド
 ci-build: ## Build CI/CD container image
@@ -109,25 +109,45 @@ lint-makefile: ## Check Makefile syntax (checkmake)
 		find makefiles -name '*.mk' -exec checkmake --config=/workspace/.checkmake {} \;" && \
 	echo "✅ All Makefile syntax checks passed!"
 
+# Frontend lint（ESLint + djlint）
+lint-frontend: ## Check frontend code (JavaScript + HTML)
+	@echo "🎨 Checking frontend code..."
+	@EXIT_CODE=0; \
+	echo "📋 JavaScript lint (ESLint)..."; \
+	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "\
+		find member-manager/static/js -name '*.js' -exec eslint --config .eslintrc.json {} \;" || EXIT_CODE=$$((EXIT_CODE + 1)); \
+	echo ""; \
+	echo "📋 HTML lint (djlint)..."; \
+	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner djlint member-manager/templates/ --check || EXIT_CODE=$$((EXIT_CODE + 2)); \
+	if [ $$EXIT_CODE -eq 0 ]; then \
+		echo "✅ All frontend checks passed!"; \
+	else \
+		echo "❌ Some frontend checks failed"; \
+		exit 1; \
+	fi
+
 # ============================================================
 # 統合 Lint
 # ============================================================
 
-lint: ## Run all linters (Python + Makefile + Markdown)
+lint: ## Run all linters (Python + Makefile + Markdown + Frontend)
 	@echo ""
 	@echo "============================================================"
 	@echo "🔍 Running all linters..."
 	@echo "============================================================"
 	@echo ""
 	@EXIT_CODE=0; \
-	echo "📋 [1/3] Python lint..."; \
+	echo "📋 [1/4] Python lint..."; \
 	$(MAKE) lint-python || EXIT_CODE=$$((EXIT_CODE + 1)); \
 	echo ""; \
-	echo "📋 [2/3] Makefile lint..."; \
+	echo "📋 [2/4] Makefile lint..."; \
 	$(MAKE) lint-makefile || EXIT_CODE=$$((EXIT_CODE + 2)); \
 	echo ""; \
-	echo "📋 [3/3] Markdown lint..."; \
+	echo "📋 [3/4] Markdown lint..."; \
 	$(MAKE) lint-markdown || EXIT_CODE=$$((EXIT_CODE + 4)); \
+	echo ""; \
+	echo "📋 [4/4] Frontend lint..."; \
+	$(MAKE) lint-frontend || EXIT_CODE=$$((EXIT_CODE + 8)); \
 	echo ""; \
 	echo "============================================================"; \
 	if [ $$EXIT_CODE -eq 0 ]; then \
@@ -139,6 +159,7 @@ lint: ## Run all linters (Python + Makefile + Markdown)
 		[ $$((EXIT_CODE & 1)) -ne 0 ] && echo "   ❌ Python lint failed"; \
 		[ $$((EXIT_CODE & 2)) -ne 0 ] && echo "   ❌ Makefile lint failed"; \
 		[ $$((EXIT_CODE & 4)) -ne 0 ] && echo "   ❌ Markdown lint failed"; \
+		[ $$((EXIT_CODE & 8)) -ne 0 ] && echo "   ❌ Frontend lint failed"; \
 		echo "============================================================"; \
 		exit 1; \
 	fi
@@ -187,7 +208,7 @@ ci-help: ## Show CI/CD commands help
 	@echo "🔍 Code Quality Checks (all run in ci-runner container):"
 	@echo ""
 	@echo "  【統合チェック】"
-	@echo "  make lint                      - Run all linters (Python + Makefile + Markdown) 🎯"
+	@echo "  make lint                      - Run all linters (Python + Makefile + Markdown + Frontend) 🎯"
 	@echo "  make ci-all                    - Run all CI checks (lint + format + type + secrets) ⭐"
 	@echo "  make ci-full                   - Run ci-all + integration tests 🚀"
 	@echo ""
@@ -195,6 +216,7 @@ ci-help: ## Show CI/CD commands help
 	@echo "  make lint-python               - Python lint (Ruff)"
 	@echo "  make lint-makefile             - Makefile lint (checkmake)"
 	@echo "  make lint-markdown             - Markdown lint (markdownlint)"
+	@echo "  make lint-frontend             - Frontend lint (ESLint + djlint)"
 	@echo ""
 	@echo "  【フォーマット】"
 	@echo "  make format                    - Auto-format code (black)"

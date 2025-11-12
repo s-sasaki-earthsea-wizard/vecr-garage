@@ -25,3 +25,6 @@ pre-commit==3.6.0
 
 # セキュリティスキャン
 detect-secrets==1.4.0
+
+# HTML/Jinja2 lint・format
+djlint==1.34.1
