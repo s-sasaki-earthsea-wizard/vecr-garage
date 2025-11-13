@@ -53,9 +53,9 @@ class PromptLoader:
             return None
 
     @staticmethod
-    def load_from_db(_bot_name: str) -> str | None:
+    def load_from_db(bot_name: str) -> str | None:
         """
-        データベースからプロンプトを読み込み（将来実装）
+        データベースからプロンプトを読み込み
 
         Args:
             bot_name: Bot名
@@ -63,6 +63,29 @@ class PromptLoader:
         Returns:
             プロンプト文字列。見つからない場合はNone
         """
-        # TODO: virtual_member_profiles.custom_promptから読み込み
-        logger.warning("⚠️ DB連携は未実装です。ファイルベースを使用してください。")
-        return None
+        from db.connection.connection import DBMemberConnection
+        from db.operation.member_queries import get_virtual_member_prompt
+
+        try:
+            # データベース接続
+            db_connection = DBMemberConnection()
+            session = db_connection.db_member_connection_check()
+
+            try:
+                # プロンプト取得
+                prompt = get_virtual_member_prompt(session, bot_name)
+
+                if prompt:
+                    logger.info(f"✅ DB からシステムプロンプト読み込み成功: {bot_name}")
+                    logger.debug(f"📝 プロンプト内容 ({len(prompt)}文字): {prompt[:100]}...")
+                    return prompt
+                else:
+                    logger.info(f"💡 DB にプロンプトが見つかりません: {bot_name}")
+                    return None
+
+            finally:
+                session.close()
+
+        except Exception as e:
+            logger.error(f"❌ DB からのプロンプト読み込みエラー: {bot_name} - {e}", exc_info=True)
+            return None
