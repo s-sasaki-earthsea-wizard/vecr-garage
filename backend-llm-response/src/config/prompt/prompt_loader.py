@@ -79,9 +79,9 @@ class PromptLoader:
                     logger.info(f"✅ DB からシステムプロンプト読み込み成功: {bot_name}")
                     logger.debug(f"📝 プロンプト内容 ({len(prompt)}文字): {prompt[:100]}...")
                     return prompt
-                else:
-                    logger.info(f"💡 DB にプロンプトが見つかりません: {bot_name}")
-                    return None
+
+                logger.info(f"💡 DB にプロンプトが見つかりません: {bot_name}")
+                return None
 
             finally:
                 session.close()

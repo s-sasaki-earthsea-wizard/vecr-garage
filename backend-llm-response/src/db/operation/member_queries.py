@@ -27,10 +27,12 @@ def get_virtual_member_prompt(session: Session, bot_name: str) -> str | None:
     """
     try:
         # VirtualMemberとVirtualMemberProfileをJOINして取得
-        result = session.query(VirtualMemberProfile.custom_prompt)\
-            .join(VirtualMember, VirtualMember.member_uuid == VirtualMemberProfile.member_uuid)\
-            .filter(VirtualMember.member_name == bot_name)\
+        result = (
+            session.query(VirtualMemberProfile.custom_prompt)
+            .join(VirtualMember, VirtualMember.member_uuid == VirtualMemberProfile.member_uuid)
+            .filter(VirtualMember.member_name == bot_name)
             .first()
+        )
 
         if result and result.custom_prompt:
             return result.custom_prompt

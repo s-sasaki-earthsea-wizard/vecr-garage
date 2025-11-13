@@ -41,7 +41,9 @@ class VirtualMemberProfile(Base):
     profile_id = Column(Integer, primary_key=True)
     profile_uuid = Column(UUID, nullable=False, unique=True, server_default=func.uuid_generate_v4())
     member_id = Column(Integer, ForeignKey("virtual_members.member_id"), nullable=False)
-    member_uuid = Column(UUID, ForeignKey("virtual_members.member_uuid"), nullable=False, unique=True)
+    member_uuid = Column(
+        UUID, ForeignKey("virtual_members.member_uuid"), nullable=False, unique=True
+    )
     llm_model = Column(String(50), nullable=False)
     custom_prompt = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
