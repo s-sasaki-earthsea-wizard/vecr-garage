@@ -49,7 +49,7 @@ class DiscordBot:
         self.times_mode_channels = set(times_channels)
 
         # システムプロンプトの読み込み
-        self.system_prompt = PromptParser.get_prompt(bot_name, source="file")
+        self.system_prompt = PromptParser.get_prompt(bot_name, source="db")
 
         # Intents設定（Message Content Intent必須）
         intents = discord.Intents.default()
