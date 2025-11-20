@@ -1,149 +1,141 @@
 {% extends "base.html" %}
-
 {% block title %}ホーム - VECR Member Manager{% endblock %}
-
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="jumbotron bg-light p-5 rounded">
-            <h1 class="display-4">
-                <i class="fas fa-users me-3"></i>VECR Garage Member Manager
-            </h1>
-            <p class="lead">メンバー管理システムへようこそ</p>
-            <hr class="my-4">
-            <p>データベースと連携して動的にデータを表示・管理できます。</p>
-            <div class="d-flex gap-2">
-                <a class="btn btn-primary btn-lg" href="{{ url_for('database_view') }}">
-                    <i class="fas fa-database me-2"></i>データベース管理
-                </a>
-                <button class="btn btn-outline-secondary btn-lg" onclick="showTableData()">
-                    <i class="fas fa-table me-2"></i>テーブル一覧表示
-                </button>
+    <div class="row">
+        <div class="col-12">
+            <div class="jumbotron bg-light p-5 rounded">
+                <h1 class="display-4">
+                    <i class="fas fa-users me-3"></i>VECR Garage Member Manager
+                </h1>
+                <p class="lead">メンバー管理システムへようこそ</p>
+                <hr class="my-4">
+                <p>データベースと連携して動的にデータを表示・管理できます。</p>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-primary btn-lg" href="{{ url_for("database_view") }}">
+                        <i class="fas fa-database me-2"></i>データベース管理
+                    </a>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="showTableData()">
+                        <i class="fas fa-table me-2"></i>テーブル一覧表示
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- テーブルデータ表示セクション -->
-<div class="row" id="tableDataSection" style="display: none;">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-table me-2"></i>データベーステーブル
-                </h5>
-            </div>
-            <div class="card-body">
-                <!-- テーブル選択 -->
-                <div class="mb-3">
-                    <label for="tableSelect" class="form-label">テーブル選択:</label>
-                    <select id="tableSelect" class="form-select" onchange="loadTableData()">
-                        <option value="">-- テーブルを選択してください --</option>
-                        <!-- JavaScriptで動的に生成 -->
-                    </select>
+    <!-- テーブルデータ表示セクション -->
+    <div class="row" id="tableDataSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-table me-2"></i>データベーステーブル
+                    </h5>
                 </div>
-
-                <!-- データ表示エリア -->
-                <div id="dataSection" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 id="tableName" class="mb-0"></h6>
-                        <div>
-                            <button id="addRecordBtn" class="btn btn-sm btn-primary me-2" onclick="showAddRecordModal()">
-                                <i class="fas fa-plus me-1"></i>新規レコード追加
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshTableData()">
-                                <i class="fas fa-sync-alt me-1"></i>更新
-                            </button>
+                <div class="card-body">
+                    <!-- テーブル選択 -->
+                    <div class="mb-3">
+                        <label for="tableSelect" class="form-label">テーブル選択:</label>
+                        <select id="tableSelect" class="form-select" onchange="loadTableData()">
+                            <option value="">-- テーブルを選択してください --</option>
+                            <!-- JavaScriptで動的に生成 -->
+                        </select>
+                    </div>
+                    <!-- データ表示エリア -->
+                    <div id="dataSection" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 id="tableName" class="mb-0"></h6>
+                            <div>
+                                <button id="addRecordBtn"
+                                        class="btn btn-sm btn-primary me-2"
+                                        onclick="showAddRecordModal()">
+                                    <i class="fas fa-plus me-1"></i>新規レコード追加
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="refreshTableData()">
+                                    <i class="fas fa-sync-alt me-1"></i>更新
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="dataTable" class="table table-striped table-hover">
+                                <thead id="tableHead" class="table-dark">
+                                    <!-- JavaScriptで動的に生成 -->
+                                </thead>
+                                <tbody id="tableBody">
+                                    <!-- JavaScriptで動的に生成 -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-
-                    <div class="table-responsive">
-                        <table id="dataTable" class="table table-striped table-hover">
-                            <thead id="tableHead" class="table-dark">
-                                <!-- JavaScriptで動的に生成 -->
-                            </thead>
-                            <tbody id="tableBody">
-                                <!-- JavaScriptで動的に生成 -->
-                            </tbody>
-                        </table>
+                    <!-- テーブル未選択時のメッセージ -->
+                    <div id="noTableSelected" class="text-center py-4">
+                        <i class="fas fa-arrow-up fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">上記のドロップダウンからテーブルを選択してください。</p>
                     </div>
                 </div>
-
-                <!-- テーブル未選択時のメッセージ -->
-                <div id="noTableSelected" class="text-center py-4">
-                    <i class="fas fa-arrow-up fa-2x text-muted mb-3"></i>
-                    <p class="text-muted">上記のドロップダウンからテーブルを選択してください。</p>
+            </div>
+        </div>
+    </div>
+    <!-- 新規レコード追加モーダル -->
+    <div class="modal fade" id="addRecordModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">新規レコード追加</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRecordForm">
+                        <!-- JavaScriptで動的に生成 -->
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRecord()">保存</button>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- 新規レコード追加モーダル -->
-<div class="modal fade" id="addRecordModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">新規レコード追加</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addRecordForm">
-                    <!-- JavaScriptで動的に生成 -->
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                <button type="button" class="btn btn-primary" onclick="saveRecord()">保存</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 編集モーダル -->
-<div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">レコード編集</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editForm">
-                    <!-- JavaScriptで動的に生成 -->
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                <button type="button" class="btn btn-primary" onclick="updateRecord()">更新</button>
+    <!-- 編集モーダル -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">レコード編集</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <!-- JavaScriptで動的に生成 -->
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-primary" onclick="updateRecord()">更新</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- 削除確認モーダル -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">削除確認</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>このレコードを削除してもよろしいですか？</p>
-                <p id="deleteInfo" class="text-muted"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                <button type="button" class="btn btn-danger" onclick="confirmDelete()">削除</button>
+    <!-- 削除確認モーダル -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">削除確認</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>このレコードを削除してもよろしいですか？</p>
+                    <p id="deleteInfo" class="text-muted"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">削除</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 {% endblock %}
-
 {% block scripts %}
-<script>
+    <script>
 let currentTableName = '';
 let currentTableData = null;
 let currentEditIndex = null;

@@ -101,6 +101,51 @@ repos:
         description: Markdownファイルのフォーマットチェックと自動修正
         args: ['--fix']
 
+  # Makefile: checkmake (構文チェッカー)
+  # ローカル環境で使用する場合は checkmake をインストールしてください:
+  #   Debian/Ubuntu: apt-get install golang-go && go install github.com/mrtazz/checkmake/cmd/checkmake@latest
+  #   macOS: brew install checkmake
+  - repo: local
+    hooks:
+      - id: checkmake
+        name: Makefile lint (checkmake)
+        description: Makefile構文チェックとベストプラクティス検証
+        entry: checkmake --config=.checkmake
+        language: system
+        files: ^(Makefile|makefiles/.*\.mk)$
+
+  # JavaScript: ESLint + Prettier
+  # ローカル環境で使用する場合は Node.js と eslint, prettier をインストールしてください:
+  #   npm install -g eslint prettier
+  - repo: local
+    hooks:
+      - id: eslint
+        name: JavaScript lint (ESLint)
+        description: JavaScript構文チェック
+        entry: eslint
+        language: system
+        files: \.js$
+        args: ['--config', '.eslintrc.json']
+
+      - id: prettier-js
+        name: JavaScript format (Prettier)
+        description: JavaScriptコードフォーマット
+        entry: prettier --write
+        language: system
+        files: \.js$
+
+  # HTML/Jinja2: djLint
+  # ローカル環境で使用する場合は djlint をインストールしてください:
+  #   pip install djlint
+  - repo: local
+    hooks:
+      - id: djlint
+        name: HTML/Jinja2 lint (djlint)
+        description: HTML/Jinja2テンプレートのlintとフォーマット
+        entry: djlint --reformat --check
+        language: system
+        files: ^member-manager/templates/.*\.html$
+
 # ============================================================
 # 実行設定
 # ============================================================

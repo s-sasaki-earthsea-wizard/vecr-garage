@@ -3,17 +3,16 @@
 # コード品質チェックとフォーマット自動化
 # ============================================================
 
-.PHONY: ci-build lint format lint-fix typecheck ci-all ci-full ci-shell ci-help ci-pre-commit-run ci-pre-commit-run-staged ci-pre-commit-install markdown-lint markdown-fix
+.PHONY: ci-build lint lint-python lint-makefile lint-markdown lint-frontend format lint-fix typecheck ci-all ci-full ci-shell ci-help ci-pre-commit-run ci-pre-commit-run-staged ci-pre-commit-install markdown-fix
 
 # CI/CDコンテナのビルド
 ci-build: ## Build CI/CD container image
 	@echo "🏗️  Building CI/CD container..."
 	$(COMPOSE) -p $(PROJECT_NAME) build ci-runner
 
-# Lintチェック（エラーで停止）
-lint: ## Run linters for all services
-	@echo "🔍 Running linters..."
-	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner /ci-scripts/lint.sh
+# ============================================================
+# フォーマット
+# ============================================================
 
 # フォーマット自動修正
 format: ## Auto-format code for all services
@@ -36,27 +35,24 @@ format-check: ## Check code formatting without modifying files
 	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner /ci-scripts/format-check.sh
 
 # CI全体実行（GitHub Actions相当） - すべてのチェックを実行してから結果をまとめて報告
-ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint + secrets-check)
+ci-all: ## Run all CI checks (lint + format-check + typecheck + secrets-check)
 	@echo ""
 	@echo "============================================================"
 	@echo "🚀 Running all CI checks..."
 	@echo "============================================================"
 	@echo ""
 	@EXIT_CODE=0; \
-	echo "📋 [1/5] Running linters..."; \
+	echo "📋 [1/4] Running all linters..."; \
 	$(MAKE) lint || EXIT_CODE=$$((EXIT_CODE + 1)); \
 	echo ""; \
-	echo "📋 [2/5] Checking code format..."; \
+	echo "📋 [2/4] Checking code format..."; \
 	$(MAKE) format-check || EXIT_CODE=$$((EXIT_CODE + 2)); \
 	echo ""; \
-	echo "📋 [3/5] Running type checker..."; \
+	echo "📋 [3/4] Running type checker..."; \
 	$(MAKE) typecheck || EXIT_CODE=$$((EXIT_CODE + 4)); \
 	echo ""; \
-	echo "📋 [4/5] Checking Markdown..."; \
-	$(MAKE) markdown-lint || EXIT_CODE=$$((EXIT_CODE + 8)); \
-	echo ""; \
-	echo "📋 [5/5] Checking secrets..."; \
-	$(MAKE) secrets-check || EXIT_CODE=$$((EXIT_CODE + 16)); \
+	echo "📋 [4/4] Checking secrets..."; \
+	$(MAKE) secrets-check || EXIT_CODE=$$((EXIT_CODE + 8)); \
 	echo ""; \
 	echo "============================================================"; \
 	if [ $$EXIT_CODE -eq 0 ]; then \
@@ -68,8 +64,7 @@ ci-all: ## Run all CI checks (lint + format-check + typecheck + markdown-lint + 
 		[ $$((EXIT_CODE & 1)) -ne 0 ] && echo "   ❌ Lint check failed"; \
 		[ $$((EXIT_CODE & 2)) -ne 0 ] && echo "   ❌ Format check failed"; \
 		[ $$((EXIT_CODE & 4)) -ne 0 ] && echo "   ❌ Type check failed"; \
-		[ $$((EXIT_CODE & 8)) -ne 0 ] && echo "   ❌ Markdown check failed"; \
-		[ $$((EXIT_CODE & 16)) -ne 0 ] && echo "   ❌ Secrets check failed"; \
+		[ $$((EXIT_CODE & 8)) -ne 0 ] && echo "   ❌ Secrets check failed"; \
 		echo "============================================================"; \
 		exit 1; \
 	fi
@@ -93,12 +88,85 @@ ci-full: ## Run all CI checks + integration tests (comprehensive)
 	@echo ""
 
 # ============================================================
-# Markdown リント・フォーマット（CI Runnerコンテナで実行）
+# 個別 Lint チェック
 # ============================================================
 
-markdown-lint: ## Check Markdown files formatting (ci-runner container)
-	@echo "📝 Checking Markdown formatting in CI container..."
+# Python lint（Ruff）
+lint-python: ## Run Python linters (Ruff)
+	@echo "🔍 Running Python linters..."
+	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner /ci-scripts/lint-python.sh
+
+# Markdown lint（markdownlint）
+lint-markdown: ## Check Markdown files formatting (markdownlint)
+	@echo "📝 Checking Markdown formatting..."
 	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner pre-commit run markdownlint --all-files
+
+# Makefile lint（checkmake）
+lint-makefile: ## Check Makefile syntax (checkmake)
+	@echo "🔍 Checking Makefile syntax..."
+	@$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "\
+		checkmake --config=/workspace/.checkmake Makefile && \
+		find makefiles -name '*.mk' -exec checkmake --config=/workspace/.checkmake {} \;" && \
+	echo "✅ All Makefile syntax checks passed!"
+
+# Frontend lint（ESLint + djlint）
+lint-frontend: ## Check frontend code (JavaScript + HTML)
+	@echo "🎨 Checking frontend code..."
+	@EXIT_CODE=0; \
+	echo "📋 JavaScript lint (ESLint)..."; \
+	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner bash -c "\
+		find member-manager/static/js -name '*.js' -exec eslint --config .eslintrc.json {} \;" || EXIT_CODE=$$((EXIT_CODE + 1)); \
+	echo ""; \
+	echo "📋 HTML lint (djlint)..."; \
+	$(COMPOSE) -p $(PROJECT_NAME) run --rm ci-runner djlint member-manager/templates/ --check || EXIT_CODE=$$((EXIT_CODE + 2)); \
+	if [ $$EXIT_CODE -eq 0 ]; then \
+		echo "✅ All frontend checks passed!"; \
+	else \
+		echo "❌ Some frontend checks failed"; \
+		exit 1; \
+	fi
+
+# ============================================================
+# 統合 Lint
+# ============================================================
+
+lint: ## Run all linters (Python + Makefile + Markdown + Frontend)
+	@echo ""
+	@echo "============================================================"
+	@echo "🔍 Running all linters..."
+	@echo "============================================================"
+	@echo ""
+	@EXIT_CODE=0; \
+	echo "📋 [1/4] Python lint..."; \
+	$(MAKE) lint-python || EXIT_CODE=$$((EXIT_CODE + 1)); \
+	echo ""; \
+	echo "📋 [2/4] Makefile lint..."; \
+	$(MAKE) lint-makefile || EXIT_CODE=$$((EXIT_CODE + 2)); \
+	echo ""; \
+	echo "📋 [3/4] Markdown lint..."; \
+	$(MAKE) lint-markdown || EXIT_CODE=$$((EXIT_CODE + 4)); \
+	echo ""; \
+	echo "📋 [4/4] Frontend lint..."; \
+	$(MAKE) lint-frontend || EXIT_CODE=$$((EXIT_CODE + 8)); \
+	echo ""; \
+	echo "============================================================"; \
+	if [ $$EXIT_CODE -eq 0 ]; then \
+		echo "✅ All linters passed!"; \
+		echo "============================================================"; \
+		exit 0; \
+	else \
+		echo "❌ Some linters failed:"; \
+		[ $$((EXIT_CODE & 1)) -ne 0 ] && echo "   ❌ Python lint failed"; \
+		[ $$((EXIT_CODE & 2)) -ne 0 ] && echo "   ❌ Makefile lint failed"; \
+		[ $$((EXIT_CODE & 4)) -ne 0 ] && echo "   ❌ Markdown lint failed"; \
+		[ $$((EXIT_CODE & 8)) -ne 0 ] && echo "   ❌ Frontend lint failed"; \
+		echo "============================================================"; \
+		exit 1; \
+	fi
+
+# ============================================================
+# Markdown フォーマット自動修正
+# ============================================================
 
 markdown-fix: ## Auto-fix Markdown files formatting (ci-runner container)
 	@echo "🔧 Fixing Markdown formatting in CI container..."
@@ -139,16 +207,26 @@ ci-help: ## Show CI/CD commands help
 	@echo ""
 	@echo "🔍 Code Quality Checks (all run in ci-runner container):"
 	@echo ""
-	@echo "  make lint                      - Run linters (ruff)"
-	@echo "  make format                    - Auto-format code (black)"
-	@echo "  make lint-fix                  - Auto-fix linting issues"
-	@echo "  make format-check              - Check formatting (no changes)"
-	@echo "  make typecheck                 - Run type checker (mypy)"
-	@echo "  make markdown-lint             - Check Markdown formatting"
-	@echo "  make markdown-fix              - Auto-fix Markdown formatting"
-	@echo "  make secrets-check             - Check for secrets (detect-secrets)"
-	@echo "  make ci-all                    - Run all CI checks (static analysis) ⭐"
+	@echo "  【統合チェック】"
+	@echo "  make lint                      - Run all linters (Python + Makefile + Markdown + Frontend) 🎯"
+	@echo "  make ci-all                    - Run all CI checks (lint + format + type + secrets) ⭐"
 	@echo "  make ci-full                   - Run ci-all + integration tests 🚀"
+	@echo ""
+	@echo "  【個別lintチェック】"
+	@echo "  make lint-python               - Python lint (Ruff)"
+	@echo "  make lint-makefile             - Makefile lint (checkmake)"
+	@echo "  make lint-markdown             - Markdown lint (markdownlint)"
+	@echo "  make lint-frontend             - Frontend lint (ESLint + djlint)"
+	@echo ""
+	@echo "  【フォーマット】"
+	@echo "  make format                    - Auto-format code (black)"
+	@echo "  make format-check              - Check formatting (no changes)"
+	@echo "  make lint-fix                  - Auto-fix linting issues"
+	@echo "  make markdown-fix              - Auto-fix Markdown formatting"
+	@echo ""
+	@echo "  【その他】"
+	@echo "  make typecheck                 - Run type checker (mypy)"
+	@echo "  make secrets-check             - Check for secrets (detect-secrets)"
 	@echo ""
 	@echo "🐳 Pre-commit Hooks (ci-runner container):"
 	@echo ""
@@ -172,9 +250,10 @@ ci-help: ## Show CI/CD commands help
 	@echo "  1. make format                 - Auto-format your code"
 	@echo "  2. make lint-fix               - Auto-fix linting issues"
 	@echo "  3. make markdown-fix           - Auto-fix Markdown"
-	@echo "  4. make ci-all                 - Run all checks (quick) ⭐"
-	@echo "  5. make ci-full                - Run all checks + tests (comprehensive) 🚀"
-	@echo "  6. git commit                  - Hooks run automatically!"
+	@echo "  4. make lint                   - Run all linters 🎯"
+	@echo "  5. make ci-all                 - Run all checks (quick) ⭐"
+	@echo "  6. make ci-full                - Run all checks + tests (comprehensive) 🚀"
+	@echo "  7. git commit                  - Hooks run automatically!"
 	@echo ""
 	@echo "============================================================"
 	@echo "ℹ️  All commands run in ci-runner container for consistency"
