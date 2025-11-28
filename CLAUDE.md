@@ -190,6 +190,10 @@ ADMIN_USERNAME=Admin
 ADMIN_PASSWORD=SamplePassword
 SECRET_KEY=vecr-garage-secret-key-development-only-2025
 
+# AWS設定
+AWS_PROFILE=your-aws-profile
+AWS_ENVIRONMENT=dev
+
 # Claude API設定
 ANTHROPIC_API_KEY=sk-ant-xxxxx
 ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
@@ -448,9 +452,11 @@ make secrets-audit             # ベースライン監査
 - [x] Discord Bot Timesモード実装（1日1回自動投稿＋APScheduler統合）
 - [x] Discord Bot Times Modeテスト機能実装（本番/テストモード切り替え）
 - [x] CI/CD Docker化システム実装（完全コンテナベース実行）
+- [x] AWS Secrets Manager Makeターゲット追加（ホスト側からの機密情報取得基盤）
 
 ### 実装予定
 
+- [ ] AWS Secrets Managerからコンテナへの機密情報注入
 - [ ] Discord Bot Times Mode話題管理の改善（データベース化、カテゴリ分類等）
 - [ ] Discord Bot会話履歴管理の改善（DynamoDB統合、トピック検出等）
 - [ ] file_uri-based UPSERT処理（本格実装）
@@ -461,7 +467,6 @@ make secrets-audit             # ベースライン監査
 - [ ] Discord Bot機能拡張（複数Bot、スレッド対応、コンテキスト保持）
 - [ ] LLM連携機能の強化（メンバープロフィールとの統合）
 - [ ] Discord通知機能の拡張（定期通知、エラー通知、リッチエンベッド等）
-- [ ] AWS Secrets Managerへの移行
 - [ ] 本番環境用の設定追加
 
 ---

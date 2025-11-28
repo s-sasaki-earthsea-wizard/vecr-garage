@@ -268,7 +268,7 @@ make test-integration
 - `config/discord_webhooks.json`は`.gitignore`で保護
 - `.envrc`も`.gitignore`で保護
 - コンテナにはファイルをマウントせず、環境変数として渡す
-- AWS Secrets Managerへの移行準備完了
+- AWS Secrets Manager統合済み（ホスト側からの機密情報取得）
 
 **統合テスト:**
 
@@ -321,6 +321,50 @@ $ make claude-prompt PROMPT="Pythonで素数判定する関数を書いてくだ
 
 - APIキーは`.env`で管理（.gitignore保護）
 - コンテナに環境変数として渡される
+- AWS Secrets Managerからの取得も可能（下記参照）
+
+#### AWS Secrets Manager連携
+
+AWS Secrets Managerから機密情報を取得するコマンドを提供しています。
+
+**前提条件:**
+
+```bash
+# 1. AWS CLIの設定（プロファイル作成済みであること）
+aws configure --profile your-profile-name
+
+# 2. .envファイルにAWS設定を追加
+AWS_PROFILE=your-profile-name
+AWS_ENVIRONMENT=dev
+```
+
+**使用可能なコマンド:**
+
+```bash
+# シークレットのキー一覧を表示
+make aws-secret-list
+
+# 特定のキーの値を取得
+make aws-secret-get KEY=anthropic_api_key
+
+# 別のシークレット名を指定（デフォルト: lambda-secrets）
+make aws-secret-list SECRET=app-secrets
+make aws-secret-get KEY=some_key SECRET=app-secrets
+
+# プロジェクトの全シークレット一覧
+make aws-secret-list-all
+```
+
+**シークレット命名規則:**
+
+- 形式: `{PROJECT_NAME}-{AWS_ENVIRONMENT}-{SECRET_NAME}`
+- 例: `vecr-garage-dev-lambda-secrets`
+
+**セキュリティ:**
+
+- AWS IAMによるアクセス制御
+- プロファイルベースの認証（共有クレデンシャル不要）
+- 環境別（dev/staging/prod）のシークレット分離
 
 #### Discord Bot統合
 
