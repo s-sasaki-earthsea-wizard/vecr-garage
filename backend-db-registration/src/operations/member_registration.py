@@ -44,7 +44,7 @@ def register_human_member_from_yaml(yaml_path: str):
     try:
         # ストレージからYAMLを読み込む（既にパース済みの辞書オブジェクト）
         storage_client = StorageClient()
-        yaml_data = storage_client.read_yaml_from_minio(yaml_path)
+        yaml_data = storage_client.read_yaml_from_storage(yaml_path)
 
         # 人間メンバーの必須フィールドを検証（DBセッション前に実行）
         YAMLValidator.validate_human_member_yaml(yaml_data)
@@ -149,7 +149,7 @@ def register_virtual_member_from_yaml(yaml_path: str):
     try:
         # ストレージからYAMLを読み込む（既にパース済みの辞書オブジェクト）
         storage_client = StorageClient()
-        yaml_data = storage_client.read_yaml_from_minio(yaml_path)
+        yaml_data = storage_client.read_yaml_from_storage(yaml_path)
 
         # 仮想メンバーの必須フィールドを検証（DBセッション前に実行）
         YAMLValidator.validate_virtual_member_yaml(yaml_data)
@@ -281,7 +281,7 @@ def register_human_members_batch(yaml_paths: list):
         yaml_data_list = []
         for yaml_path in yaml_paths:
             try:
-                yaml_data = storage_client.read_yaml_from_minio(yaml_path)
+                yaml_data = storage_client.read_yaml_from_storage(yaml_path)
                 # バリデーション
                 YAMLValidator.validate_human_member_yaml(yaml_data)
                 yaml_data_list.append((yaml_path, yaml_data))
@@ -362,7 +362,7 @@ def register_virtual_members_batch(yaml_paths: list):
         yaml_data_list = []
         for yaml_path in yaml_paths:
             try:
-                yaml_data = storage_client.read_yaml_from_minio(yaml_path)
+                yaml_data = storage_client.read_yaml_from_storage(yaml_path)
                 # バリデーション
                 YAMLValidator.validate_virtual_member_yaml(yaml_data)
                 yaml_data_list.append((yaml_path, yaml_data))

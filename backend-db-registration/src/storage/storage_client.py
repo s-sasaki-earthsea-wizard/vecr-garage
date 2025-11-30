@@ -1,12 +1,12 @@
 import os
-from io import BytesIO
 
+import boto3
 import yaml
-from minio import Minio
+from botocore.exceptions import ClientError
 
 
 class StorageClient:
-    """MinIOストレージサービスとの通信を行うクライアントクラス
+    """S3互換ストレージサービスとの通信を行うクライアントクラス
 
     メンバー登録システムで使用するYAMLファイルの読み込み、ファイル一覧取得、
     ストレージ接続確認などの機能を提供します。環境変数から認証情報を
@@ -19,21 +19,33 @@ class StorageClient:
     - バケット存在確認
 
     Attributes:
-        client (Minio): MinIOクライアントインスタンス
+        client (boto3.client): S3クライアントインスタンス
         bucket_name (str): 使用するバケット名
 
     Note:
         - 環境変数から認証情報を取得（STORAGE_HOST, STORAGE_PORT, MINIO_ROOT_USER, MINIO_ROOT_PASSWORD）
         - 開発環境ではHTTP接続、本番環境ではHTTPS接続を推奨
+        - boto3ライブラリを使用してS3互換APIでアクセス
+        - ローカルMinIOと本番S3の両方に対応
     """
 
     def __init__(self):
-        # Get authentication information from environment variables
-        self.client = Minio(
-            f"{os.environ.get('STORAGE_HOST')}:{os.environ.get('STORAGE_PORT')}",
-            access_key=os.environ.get("MINIO_ROOT_USER"),
-            secret_key=os.environ.get("MINIO_ROOT_PASSWORD"),
-            secure=False,  # In development, HTTP is fine. In production, it should be True
+        # 環境変数から認証情報を取得
+        storage_host = os.environ.get("STORAGE_HOST")
+        storage_port = os.environ.get("STORAGE_PORT")
+
+        # S3互換エンドポイントのURL構築
+        endpoint_url = f"http://{storage_host}:{storage_port}"  # 開発環境はHTTP
+
+        # boto3 S3クライアントの初期化
+        self.client = boto3.client(
+            "s3",
+            endpoint_url=endpoint_url,
+            aws_access_key_id=os.environ.get("MINIO_ROOT_USER"),
+            aws_secret_access_key=os.environ.get("MINIO_ROOT_PASSWORD"),
+            region_name="us-east-1",  # MinIOではリージョンは任意だがboto3には必須
+            aws_session_token=None,
+            verify=False,  # 開発環境でSSL証明書検証を無効化
         )
         self.bucket_name = os.environ.get("MINIO_BUCKET_NAME")
 
@@ -86,7 +98,13 @@ class StorageClient:
             bucket_name = self.bucket_name
 
         try:
-            return self.client.bucket_exists(bucket_name)
+            self.client.head_bucket(Bucket=bucket_name)
+            return True
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "404":
+                return False
+            raise Exception(f"❌ Error checking if bucket {bucket_name} exists: {e}") from e
         except Exception as e:
             raise Exception(f"❌ Error checking if bucket {bucket_name} exists: {e}") from e
 
@@ -114,17 +132,23 @@ class StorageClient:
         """
         try:
             yaml_files = []
-            objects = self.client.list_objects(self.bucket_name, prefix=prefix, recursive=True)
 
-            for obj in objects:
-                if obj.object_name.endswith(".yml") or obj.object_name.endswith(".yaml"):
-                    yaml_files.append(obj.object_name)
+            # boto3のlist_objects_v2を使用してオブジェクト一覧を取得
+            paginator = self.client.get_paginator("list_objects_v2")
+            page_iterator = paginator.paginate(Bucket=self.bucket_name, Prefix=prefix)
+
+            for page in page_iterator:
+                if "Contents" in page:
+                    for obj in page["Contents"]:
+                        object_key = obj["Key"]
+                        if object_key.endswith(".yml") or object_key.endswith(".yaml"):
+                            yaml_files.append(object_key)
 
             return yaml_files
         except Exception as e:
             raise Exception(f"❌ Error listing YAML files with prefix '{prefix}': {e}") from e
 
-    def read_yaml_from_minio(self, object_name: str) -> dict:
+    def read_yaml_from_storage(self, object_name: str) -> dict:
         """ストレージからYAMLファイルを読み込み、パースされた辞書オブジェクトを返す
 
         指定されたオブジェクト名（ファイルパス）のYAMLファイルを
@@ -141,31 +165,31 @@ class StorageClient:
 
         Example:
             >>> client = StorageClient()
-            >>> data = client.read_yaml_from_minio("data/human_members/田中太郎.yml")
+            >>> data = client.read_yaml_from_storage("data/human_members/田中太郎.yml")
             >>> print(f"Name: {data.get('name')}")
             >>> print(f"Age: {data.get('age')}")
 
         Note:
             - ファイルが見つからない場合は専用のエラーメッセージが表示されます
             - YAML形式が不正な場合はパースエラーが発生します
-            - 読み込み後は自動的にリソースが解放されます
+            - boto3では自動的にリソースが管理されます
         """
-        response = None
         try:
-            # Get the object
-            response = self.client.get_object(self.bucket_name, object_name)
+            # boto3でオブジェクトを取得
+            response = self.client.get_object(Bucket=self.bucket_name, Key=object_name)
 
-            # Read the binary data into memory
-            yaml_data = BytesIO(response.read())
+            # ストリームからデータを読み込み
+            content = response["Body"].read()
 
-            # Parse as YAML
-            data = yaml.safe_load(yaml_data)
-
-            # Close the connection
-            response.close()
-            response.release_conn()
-
-            return data
+            # YAMLとしてパース
+            return yaml.safe_load(content)
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "NoSuchKey":
+                raise Exception(
+                    f"❌ File not found: {object_name} in bucket {self.bucket_name}"
+                ) from e
+            raise Exception(f"❌ Error reading {object_name} from {self.bucket_name}: {e}") from e
         except Exception as e:
             raise Exception(f"❌ Error reading {object_name} from {self.bucket_name}: {e}") from e
 
@@ -215,8 +239,8 @@ def main():
             print(f"  {file}")
 
         # Read specific files
-        syota_data = storage_client.read_yaml_from_minio("data/samples/human_members/syota.yml")
-        kasen_data = storage_client.read_yaml_from_minio("data/samples/virtual_members/kasen.yml")
+        syota_data = storage_client.read_yaml_from_storage("data/samples/human_members/syota.yml")
+        kasen_data = storage_client.read_yaml_from_storage("data/samples/virtual_members/kasen.yml")
 
         print(f"\nSyota data: {syota_data}")
         print(f"Kasen data: {kasen_data}")
