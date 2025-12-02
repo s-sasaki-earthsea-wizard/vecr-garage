@@ -43,7 +43,7 @@ class StorageClient:
             endpoint_url=endpoint_url,
             aws_access_key_id=os.environ.get("MINIO_ROOT_USER"),
             aws_secret_access_key=os.environ.get("MINIO_ROOT_PASSWORD"),
-            region_name="us-east-1",  # MinIOではリージョンは任意だがboto3には必須
+            region_name="ap-northeast-1",  # 東京リージョン（MinIOではリージョンは任意だがboto3には必須）
             aws_session_token=None,
             verify=False,  # 開発環境でSSL証明書検証を無効化
         )
