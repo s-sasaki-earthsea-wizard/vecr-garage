@@ -13,7 +13,7 @@ requires-python = ">=3.11"
 # Black (コードフォーマッター)
 # ============================================================
 [tool.black]
-line-length = 100
+line-length = 88
 target-version = ['py311']
 include = '\.pyi?$'
 exclude = '''
@@ -34,7 +34,7 @@ exclude = '''
 # Ruff (高速リンター)
 # ============================================================
 [tool.ruff]
-line-length = 100
+line-length = 88
 target-version = "py311"
 
 # 除外するディレクトリ

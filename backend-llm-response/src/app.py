@@ -31,7 +31,9 @@ def main():
     logger.info("=" * 60)
     logger.info(f"🚀 Discord Bot '{bot_name}' を起動します")
     if times_test_mode:
-        logger.info(f"🧪 Times Mode テストモード有効 (インターバル: {times_test_interval}秒)")
+        logger.info(
+            f"🧪 Times Mode テストモード有効 (インターバル: {times_test_interval}秒)"
+        )
     logger.info("=" * 60)
 
     try:

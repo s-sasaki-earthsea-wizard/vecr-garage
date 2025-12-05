@@ -104,7 +104,9 @@ class StorageClient:
             error_code = e.response["Error"]["Code"]
             if error_code == "404":
                 return False
-            raise Exception(f"❌ Error checking if bucket {bucket_name} exists: {e}") from e
+            raise Exception(
+                f"❌ Error checking if bucket {bucket_name} exists: {e}"
+            ) from e
         except Exception as e:
             raise Exception(
                 f"❌ Error checking if bucket {bucket_name} exists: {e}"
@@ -137,17 +139,13 @@ class StorageClient:
 
             # boto3のlist_objects_v2を使用してオブジェクト一覧を取得
             paginator = self.client.get_paginator("list_objects_v2")
-            page_iterator = paginator.paginate(
-                Bucket=self.bucket_name, Prefix=prefix
-            )
+            page_iterator = paginator.paginate(Bucket=self.bucket_name, Prefix=prefix)
 
             for page in page_iterator:
                 if "Contents" in page:
                     for obj in page["Contents"]:
                         object_key = obj["Key"]
-                        if object_key.endswith(".yml") or object_key.endswith(
-                            ".yaml"
-                        ):
+                        if object_key.endswith(".yml") or object_key.endswith(".yaml"):
                             yaml_files.append(object_key)
 
             return yaml_files
@@ -197,7 +195,9 @@ class StorageClient:
                 raise Exception(
                     f"❌ File not found: {object_name} in bucket {self.bucket_name}"
                 ) from e
-            raise Exception(f"❌ Error reading {object_name} from {self.bucket_name}: {e}") from e
+            raise Exception(
+                f"❌ Error reading {object_name} from {self.bucket_name}: {e}"
+            ) from e
         except Exception as e:
             raise Exception(
                 f"❌ Error reading {object_name} from {self.bucket_name}: {e}"
