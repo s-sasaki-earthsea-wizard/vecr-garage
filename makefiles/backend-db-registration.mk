@@ -1,7 +1,7 @@
 # backend-db-registrationサービス専用のMakeタスク
 # サービス固有の操作を定義
 
-.PHONY: backend-db-registration-test backend-db-registration-test-rollback backend-db-registration-logs backend-db-registration-health backend-db-registration-webhook-test backend-db-registration-register-members backend-db-registration-register-members-single backend-db-registration-register-human backend-db-registration-register-virtual backend-db-registration-db-connection backend-db-registration-start-api backend-db-registration-check-api backend-db-registration-start backend-db-registration-stop backend-db-registration-clean
+.PHONY: backend-db-registration-test backend-db-registration-test-rollback backend-db-registration-logs backend-db-registration-health backend-db-registration-webhook-test backend-db-registration-register-members backend-db-registration-register-members-single backend-db-registration-register-human backend-db-registration-register-virtual backend-db-registration-db-connection backend-db-registration-storage-connection backend-db-registration-start-api backend-db-registration-check-api backend-db-registration-start backend-db-registration-stop backend-db-registration-clean
 
 backend-db-registration-test: ## Run tests for backend-db-registration service
 	@echo "Running tests for backend-db-registration service..."
@@ -67,6 +67,17 @@ backend-db-registration-db-connection: ## Check database connection
 			exit 1; \
 		fi && \
 		PGPASSWORD="$$MEMBER_DB_PASSWORD" psql -h "$$MEMBER_DB_HOST" -p "$$MEMBER_DB_PORT" -U "$$MEMBER_DB_USER" -d "$$MEMBER_DB_NAME" -c "\\conninfo"'
+
+backend-db-registration-storage-connection: ## Check storage (MinIO/S3) connection with boto3
+	@echo "Checking storage connection with boto3..."
+	@docker exec vecr-garage-backend-db-registration python -c \
+		"from storage.storage_client import StorageClient; \
+		client = StorageClient(); \
+		print('✅ Client created'); \
+		result = client.storage_connection_check(); \
+		print(f'✅ Connection: {result}'); \
+		files = client.list_yaml_files('data/samples/'); \
+		print(f'✅ Found {len(files)} files')"
 
 backend-db-registration-start-api: ## Start FastAPI server (development)
 	@echo "Starting FastAPI server in development mode..."
