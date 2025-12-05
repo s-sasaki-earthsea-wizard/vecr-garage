@@ -42,7 +42,7 @@ jobs:
           go-version: '1.21'
 
       - name: checkmake をインストール
-        run: go install github.com/mrtazz/checkmake/cmd/checkmake@latest
+        run: go install github.com/checkmake/checkmake/cmd/checkmake@latest
 
       - name: Node.js ツールをインストール
         run: npm install -g eslint prettier
