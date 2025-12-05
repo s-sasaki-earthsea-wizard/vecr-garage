@@ -1,13 +1,12 @@
+from sqlalchemy.orm import Session
+
 from db.connection.connection import DBMemberConnection
 from db.models.schemas import HumanMember, VirtualMember, VirtualMemberProfile
-from sqlalchemy.orm import Session
 
 
 def query_human_members(session: Session, name: str) -> list[HumanMember]:
     try:
-        return (
-            session.query(HumanMember).filter(HumanMember.member_name == name).first()
-        )
+        return session.query(HumanMember).filter(HumanMember.member_name == name).first()
     except Exception as e:
         print(f"❌ Error querying human members: {e}")
 
