@@ -83,7 +83,7 @@ def mock_storage_client(monkeypatch):
     """ストレージクライアントのモックを作成するフィクスチャ"""
 
     class MockStorageClient:
-        def read_yaml_from_minio(self, yaml_path):
+        def read_yaml_from_storage(self, yaml_path):
             with open(yaml_path, encoding="utf-8") as f:
                 return yaml.safe_load(f)
 
@@ -199,7 +199,7 @@ def mock_storage_with_real_files(monkeypatch, tmp_path):
     }
 
     class MockStorageClientForRealFiles:
-        def read_yaml_from_minio(self, yaml_path):
+        def read_yaml_from_storage(self, yaml_path):
             if yaml_path in test_files:
                 content = test_files[yaml_path]
                 if content is None:  # 空ファイルの場合
@@ -353,7 +353,7 @@ def test_yml_file_uri_based_upsert_human_member(db_session, monkeypatch):
     }
 
     class MockStorageClient:
-        def read_yaml_from_minio(self, yaml_path):
+        def read_yaml_from_storage(self, yaml_path):
             if yaml_path in test_files:
                 content = test_files[yaml_path]
                 if content is None:
@@ -429,7 +429,7 @@ def test_yml_file_uri_based_upsert_virtual_member(db_session, monkeypatch):
     }
 
     class MockStorageClient:
-        def read_yaml_from_minio(self, yaml_path):
+        def read_yaml_from_storage(self, yaml_path):
             if yaml_path in test_files:
                 content = test_files[yaml_path]
                 if content is None:
@@ -513,7 +513,7 @@ def test_profile_information_storage(db_session, monkeypatch):
     }
 
     class MockStorageClient:
-        def read_yaml_from_minio(self, yaml_path):
+        def read_yaml_from_storage(self, yaml_path):
             if yaml_path in test_files:
                 content = test_files[yaml_path]
                 if content is None:

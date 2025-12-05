@@ -76,7 +76,7 @@ def mock_storage_client(monkeypatch):
             return yaml.safe_load(f)
 
     class MockStorageClient:
-        def read_yaml_from_minio(self, yaml_path):
+        def read_yaml_from_storage(self, yaml_path):
             return mock_read_yaml(yaml_path)
 
     monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
