@@ -20,7 +20,9 @@ class HumanMember(Base):
     __tablename__ = "human_members"
 
     member_id = Column(Integer, primary_key=True)
-    member_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    member_uuid = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
     member_name = Column(String(50), unique=True, nullable=False)
     yml_file_uri = Column(String(500), unique=True, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
@@ -38,7 +40,9 @@ class VirtualMember(Base):
     __tablename__ = "virtual_members"
 
     member_id = Column(Integer, primary_key=True)
-    member_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    member_uuid = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
     member_name = Column(String(50), unique=True, nullable=False)
     yml_file_uri = Column(String(500), unique=True, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
@@ -56,7 +60,9 @@ class HumanMemberProfile(Base):
     __tablename__ = "human_member_profiles"
 
     profile_id = Column(Integer, primary_key=True)
-    profile_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    profile_uuid = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
     member_id = Column(Integer, ForeignKey("human_members.member_id"), nullable=False)
     member_uuid = Column(
         UUID(as_uuid=True),
@@ -73,7 +79,9 @@ class HumanMemberProfile(Base):
     )
 
     # リレーションシップ（foreign_keysを明示的に指定）
-    human_member = relationship("HumanMember", backref="profiles", foreign_keys=[member_uuid])
+    human_member = relationship(
+        "HumanMember", backref="profiles", foreign_keys=[member_uuid]
+    )
 
     def __repr__(self):
         return f"<HumanMemberProfile(id={self.profile_id}, member_id={self.member_id})>"
@@ -83,7 +91,9 @@ class VirtualMemberProfile(Base):
     __tablename__ = "virtual_member_profiles"
 
     profile_id = Column(Integer, primary_key=True)
-    profile_uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    profile_uuid = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
     member_id = Column(Integer, ForeignKey("virtual_members.member_id"), nullable=False)
     member_uuid = Column(
         UUID(as_uuid=True),
@@ -101,10 +111,14 @@ class VirtualMemberProfile(Base):
     )
 
     # リレーションシップ（foreign_keysを明示的に指定）
-    virtual_member = relationship("VirtualMember", backref="profiles", foreign_keys=[member_uuid])
+    virtual_member = relationship(
+        "VirtualMember", backref="profiles", foreign_keys=[member_uuid]
+    )
 
     def __repr__(self):
-        return f"<VirtualMemberProfile(id={self.profile_id}, member_id={self.member_id})>"
+        return (
+            f"<VirtualMemberProfile(id={self.profile_id}, member_id={self.member_id})>"
+        )
 
 
 class MemberRelationship(Base):

@@ -48,7 +48,9 @@ def human_test_yaml():
     """人間メンバー用のテストYAMLファイル（プロフィール失敗用）"""
     yaml_data = {"name": "テスト人間メンバー", "bio": "テスト用のbio情報"}
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".yaml", delete=False, encoding="utf-8"
+    ) as f:
         yaml.dump(yaml_data, f, allow_unicode=True)
         return f.name
 
@@ -62,7 +64,9 @@ def virtual_test_yaml():
         "custom_prompt": "テスト用のカスタムプロンプト",
     }
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".yaml", delete=False, encoding="utf-8"
+    ) as f:
         yaml.dump(yaml_data, f, allow_unicode=True)
         return f.name
 
@@ -79,10 +83,14 @@ def mock_storage_client(monkeypatch):
         def read_yaml_from_storage(self, yaml_path):
             return mock_read_yaml(yaml_path)
 
-    monkeypatch.setattr("operations.member_registration.StorageClient", MockStorageClient)
+    monkeypatch.setattr(
+        "operations.member_registration.StorageClient", MockStorageClient
+    )
 
 
-def test_human_member_profile_failure_rollback(db_session, human_test_yaml, mock_storage_client):
+def test_human_member_profile_failure_rollback(
+    db_session, human_test_yaml, mock_storage_client
+):
     """
     人間メンバー登録でプロフィール失敗時の全体ロールバックテスト
 
@@ -168,7 +176,9 @@ def test_virtual_member_profile_failure_rollback(
     print(f"   - プロフィール数: {initial_profile_count} → {final_profile_count}")
 
 
-def test_database_constraint_violation_rollback(db_session, human_test_yaml, mock_storage_client):
+def test_database_constraint_violation_rollback(
+    db_session, human_test_yaml, mock_storage_client
+):
     """
     データベース制約違反による自動ロールバックテスト
 
@@ -209,7 +219,9 @@ def test_database_constraint_violation_rollback(db_session, human_test_yaml, moc
     print(f"   - 2回目登録後: {final_human_count} (UPSERT動作)")
 
 
-def test_transaction_isolation_verification(db_session, human_test_yaml, mock_storage_client):
+def test_transaction_isolation_verification(
+    db_session, human_test_yaml, mock_storage_client
+):
     """
     トランザクション分離レベルの検証テスト
 
@@ -231,7 +243,9 @@ def test_transaction_isolation_verification(db_session, human_test_yaml, mock_st
 
         # 外部セッションから見た場合、変更が見えないことを確認
         external_count = external_session.query(HumanMember).count()
-        assert external_count == initial_count, "未コミットの変更が外部セッションから見えています"
+        assert (
+            external_count == initial_count
+        ), "未コミットの変更が外部セッションから見えています"
 
         print("✅ トランザクション分離確認テスト成功")
         print("   - 外部セッションからの変更は不可視")

@@ -11,9 +11,13 @@ class MemberService:
 
         try:
             # 仮実装として、member_idをハードコード
-            human_member = session.query(HumanMember).filter(HumanMember.member_id == 1).first()
+            human_member = (
+                session.query(HumanMember).filter(HumanMember.member_id == 1).first()
+            )
             virtual_member = (
-                session.query(VirtualMember).filter(VirtualMember.member_id == 1).first()
+                session.query(VirtualMember)
+                .filter(VirtualMember.member_id == 1)
+                .first()
             )
 
             if not human_member or not virtual_member:
