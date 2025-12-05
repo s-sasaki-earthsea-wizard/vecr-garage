@@ -1,7 +1,7 @@
 # VECR Garage CI/CD ワークフロー
 # ============================================================
 # プルリクエストとプッシュ時に自動的にコード品質チェックを実行
-# ローカルのpre-commit hooksと同じチェックをリモートでも実行
+# ローカルのpre-commit hooksと同じci-runnerコンテナを使用
 # ============================================================
 
 name: CI
@@ -26,32 +26,11 @@ jobs:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
 
-      - name: Python 3.11 をセットアップ
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: 環境変数ファイルを準備
+        run: cp .env.example .env
 
-      - name: Node.js 20 をセットアップ
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: ci-runner コンテナをビルド
+        run: docker compose -p vecr-garage build ci-runner
 
-      - name: Go をセットアップ（checkmake用）
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-
-      - name: checkmake をインストール
-        run: go install github.com/checkmake/checkmake/cmd/checkmake@latest
-
-      - name: Node.js ツールをインストール
-        run: npm install -g eslint prettier
-
-      - name: Python ツールをインストール
-        run: pip install djlint
-
-      - name: PATH に Go bin を追加
-        run: echo "$HOME/go/bin" >> $GITHUB_PATH
-
-      - name: Pre-commit を実行
-        uses: pre-commit/action@v3.0.1
+      - name: Pre-commit を実行（ci-runner コンテナ）
+        run: docker compose -p vecr-garage run --rm ci-runner /ci-scripts/pre-commit-run.sh --all-files
