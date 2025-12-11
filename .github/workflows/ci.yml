@@ -1,0 +1,36 @@
+# VECR Garage CI/CD ワークフロー
+# ============================================================
+# プルリクエストとプッシュ時に自動的にコード品質チェックを実行
+# ローカルのpre-commit hooksと同じci-runnerコンテナを使用
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 同じブランチの古いワークフローをキャンセル
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    name: Pre-commit チェック
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 環境変数ファイルを準備
+        run: cp .env.example .env
+
+      - name: ci-runner コンテナをビルド
+        run: docker compose -p vecr-garage build ci-runner
+
+      - name: Pre-commit を実行（ci-runner コンテナ）
+        run: docker compose -p vecr-garage run --rm ci-runner /ci-scripts/pre-commit-run.sh --all-files

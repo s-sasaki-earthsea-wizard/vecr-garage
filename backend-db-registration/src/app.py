@@ -72,7 +72,9 @@ async def storage_monitor_health():
 
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Health check failed: {str(e)}"
+        ) from e
 
 
 @app.get("/health/storage-monitor/ready")
@@ -129,7 +131,9 @@ async def health_check():
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Health check failed: {str(e)}"
+        ) from e
 
 
 @app.post("/webhook/file-change", response_model=WebhookResponse)
@@ -173,7 +177,9 @@ async def get_webhook_status():
         return {"status": "success", "data": status}
     except Exception as e:
         logger.error(f"Failed to get webhook status: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get status: {str(e)}"
+        ) from e
 
 
 @app.post("/webhook/test")
@@ -187,7 +193,9 @@ async def test_webhook():
                     "eventName": "s3:ObjectCreated:Put",
                     "eventTime": "2024-01-01T00:00:00.000Z",
                     "s3": {
-                        "bucket": {"name": os.getenv("MINIO_BUCKET_NAME", "vecr-storage")},
+                        "bucket": {
+                            "name": os.getenv("MINIO_BUCKET_NAME", "vecr-storage")
+                        },
                         "object": {
                             "key": "data/samples/human_members/test_human_member.yaml",
                             "eTag": "test-etag-123",

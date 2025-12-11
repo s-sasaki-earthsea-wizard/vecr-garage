@@ -30,7 +30,9 @@ class PromptLoader:
         prompt_file = Path(f"{PromptLoader.PROMPT_DIR}/{bot_name}.txt")
 
         if not prompt_file.exists():
-            logger.warning(f"⚠️ システムプロンプトファイルが見つかりません: {prompt_file}")
+            logger.warning(
+                f"⚠️ システムプロンプトファイルが見つかりません: {prompt_file}"
+            )
             logger.info(
                 f"💡 デフォルトプロンプトなしで起動します。"
                 f"カスタマイズする場合は {prompt_file} を作成してください。"
@@ -77,7 +79,9 @@ class PromptLoader:
 
                 if prompt:
                     logger.info(f"✅ DB からシステムプロンプト読み込み成功: {bot_name}")
-                    logger.debug(f"📝 プロンプト内容 ({len(prompt)}文字): {prompt[:100]}...")
+                    logger.debug(
+                        f"📝 プロンプト内容 ({len(prompt)}文字): {prompt[:100]}..."
+                    )
                     return prompt
 
                 logger.info(f"💡 DB にプロンプトが見つかりません: {bot_name}")
@@ -87,5 +91,7 @@ class PromptLoader:
                 session.close()
 
         except Exception as e:
-            logger.error(f"❌ DB からのプロンプト読み込みエラー: {bot_name} - {e}", exc_info=True)
+            logger.error(
+                f"❌ DB からのプロンプト読み込みエラー: {bot_name} - {e}", exc_info=True
+            )
             return None

@@ -12,7 +12,9 @@ class WebhookValidator:
     """Webhook設定バリデーションクラス"""
 
     # Discord Webhook URLの正規表現パターン
-    DISCORD_WEBHOOK_PATTERN = re.compile(r"^https://discord\.com/api/webhooks/\d+/[\w-]+$")
+    DISCORD_WEBHOOK_PATTERN = re.compile(
+        r"^https://discord\.com/api/webhooks/\d+/[\w-]+$"
+    )
 
     @staticmethod
     def validate_discord_url(url: str) -> bool:
@@ -81,7 +83,9 @@ class WebhookValidator:
         return True, ""
 
     @staticmethod
-    def validate_webhook_name(config: dict[str, str], webhook_name: str) -> tuple[bool, str]:
+    def validate_webhook_name(
+        config: dict[str, str], webhook_name: str
+    ) -> tuple[bool, str]:
         """
         指定されたWebhook名の存在を検証
 
@@ -95,7 +99,8 @@ class WebhookValidator:
         if webhook_name not in config:
             available = ", ".join(config.keys())
             return False, (
-                f"Webhook '{webhook_name}' が見つかりません。\n" f"利用可能なWebhook: {available}"
+                f"Webhook '{webhook_name}' が見つかりません。\n"
+                f"利用可能なWebhook: {available}"
             )
 
         return True, ""

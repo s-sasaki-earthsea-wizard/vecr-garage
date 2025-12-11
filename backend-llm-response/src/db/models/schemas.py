@@ -13,7 +13,9 @@ class HumanMember(Base):
     __tablename__ = "human_members"
 
     member_id = Column(Integer, primary_key=True)
-    member_uuid = Column(UUID, nullable=False, unique=True, server_default=func.uuid_generate_v4())
+    member_uuid = Column(
+        UUID, nullable=False, unique=True, server_default=func.uuid_generate_v4()
+    )
     member_name = Column(String(255), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
@@ -26,7 +28,9 @@ class VirtualMember(Base):
     __tablename__ = "virtual_members"
 
     member_id = Column(Integer, primary_key=True)
-    member_uuid = Column(UUID, nullable=False, unique=True, server_default=func.uuid_generate_v4())
+    member_uuid = Column(
+        UUID, nullable=False, unique=True, server_default=func.uuid_generate_v4()
+    )
     member_name = Column(String(255), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
@@ -39,7 +43,9 @@ class VirtualMemberProfile(Base):
     __tablename__ = "virtual_member_profiles"
 
     profile_id = Column(Integer, primary_key=True)
-    profile_uuid = Column(UUID, nullable=False, unique=True, server_default=func.uuid_generate_v4())
+    profile_uuid = Column(
+        UUID, nullable=False, unique=True, server_default=func.uuid_generate_v4()
+    )
     member_id = Column(Integer, ForeignKey("virtual_members.member_id"), nullable=False)
     member_uuid = Column(
         UUID, ForeignKey("virtual_members.member_uuid"), nullable=False, unique=True
@@ -50,7 +56,11 @@ class VirtualMemberProfile(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # リレーションシップ
-    virtual_member = relationship("VirtualMember", backref="profiles", foreign_keys=[member_uuid])
+    virtual_member = relationship(
+        "VirtualMember", backref="profiles", foreign_keys=[member_uuid]
+    )
 
     def __repr__(self):
-        return f"<VirtualMemberProfile(id={self.profile_id}, member_id={self.member_id})>"
+        return (
+            f"<VirtualMemberProfile(id={self.profile_id}, member_id={self.member_id})>"
+        )

@@ -214,7 +214,10 @@ def update_record(table_name, record_id):
             )
 
         # メンバーテーブルでYMLファイルURIを持つ場合はWebhookフローを使用
-        if table_name in ["human_members", "virtual_members"] and "yml_file_uri" in data:
+        if (
+            table_name in ["human_members", "virtual_members"]
+            and "yml_file_uri" in data
+        ):
             try:
                 from storage_client import StorageClient
                 from yaml_generator import YAMLGenerator
@@ -241,7 +244,9 @@ def update_record(table_name, record_id):
                     yaml_content = YAMLGenerator.generate_virtual_member_yaml(form_data)
 
                 # ストレージにアップロード（Webhookが自動的にDB更新を実行）
-                upload_result = storage_client.upload_yaml_file(yaml_content, yml_file_uri)
+                upload_result = storage_client.upload_yaml_file(
+                    yaml_content, yml_file_uri
+                )
 
                 return jsonify(
                     {
@@ -281,20 +286,26 @@ def update_record(table_name, record_id):
                         }
                     )
                 return (
-                    jsonify({"success": False, "error": "レコードの更新に失敗しました"}),
+                    jsonify(
+                        {"success": False, "error": "レコードの更新に失敗しました"}
+                    ),
                     500,
                 )
             except Exception as e:
                 logger.error(f"Database update error: {str(e)}")
                 return (
-                    jsonify({"success": False, "error": f"データベース更新エラー: {str(e)}"}),
+                    jsonify(
+                        {"success": False, "error": f"データベース更新エラー: {str(e)}"}
+                    ),
                     500,
                 )
 
     except Exception as e:
         logger.error(f"Record update error: {str(e)}")
         return (
-            jsonify({"success": False, "error": f"レコード更新中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {"success": False, "error": f"レコード更新中にエラーが発生: {str(e)}"}
+            ),
             500,
         )
 
@@ -323,7 +334,9 @@ def delete_record(table_name, record_id):
     except Exception as e:
         logger.error(f"Record deletion error: {str(e)}")
         return (
-            jsonify({"success": False, "error": f"レコード削除中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {"success": False, "error": f"レコード削除中にエラーが発生: {str(e)}"}
+            ),
             500,
         )
 
@@ -512,7 +525,9 @@ def create_table_record_api(table_name):
 
     except Exception as e:
         return (
-            jsonify({"success": False, "error": f"レコード作成中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {"success": False, "error": f"レコード作成中にエラーが発生: {str(e)}"}
+            ),
             500,
         )
 
@@ -601,7 +616,9 @@ def create_member():
     except Exception as e:
         logger.error(f"Member creation error: {str(e)}")
         return (
-            jsonify({"success": False, "message": f"メンバー作成中にエラーが発生: {str(e)}"}),
+            jsonify(
+                {"success": False, "message": f"メンバー作成中にエラーが発生: {str(e)}"}
+            ),
             500,
         )
 

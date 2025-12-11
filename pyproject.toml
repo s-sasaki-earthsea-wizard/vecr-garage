@@ -1,0 +1,22 @@
+# ============================================================
+# VECR Garage - プロジェクトルート設定
+# pre-commit hooks用の統一設定
+# ============================================================
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.ruff_cache
+  | __pycache__
+  | venv
+  | env
+  | build
+  | dist
+)/
+'''

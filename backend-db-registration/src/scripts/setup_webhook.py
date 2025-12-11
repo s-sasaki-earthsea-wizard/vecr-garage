@@ -28,7 +28,9 @@ class WebhookSetup:
         self.storage_client = StorageClient()
         self.minio_client = self.storage_client.client
 
-    def create_webhook_config(self, webhook_url: str, bucket_name: str | None = None) -> bool:
+    def create_webhook_config(
+        self, webhook_url: str, bucket_name: str | None = None
+    ) -> bool:
         """Webhook設定を作成する
 
         Args:
@@ -173,7 +175,9 @@ def main():
     # 環境変数から設定を取得
     webhook_url = os.getenv("WEBHOOK_URL", os.getenv("WEBHOOK_FULL_URL"))
     if not webhook_url:
-        print("❌ Error: WEBHOOK_URL or WEBHOOK_FULL_URL environment variable is required")
+        print(
+            "❌ Error: WEBHOOK_URL or WEBHOOK_FULL_URL environment variable is required"
+        )
         sys.exit(1)
     bucket_name = os.getenv("MINIO_BUCKET_NAME")
     if not bucket_name:

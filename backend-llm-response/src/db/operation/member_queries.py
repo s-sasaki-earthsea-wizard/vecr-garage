@@ -1,11 +1,14 @@
+from sqlalchemy.orm import Session
+
 from db.connection.connection import DBMemberConnection
 from db.models.schemas import HumanMember, VirtualMember, VirtualMemberProfile
-from sqlalchemy.orm import Session
 
 
 def query_human_members(session: Session, name: str) -> list[HumanMember]:
     try:
-        return session.query(HumanMember).filter(HumanMember.member_name == name).first()
+        return (
+            session.query(HumanMember).filter(HumanMember.member_name == name).first()
+        )
     except Exception as e:
         print(f"❌ Error querying human members: {e}")
 
@@ -29,7 +32,10 @@ def get_virtual_member_prompt(session: Session, bot_name: str) -> str | None:
         # VirtualMemberとVirtualMemberProfileをJOINして取得
         result = (
             session.query(VirtualMemberProfile.custom_prompt)
-            .join(VirtualMember, VirtualMember.member_uuid == VirtualMemberProfile.member_uuid)
+            .join(
+                VirtualMember,
+                VirtualMember.member_uuid == VirtualMemberProfile.member_uuid,
+            )
             .filter(VirtualMember.member_name == bot_name)
             .first()
         )
