@@ -10,9 +10,13 @@ Member Manager Mock Application with Authentication
 - Phase 3: AWS Cognito統合 + MFA対応
 """
 
+import json
 import logging
 import os
 from functools import wraps
+
+import boto3
+from botocore.exceptions import ClientError
 
 from flask import (
     Flask,
@@ -30,17 +34,52 @@ from database import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
+
+def get_secret_from_aws(secret_name, key):
+    """AWS Secrets Managerから秘密鍵を取得"""
+    try:
+        # AWS_PROFILEが設定されている場合は使用、なければデフォルト
+        aws_profile = os.getenv("AWS_PROFILE")
+        if aws_profile:
+            session = boto3.Session(profile_name=aws_profile)
+            client = session.client("secretsmanager")
+        else:
+            client = boto3.client("secretsmanager")
+
+        response = client.get_secret_value(SecretId=secret_name)
+        secret_dict = json.loads(response["SecretString"])
+        return secret_dict.get(key)
+    except (ClientError, Exception) as e:
+        logger.debug(f"AWS Secrets Manager取得失敗: {e}")
+        return None
+
+
+def get_config_value(key, secret_name="vecr-garage-dev-app-secrets", default=None):
+    """設定値を取得: Secrets Manager → 環境変数 → デフォルト値"""
+    # 1. AWS Secrets Managerから取得を試行
+    secret_value = get_secret_from_aws(secret_name, key)
+    if secret_value:
+        return secret_value
+
+    # 2. 環境変数から取得
+    env_value = os.getenv(key)
+    if env_value:
+        return env_value
+
+    # 3. デフォルト値
+    return default
+
 app = Flask(__name__)
 CORS(app)
 
 # セッション設定
 # 将来的にはRedisセッションストアを使用
-app.secret_key = os.getenv("SECRET_KEY", "vecr-garage-dev-key")
+app.secret_key = get_config_value("SECRET_KEY", default="vecr-garage-dev-key")
 app.permanent_session_lifetime = 3600  # 1時間
 
-# 認証設定（環境変数から取得）
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "password")
+# 認証設定（Secrets Manager → 環境変数 → デフォルト値の順でフォールバック）
+ADMIN_USERNAME = get_config_value("ADMIN_USERNAME", default="admin")
+ADMIN_PASSWORD = get_config_value("ADMIN_PASSWORD", default="password")
 
 # データベースマネージャーの初期化
 db_manager = DatabaseManager()

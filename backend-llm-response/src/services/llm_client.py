@@ -5,10 +5,47 @@ LLM（Large Language Model）APIを使用してプロンプトを送信し、応
 現在はAnthropic Claude APIを実装。将来的にHugging Face等の他プロバイダーにも対応予定。
 """
 
+import json
+import logging
 import os
 from typing import Any
 
+import boto3
 from anthropic import Anthropic
+from botocore.exceptions import ClientError
+
+logger = logging.getLogger(__name__)
+
+
+def get_secret_from_aws(secret_name, key):
+    """AWS Secrets Managerから秘密鍵を取得"""
+    try:
+        aws_profile = os.getenv("AWS_PROFILE")
+        if aws_profile:
+            session = boto3.Session(profile_name=aws_profile)
+            client = session.client("secretsmanager")
+        else:
+            client = boto3.client("secretsmanager")
+
+        response = client.get_secret_value(SecretId=secret_name)
+        secret_dict = json.loads(response["SecretString"])
+        return secret_dict.get(key)
+    except (ClientError, Exception) as e:
+        logger.debug(f"AWS Secrets Manager取得失敗: {e}")
+        return None
+
+
+def get_config_value(key, secret_name="vecr-garage-dev-app-secrets", default=None):
+    """設定値を取得: Secrets Manager → 環境変数 → デフォルト値"""
+    secret_value = get_secret_from_aws(secret_name, key)
+    if secret_value:
+        return secret_value
+
+    env_value = os.getenv(key)
+    if env_value:
+        return env_value
+
+    return default
 
 
 class LLMClient:
@@ -28,9 +65,9 @@ class LLMClient:
             model: 使用するモデル（未指定の場合は環境変数ANTHROPIC_MODELを使用）
             max_tokens: 最大トークン数（未指定の場合は環境変数ANTHROPIC_MAX_TOKENSを使用）
         """
-        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        self.model = model or os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")
-        self.max_tokens = max_tokens or int(os.getenv("ANTHROPIC_MAX_TOKENS", "4096"))
+        self.api_key = api_key or get_config_value("ANTHROPIC_API_KEY")
+        self.model = model or get_config_value("ANTHROPIC_MODEL", default="claude-sonnet-4-5-20250929")
+        self.max_tokens = max_tokens or int(get_config_value("ANTHROPIC_MAX_TOKENS", default="4096"))
 
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEYが設定されていません")

@@ -4,10 +4,13 @@ Database connection and operations for member-manager service
 PostgreSQL接続とテーブル操作の実装
 """
 
+import json
 import logging
 import os
 
+import boto3
 import psycopg2
+from botocore.exceptions import ClientError
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -16,16 +19,47 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def get_secret_from_aws(secret_name, key):
+    """AWS Secrets Managerから秘密鍵を取得"""
+    try:
+        aws_profile = os.getenv("AWS_PROFILE")
+        if aws_profile:
+            session = boto3.Session(profile_name=aws_profile)
+            client = session.client("secretsmanager")
+        else:
+            client = boto3.client("secretsmanager")
+
+        response = client.get_secret_value(SecretId=secret_name)
+        secret_dict = json.loads(response["SecretString"])
+        return secret_dict.get(key)
+    except (ClientError, Exception) as e:
+        logger.debug(f"AWS Secrets Manager取得失敗: {e}")
+        return None
+
+
+def get_config_value(key, secret_name="vecr-garage-dev-app-secrets", default=None):
+    """設定値を取得: Secrets Manager → 環境変数 → デフォルト値"""
+    secret_value = get_secret_from_aws(secret_name, key)
+    if secret_value:
+        return secret_value
+
+    env_value = os.getenv(key)
+    if env_value:
+        return env_value
+
+    return default
+
+
 class DatabaseManager:
     """データベース接続管理クラス"""
 
     def __init__(self):
-        """環境変数からデータベース接続情報を取得"""
-        self.db_host = os.getenv("MEMBER_DB_HOST", "db-member")
-        self.db_port = os.getenv("MEMBER_DB_PORT", "5432")
-        self.db_user = os.getenv("MEMBER_DB_USER", "testuser")
-        self.db_password = os.getenv("MEMBER_DB_PASSWORD", "password")
-        self.db_name = os.getenv("MEMBER_DB_NAME", "member_db")
+        """Secrets Manager → 環境変数 → デフォルト値の順でデータベース接続情報を取得"""
+        self.db_host = get_config_value("MEMBER_DB_HOST", default="db-member")
+        self.db_port = get_config_value("MEMBER_DB_PORT", default="5432")
+        self.db_user = get_config_value("MEMBER_DB_USER", default="testuser")
+        self.db_password = get_config_value("MEMBER_DB_PASSWORD", default="password")
+        self.db_name = get_config_value("MEMBER_DB_NAME", default="member_db")
 
         # 接続文字列
         self.connection_string = f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
