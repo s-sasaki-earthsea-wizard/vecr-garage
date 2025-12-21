@@ -53,20 +53,14 @@ def get_secret_from_aws(aws_secret_id, key):
         return None
 
 
-def get_config_value(key, aws_secret_id="vecr-garage-dev-app-secrets", default=None):
-    """設定値を取得: Secrets Manager → 環境変数 → デフォルト値"""
-    # 1. AWS Secrets Managerから取得を試行
+def get_config_value(key, aws_secret_id="vecr-garage-dev-app-secrets"):
+    """AWS Secrets Managerから設定値を取得"""
     secret_value = get_secret_from_aws(aws_secret_id, key)
-    if secret_value:
-        return secret_value
-
-    # 2. 環境変数から取得
-    env_value = os.getenv(key)
-    if env_value:
-        return env_value
-
-    # 3. デフォルト値
-    return default
+    if not secret_value:
+        raise ValueError(
+            f"設定値'{key}'がSecrets Manager '{aws_secret_id}'から取得できませんでした"
+        )
+    return secret_value
 
 
 app = Flask(__name__)
@@ -74,12 +68,12 @@ CORS(app)
 
 # セッション設定
 # 将来的にはRedisセッションストアを使用
-app.secret_key = get_config_value("SECRET_KEY", default="vecr-garage-dev-key")
+app.secret_key = get_config_value("SECRET_KEY")
 app.permanent_session_lifetime = 3600  # 1時間
 
-# 認証設定（Secrets Manager → 環境変数 → デフォルト値の順でフォールバック）
-ADMIN_USERNAME = get_config_value("ADMIN_USERNAME", default="admin")
-ADMIN_PASSWORD = get_config_value("ADMIN_PASSWORD", default="password")
+# 認証設定（AWS Secrets Managerから取得）
+ADMIN_USERNAME = get_config_value("ADMIN_USERNAME")
+ADMIN_PASSWORD = get_config_value("ADMIN_PASSWORD")
 
 # データベースマネージャーの初期化
 db_manager = DatabaseManager()

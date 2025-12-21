@@ -28,25 +28,22 @@ def get_secret_from_aws(aws_secret_id, key):
         return None
 
 
-def get_config_value(key, aws_secret_id="vecr-garage-dev-app-secrets", default=None):
-    """設定値を取得: Secrets Manager → 環境変数 → デフォルト値"""
+def get_config_value(key, aws_secret_id="vecr-garage-dev-app-secrets"):
+    """AWS Secrets Managerから設定値を取得"""
     secret_value = get_secret_from_aws(aws_secret_id, key)
-    if secret_value:
-        return secret_value
-
-    env_value = os.getenv(key)
-    if env_value:
-        return env_value
-
-    return default
+    if not secret_value:
+        raise ValueError(
+            f"設定値'{key}'がSecrets Manager '{aws_secret_id}'から取得できませんでした"
+        )
+    return secret_value
 
 
-# Secrets Manager → 環境変数 → デフォルト値の順で接続情報を取得
-DB_HOST = get_config_value("MEMBER_DB_HOST", default="localhost")
-DB_PORT = get_config_value("MEMBER_DB_PORT", default="5432")
-DB_USER = get_config_value("MEMBER_DB_USER", default="testuser")
-DB_PASSWORD = get_config_value("MEMBER_DB_PASSWORD", default="password")
-DB_NAME = get_config_value("MEMBER_DB_NAME", default="member_db")
+# AWS Secrets Managerから接続情報を取得
+DB_HOST = get_config_value("MEMBER_DB_HOST")
+DB_PORT = get_config_value("MEMBER_DB_PORT")
+DB_USER = get_config_value("MEMBER_DB_USER")
+DB_PASSWORD = get_config_value("MEMBER_DB_PASSWORD")
+DB_NAME = get_config_value("MEMBER_DB_NAME")
 
 # 環境変数を使用した接続URLの構築
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"

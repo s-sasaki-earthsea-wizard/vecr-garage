@@ -54,12 +54,12 @@ class DatabaseManager:
     """データベース接続管理クラス"""
 
     def __init__(self):
-        """Secrets Manager → 環境変数 → デフォルト値の順でデータベース接続情報を取得"""
-        self.db_host = get_config_value("MEMBER_DB_HOST", default="db-member")
-        self.db_port = get_config_value("MEMBER_DB_PORT", default="5432")
-        self.db_user = get_config_value("MEMBER_DB_USER", default="testuser")
-        self.db_password = get_config_value("MEMBER_DB_PASSWORD", default="password")
-        self.db_name = get_config_value("MEMBER_DB_NAME", default="member_db")
+        """AWS Secrets Managerからデータベース接続情報を取得"""
+        self.db_host = get_config_value("MEMBER_DB_HOST")
+        self.db_port = get_config_value("MEMBER_DB_PORT")
+        self.db_user = get_config_value("MEMBER_DB_USER")
+        self.db_password = get_config_value("MEMBER_DB_PASSWORD")
+        self.db_name = get_config_value("MEMBER_DB_NAME")
 
         # 接続文字列
         self.connection_string = f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
