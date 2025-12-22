@@ -85,7 +85,7 @@ ignore = [
 
 # import文の整列設定（isort互換）
 [tool.ruff.lint.isort]
-known-first-party = ["app"]
+known-first-party = ["app", "aws_utils", "database"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 # ============================================================
