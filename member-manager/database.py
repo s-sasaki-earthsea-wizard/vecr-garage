@@ -4,50 +4,17 @@ Database connection and operations for member-manager service
 PostgreSQL接続とテーブル操作の実装
 """
 
-import json
 import logging
-import os
 
-import boto3
 import psycopg2
-from botocore.exceptions import ClientError
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
+
+from aws_utils.secrets_manager import get_config_value
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def get_secret_from_aws(aws_secret_id, key):
-    """AWS Secrets Managerから秘密鍵を取得"""
-    try:
-        aws_profile = os.getenv("AWS_PROFILE")
-        if aws_profile:
-            session = boto3.Session(profile_name=aws_profile)
-            client = session.client("secretsmanager")
-        else:
-            client = boto3.client("secretsmanager")
-
-        response = client.get_secret_value(SecretId=aws_secret_id)
-        secret_dict = json.loads(response["SecretString"])
-        return secret_dict.get(key)
-    except (ClientError, Exception) as e:
-        logger.debug(f"AWS Secrets Manager取得失敗: {e}")
-        return None
-
-
-def get_config_value(key, aws_secret_id="vecr-garage-dev-app-secrets", default=None):
-    """設定値を取得: Secrets Manager → 環境変数 → デフォルト値"""
-    secret_value = get_secret_from_aws(aws_secret_id, key)
-    if secret_value:
-        return secret_value
-
-    env_value = os.getenv(key)
-    if env_value:
-        return env_value
-
-    return default
 
 
 class DatabaseManager:
