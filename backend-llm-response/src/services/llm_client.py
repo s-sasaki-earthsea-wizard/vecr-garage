@@ -5,10 +5,14 @@ LLM（Large Language Model）APIを使用してプロンプトを送信し、応
 現在はAnthropic Claude APIを実装。将来的にHugging Face等の他プロバイダーにも対応予定。
 """
 
-import os
+import logging
 from typing import Any
 
 from anthropic import Anthropic
+
+from aws_utils.secrets_manager import get_config_value
+
+logger = logging.getLogger(__name__)
 
 
 class LLMClient:
@@ -28,9 +32,9 @@ class LLMClient:
             model: 使用するモデル（未指定の場合は環境変数ANTHROPIC_MODELを使用）
             max_tokens: 最大トークン数（未指定の場合は環境変数ANTHROPIC_MAX_TOKENSを使用）
         """
-        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        self.model = model or os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")
-        self.max_tokens = max_tokens or int(os.getenv("ANTHROPIC_MAX_TOKENS", "4096"))
+        self.api_key = api_key or get_config_value("ANTHROPIC_API_KEY")
+        self.model = model or get_config_value("ANTHROPIC_MODEL")
+        self.max_tokens = max_tokens or int(get_config_value("ANTHROPIC_MAX_TOKENS"))
 
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEYが設定されていません")

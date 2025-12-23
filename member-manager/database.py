@@ -5,11 +5,12 @@ PostgreSQL接続とテーブル操作の実装
 """
 
 import logging
-import os
 
 import psycopg2
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
+
+from aws_utils.secrets_manager import get_config_value
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
@@ -20,12 +21,12 @@ class DatabaseManager:
     """データベース接続管理クラス"""
 
     def __init__(self):
-        """環境変数からデータベース接続情報を取得"""
-        self.db_host = os.getenv("MEMBER_DB_HOST", "db-member")
-        self.db_port = os.getenv("MEMBER_DB_PORT", "5432")
-        self.db_user = os.getenv("MEMBER_DB_USER", "testuser")
-        self.db_password = os.getenv("MEMBER_DB_PASSWORD", "password")
-        self.db_name = os.getenv("MEMBER_DB_NAME", "member_db")
+        """AWS Secrets Managerからデータベース接続情報を取得"""
+        self.db_host = get_config_value("MEMBER_DB_HOST")
+        self.db_port = get_config_value("MEMBER_DB_PORT")
+        self.db_user = get_config_value("MEMBER_DB_USER")
+        self.db_password = get_config_value("MEMBER_DB_PASSWORD")
+        self.db_name = get_config_value("MEMBER_DB_NAME")
 
         # 接続文字列
         self.connection_string = f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"

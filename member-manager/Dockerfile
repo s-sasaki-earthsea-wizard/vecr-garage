@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Set PYTHONPATH to include app directory and aws_utils
+ENV PYTHONPATH="/app:/app/aws_utils:$PYTHONPATH"
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \

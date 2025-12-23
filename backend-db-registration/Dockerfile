@@ -22,8 +22,8 @@ COPY src/ ./src/
 COPY tests/ ./tests/
 COPY Makefile ./
 
-# Set the PYTHONPATH to include the src directory
-ENV PYTHONPATH="/app/src:$PYTHONPATH"
+# Set the PYTHONPATH to include the src directory, app directory, and aws_utils
+ENV PYTHONPATH="/app/src:/app:/app/aws_utils:$PYTHONPATH"
 
 # Set the entrypoint to start the FastAPI application
 ENTRYPOINT ["python", "src/app.py"]

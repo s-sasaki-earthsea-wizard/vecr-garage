@@ -9,6 +9,8 @@ services:
     volumes:
       - ./backend-db-registration/src:/app/src
       - ./backend-db-registration/tests:/app/tests
+      - ./aws_utils:/app/aws_utils
+      - ./.aws:/root/.aws:ro
     environment:
       - MEMBER_DB_HOST=db-member
       - MEMBER_DB_PORT=${MEMBER_DB_PORT}
@@ -63,6 +65,8 @@ services:
     volumes:
       - ./backend-llm-response/:/app/
       - ./config/discord_tokens.json:/app/config/discord_tokens.json:ro
+      - ./aws_utils:/app/aws_utils
+      - ./.aws:/root/.aws:ro
     environment:
       - MEMBER_DB_HOST=db-member
       - MEMBER_DB_PORT=${MEMBER_DB_PORT}
@@ -198,6 +202,8 @@ services:
       - "${MEMBER_MANAGER_PORT}:${MEMBER_MANAGER_PORT}"
     volumes:
       - ./member-manager:/app
+      - ./aws_utils:/app/aws_utils
+      - ./.aws:/root/.aws:ro
     environment:
       - MEMBER_DB_HOST=db-member
       - MEMBER_DB_PORT=${MEMBER_DB_PORT}

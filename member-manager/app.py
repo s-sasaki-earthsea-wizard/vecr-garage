@@ -11,7 +11,6 @@ Member Manager Mock Application with Authentication
 """
 
 import logging
-import os
 from functools import wraps
 
 from flask import (
@@ -26,21 +25,23 @@ from flask import (
 )
 from flask_cors import CORS
 
+from aws_utils.secrets_manager import get_config_value
 from database import DatabaseManager
 
 logger = logging.getLogger(__name__)
+
 
 app = Flask(__name__)
 CORS(app)
 
 # セッション設定
 # 将来的にはRedisセッションストアを使用
-app.secret_key = os.getenv("SECRET_KEY", "vecr-garage-dev-key")
+app.secret_key = get_config_value("SECRET_KEY")
 app.permanent_session_lifetime = 3600  # 1時間
 
-# 認証設定（環境変数から取得）
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "password")
+# 認証設定（AWS Secrets Managerから取得）
+ADMIN_USERNAME = get_config_value("ADMIN_USERNAME")
+ADMIN_PASSWORD = get_config_value("ADMIN_PASSWORD")
 
 # データベースマネージャーの初期化
 db_manager = DatabaseManager()

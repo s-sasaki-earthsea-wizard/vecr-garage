@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Set the PYTHONPATH to include the src directory
-ENV PYTHONPATH="/app/src:$PYTHONPATH"
+# Set the PYTHONPATH to include the src directory, app directory, and aws_utils
+ENV PYTHONPATH="/app/src:/app:/app/aws_utils:$PYTHONPATH"
 
 # Discord Bot起動コマンド
 CMD ["python", "src/app.py"]

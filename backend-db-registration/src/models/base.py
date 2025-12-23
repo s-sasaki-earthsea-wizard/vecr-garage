@@ -1,14 +1,18 @@
-import os
+import logging
 
+from aws_utils.secrets_manager import get_config_value
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# 環境変数から接続情報を取得（デフォルト値付き）
-DB_HOST = os.getenv("MEMBER_DB_HOST", "localhost")
-DB_PORT = os.getenv("MEMBER_DB_PORT", "5432")  # デフォルト値を設定
-DB_USER = os.getenv("MEMBER_DB_USER", "testuser")
-DB_PASSWORD = os.getenv("MEMBER_DB_PASSWORD", "password")
-DB_NAME = os.getenv("MEMBER_DB_NAME", "member_db")
+logger = logging.getLogger(__name__)
+
+
+# AWS Secrets Managerから接続情報を取得
+DB_HOST = get_config_value("MEMBER_DB_HOST")
+DB_PORT = get_config_value("MEMBER_DB_PORT")
+DB_USER = get_config_value("MEMBER_DB_USER")
+DB_PASSWORD = get_config_value("MEMBER_DB_PASSWORD")
+DB_NAME = get_config_value("MEMBER_DB_NAME")
 
 # 環境変数を使用した接続URLの構築
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
