@@ -8,38 +8,22 @@
 # Sample Files Operations (正常系ファイル)
 # ------------------------------------------------------------
 
-samples-copy: samples-copy-human samples-copy-virtual ## Copy all normal sample files to MinIO storage
+samples-copy: samples-copy-human samples-copy-virtual ## Copy all normal sample files to AWS S3 storage
 
-samples-copy-human: ## Copy human member sample files to MinIO storage
-	@echo "Copying human member sample files to MinIO storage..."
-	aws s3 cp ./storage/sample_data/samples/human_members/syota.yml s3://$(MINIO_BUCKET_NAME)/data/samples/human_members/syota.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/samples/human_members/syota.yml s3://$(MINIO_BUCKET_NAME)/data/samples/human_members/syota.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
-	aws s3 cp ./storage/sample_data/samples/human_members/rin.yml s3://$(MINIO_BUCKET_NAME)/data/samples/human_members/rin.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/samples/human_members/rin.yml s3://$(MINIO_BUCKET_NAME)/data/samples/human_members/rin.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
+samples-copy-human: ## Copy human member sample files to AWS S3 storage
+	@echo "Copying human member sample files to AWS S3 storage..."
+	aws s3 cp ./storage/sample_data/samples/human_members/syota.yml s3://$(S3_BUCKET_NAME)/data/samples/human_members/syota.yml \
+		--profile $(AWS_PROFILE)
+	aws s3 cp ./storage/sample_data/samples/human_members/rin.yml s3://$(S3_BUCKET_NAME)/data/samples/human_members/rin.yml \
+		--profile $(AWS_PROFILE)
 	@echo "Human member sample files copied successfully!"
 
-samples-copy-virtual: ## Copy virtual member sample files to MinIO storage
-	@echo "Copying virtual member sample files to MinIO storage..."
-	aws s3 cp ./storage/sample_data/samples/virtual_members/kasen.yml s3://$(MINIO_BUCKET_NAME)/data/samples/virtual_members/kasen.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/samples/virtual_members/kasen.yml s3://$(MINIO_BUCKET_NAME)/data/samples/virtual_members/kasen.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
-	aws s3 cp ./storage/sample_data/samples/virtual_members/darcy.yml s3://$(MINIO_BUCKET_NAME)/data/samples/virtual_members/darcy.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/samples/virtual_members/darcy.yml s3://$(MINIO_BUCKET_NAME)/data/samples/virtual_members/darcy.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
+samples-copy-virtual: ## Copy virtual member sample files to AWS S3 storage
+	@echo "Copying virtual member sample files to AWS S3 storage..."
+	aws s3 cp ./storage/sample_data/samples/virtual_members/kasen.yml s3://$(S3_BUCKET_NAME)/data/samples/virtual_members/kasen.yml \
+		--profile $(AWS_PROFILE)
+	aws s3 cp ./storage/sample_data/samples/virtual_members/darcy.yml s3://$(S3_BUCKET_NAME)/data/samples/virtual_members/darcy.yml \
+		--profile $(AWS_PROFILE)
 	@echo "Virtual member sample files copied successfully!"
 
 samples-copy-single: ## Copy a single sample file (usage: make samples-copy-single FILE=path/to/file.yml TARGET=target/path.yml)
@@ -48,23 +32,15 @@ samples-copy-single: ## Copy a single sample file (usage: make samples-copy-sing
 		echo "Usage: make samples-copy-single FILE=./storage/sample_data/samples/human_members/syota.yml TARGET=data/samples/human_members/syota_copy.yml"; \
 		exit 1; \
 	fi
-	@echo "Copying single sample file: $(FILE) -> s3://$(MINIO_BUCKET_NAME)/$(TARGET)"
-	aws s3 cp $(FILE) s3://$(MINIO_BUCKET_NAME)/$(TARGET) \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp $(FILE) s3://$(MINIO_BUCKET_NAME)/$(TARGET) \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
+	@echo "Copying single sample file: $(FILE) -> s3://$(S3_BUCKET_NAME)/$(TARGET)"
+	aws s3 cp $(FILE) s3://$(S3_BUCKET_NAME)/$(TARGET) \
+		--profile $(AWS_PROFILE)
 	@echo "Single sample file copied successfully!"
 
-samples-clean: ## Clean sample files from MinIO storage
-	@echo "Cleaning sample files from MinIO storage..."
-	aws s3 rm s3://$(MINIO_BUCKET_NAME)/data/samples/ --recursive \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 rm s3://$(MINIO_BUCKET_NAME)/data/samples/ --recursive \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
+samples-clean: ## Clean sample files from AWS S3 storage
+	@echo "Cleaning sample files from AWS S3 storage..."
+	aws s3 rm s3://$(S3_BUCKET_NAME)/data/samples/ --recursive \
+		--profile $(AWS_PROFILE)
 	@echo "Sample files cleaned successfully!"
 
 samples-verify: ## Verify sample files exist in local storage
@@ -79,44 +55,24 @@ samples-verify: ## Verify sample files exist in local storage
 # Test Cases Operations (異常系ファイル)
 # ------------------------------------------------------------
 
-test-cases-copy: test-cases-copy-human test-cases-copy-virtual ## Copy all test case files to MinIO storage
+test-cases-copy: test-cases-copy-human test-cases-copy-virtual ## Copy all test case files to AWS S3 storage
 
-test-cases-copy-human: ## Copy human member test case files to MinIO storage
-	@echo "Copying human member test case files to MinIO storage..."
-	aws s3 cp ./storage/sample_data/test_cases/human_members/invalid_missing_name.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/human_members/invalid_missing_name.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/test_cases/human_members/invalid_missing_name.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/human_members/invalid_missing_name.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
-	aws s3 cp ./storage/sample_data/test_cases/human_members/invalid_missing_bio.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/human_members/invalid_missing_bio.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/test_cases/human_members/invalid_missing_bio.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/human_members/invalid_missing_bio.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
-	aws s3 cp ./storage/sample_data/test_cases/human_members/invalid_empty_file.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/human_members/invalid_empty_file.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/test_cases/human_members/invalid_empty_file.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/human_members/invalid_empty_file.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
+test-cases-copy-human: ## Copy human member test case files to AWS S3 storage
+	@echo "Copying human member test case files to AWS S3 storage..."
+	aws s3 cp ./storage/sample_data/test_cases/human_members/invalid_missing_name.yml s3://$(S3_BUCKET_NAME)/data/test_cases/human_members/invalid_missing_name.yml \
+		--profile $(AWS_PROFILE)
+	aws s3 cp ./storage/sample_data/test_cases/human_members/invalid_missing_bio.yml s3://$(S3_BUCKET_NAME)/data/test_cases/human_members/invalid_missing_bio.yml \
+		--profile $(AWS_PROFILE)
+	aws s3 cp ./storage/sample_data/test_cases/human_members/invalid_empty_file.yml s3://$(S3_BUCKET_NAME)/data/test_cases/human_members/invalid_empty_file.yml \
+		--profile $(AWS_PROFILE)
 	@echo "Human member test case files copied successfully!"
 
-test-cases-copy-virtual: ## Copy virtual member test case files to MinIO storage
-	@echo "Copying virtual member test case files to MinIO storage..."
-	aws s3 cp ./storage/sample_data/test_cases/virtual_members/invalid_missing_name.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/virtual_members/invalid_missing_name.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/test_cases/virtual_members/invalid_missing_name.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/virtual_members/invalid_missing_name.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
-	aws s3 cp ./storage/sample_data/test_cases/virtual_members/invalid_missing_model.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/virtual_members/invalid_missing_model.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp ./storage/sample_data/test_cases/virtual_members/invalid_missing_model.yml s3://$(MINIO_BUCKET_NAME)/data/test_cases/virtual_members/invalid_missing_model.yml \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
+test-cases-copy-virtual: ## Copy virtual member test case files to AWS S3 storage
+	@echo "Copying virtual member test case files to AWS S3 storage..."
+	aws s3 cp ./storage/sample_data/test_cases/virtual_members/invalid_missing_name.yml s3://$(S3_BUCKET_NAME)/data/test_cases/virtual_members/invalid_missing_name.yml \
+		--profile $(AWS_PROFILE)
+	aws s3 cp ./storage/sample_data/test_cases/virtual_members/invalid_missing_model.yml s3://$(S3_BUCKET_NAME)/data/test_cases/virtual_members/invalid_missing_model.yml \
+		--profile $(AWS_PROFILE)
 	@echo "Virtual member test case files copied successfully!"
 
 test-cases-copy-single: ## Copy a single test case file (usage: make test-cases-copy-single FILE=path/to/file.yml)
@@ -135,22 +91,14 @@ test-cases-copy-single: ## Copy a single test case file (usage: make test-cases-
 		echo "❌ Error: Cannot determine target directory from file path"; \
 		exit 1; \
 	fi; \
-	aws s3 cp "$(FILE)" "s3://$(MINIO_BUCKET_NAME)/$$TARGET" \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 cp "$(FILE)" "s3://$(MINIO_BUCKET_NAME)/$$TARGET" \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
+	aws s3 cp "$(FILE)" "s3://$(S3_BUCKET_NAME)/$$TARGET" \
+		--profile $(AWS_PROFILE)
 	@echo "Single test case file copied successfully!"
 
-test-cases-clean: ## Clean test case files from MinIO storage
-	@echo "Cleaning test case files from MinIO storage..."
-	aws s3 rm s3://$(MINIO_BUCKET_NAME)/data/test_cases/ --recursive \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--profile minio-local || \
-		aws s3 rm s3://$(MINIO_BUCKET_NAME)/data/test_cases/ --recursive \
-		--endpoint-url $(STORAGE_BASE_URL) \
-		--no-sign-request
+test-cases-clean: ## Clean test case files from AWS S3 storage
+	@echo "Cleaning test case files from AWS S3 storage..."
+	aws s3 rm s3://$(S3_BUCKET_NAME)/data/test_cases/ --recursive \
+		--profile $(AWS_PROFILE)
 	@echo "Test case files cleaned successfully!"
 
 test-cases-verify: ## Verify test case files exist locally

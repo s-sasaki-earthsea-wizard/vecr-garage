@@ -6,11 +6,11 @@ from botocore.exceptions import ClientError
 
 
 class StorageClient:
-    """S3互換ストレージサービスとの通信を行うクライアントクラス
+    """AWS S3ストレージサービスとの通信を行うクライアントクラス
 
     メンバー登録システムで使用するYAMLファイルの読み込み、ファイル一覧取得、
-    ストレージ接続確認などの機能を提供します。環境変数から認証情報を
-    自動的に取得し、安全なストレージ操作を実現します。
+    ストレージ接続確認などの機能を提供します。AWS認証情報は~/.aws/credentialsまたは
+    環境変数から自動的に取得し、安全なストレージ操作を実現します。
 
     主な機能:
     - ストレージ接続の確認
@@ -23,31 +23,25 @@ class StorageClient:
         bucket_name (str): 使用するバケット名
 
     Note:
-        - 環境変数から認証情報を取得（STORAGE_HOST, STORAGE_PORT, MINIO_ROOT_USER, MINIO_ROOT_PASSWORD）
-        - 開発環境ではHTTP接続、本番環境ではHTTPS接続を推奨
-        - boto3ライブラリを使用してS3互換APIでアクセス
-        - ローカルMinIOと本番S3の両方に対応
+        - 環境変数から設定を取得（S3_BUCKET_NAME, AWS_REGION）
+        - AWS認証情報は~/.aws/credentialsまたは環境変数（AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY）から取得
+        - boto3ライブラリを使用してS3 APIでアクセス
     """
 
     def __init__(self):
-        # 環境変数から認証情報を取得
-        storage_host = os.environ.get("STORAGE_HOST")
-        storage_port = os.environ.get("STORAGE_PORT")
+        # 環境変数からS3設定を取得
+        self.bucket_name = os.environ.get("S3_BUCKET_NAME")
+        aws_region = os.environ.get("AWS_REGION", "ap-northeast-1")
 
-        # S3互換エンドポイントのURL構築
-        endpoint_url = f"http://{storage_host}:{storage_port}"  # 開発環境はHTTP
+        if not self.bucket_name:
+            raise ValueError("環境変数 S3_BUCKET_NAME が設定されていません")
 
         # boto3 S3クライアントの初期化
+        # AWS認証情報は~/.aws/credentialsまたは環境変数から自動取得
         self.client = boto3.client(
             "s3",
-            endpoint_url=endpoint_url,
-            aws_access_key_id=os.environ.get("MINIO_ROOT_USER"),
-            aws_secret_access_key=os.environ.get("MINIO_ROOT_PASSWORD"),
-            region_name="ap-northeast-1",  # 東京リージョン（MinIOではリージョンは任意だがboto3には必須）
-            aws_session_token=None,
-            verify=False,  # 開発環境でSSL証明書検証を無効化
+            region_name=aws_region,
         )
-        self.bucket_name = os.environ.get("MINIO_BUCKET_NAME")
 
     def storage_connection_check(self):
         """ストレージサービスへの接続を確認する
