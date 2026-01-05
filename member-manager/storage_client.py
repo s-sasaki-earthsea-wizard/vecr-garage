@@ -8,59 +8,53 @@ import logging
 import os
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin
 
 import boto3
-import requests
 from botocore.exceptions import ClientError, NoCredentialsError
 
 logger = logging.getLogger(__name__)
 
 
 class StorageClient:
-    """MinIOストレージサービスとの通信を行うクライアントクラス
+    """AWS S3ストレージサービスとの通信を行うクライアントクラス
 
-    YAMLファイルのアップロードとMinIOとの基本的な通信機能を提供します。
+    YAMLファイルのアップロードとAWS S3との基本的な通信機能を提供します。
     """
 
     def __init__(self):
         """ストレージクライアントの初期化"""
-        self.storage_host = os.getenv("STORAGE_HOST", "storage")
-        self.storage_port = os.getenv("STORAGE_PORT", "9000")
-        self.base_url = f"http://{self.storage_host}:{self.storage_port}"
+        # 環境変数からS3設定を取得
+        self.bucket_name = os.getenv("S3_BUCKET_NAME")
+        aws_region = os.getenv("AWS_REGION", "ap-northeast-1")
 
-        # MinIO認証情報
-        self.minio_user = os.getenv("MINIO_ROOT_USER")
-        self.minio_password = os.getenv("MINIO_ROOT_PASSWORD")
-        self.bucket_name = os.getenv("MINIO_BUCKET_NAME")
+        if not self.bucket_name:
+            raise ValueError("環境変数 S3_BUCKET_NAME が設定されていません")
 
         # boto3 S3クライアントの初期化
-        self.s3_client = self._initialize_s3_client()
+        self.s3_client = self._initialize_s3_client(aws_region)
 
-        logger.info(f"Storage client initialized: {self.base_url}")
-        logger.info(f"MinIO bucket: {self.bucket_name}")
+        logger.info("Storage client initialized for AWS S3")
+        logger.info(f"S3 bucket: {self.bucket_name}")
+        logger.info(f"AWS region: {aws_region}")
 
-    def _initialize_s3_client(self):
+    def _initialize_s3_client(self, aws_region: str):
         """boto3 S3クライアントを初期化
+
+        Args:
+            aws_region: AWSリージョン
 
         Returns:
             boto3.client: S3クライアント
         """
         try:
-            # MinIOのS3互換エンドポイントを設定
-            endpoint_url = f"http://{self.storage_host}:{self.storage_port}"
-
             # boto3 S3クライアントを作成
+            # AWS認証情報は~/.aws/credentialsまたは環境変数から自動取得
             s3_client = boto3.client(
                 "s3",
-                endpoint_url=endpoint_url,
-                aws_access_key_id=self.minio_user,
-                aws_secret_access_key=self.minio_password,
-                region_name="us-east-1",  # MinIOでは任意のリージョンでOK
-                use_ssl=False,  # ローカル開発環境ではSSL無効
+                region_name=aws_region,
             )
 
-            logger.info(f"S3 client initialized for MinIO: {endpoint_url}")
+            logger.info(f"S3 client initialized for AWS region: {aws_region}")
             return s3_client
 
         except Exception as e:
@@ -98,7 +92,7 @@ class StorageClient:
                 raise Exception(error_msg) from e
 
     def upload_yaml_file(self, yaml_content: str, storage_path: str) -> dict[str, Any]:
-        """YAMLファイルをMinIOストレージにアップロード
+        """YAMLファイルをAWS S3ストレージにアップロード
 
         Args:
             yaml_content (str): アップロードするYAMLの内容
@@ -111,7 +105,7 @@ class StorageClient:
             Exception: アップロードに失敗した場合
         """
         try:
-            logger.info(f"Attempting to upload YAML to MinIO: {storage_path}")
+            logger.info(f"Attempting to upload YAML to AWS S3: {storage_path}")
 
             # バケットの存在確認と作成
             self._ensure_bucket_exists()
@@ -119,7 +113,7 @@ class StorageClient:
             # YAMLコンテンツをバイトに変換
             yaml_bytes = yaml_content.encode("utf-8")
 
-            # MinIOにファイルをアップロード
+            # AWS S3にファイルをアップロード
             self.s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=storage_path,
@@ -130,23 +124,23 @@ class StorageClient:
 
             result = {
                 "success": True,
-                "message": "YAML file uploaded successfully to MinIO",
+                "message": "YAML file uploaded successfully to AWS S3",
                 "storage_path": storage_path,
                 "bucket_name": self.bucket_name,
                 "file_size": len(yaml_bytes),
                 "upload_timestamp": self._get_current_timestamp(),
             }
 
-            logger.info(f"YAML uploaded successfully to MinIO: {storage_path}")
+            logger.info(f"YAML uploaded successfully to AWS S3: {storage_path}")
             return result
 
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
-            error_msg = f"MinIO upload failed ({error_code}): {str(e)}"
+            error_msg = f"AWS S3 upload failed ({error_code}): {str(e)}"
             logger.error(error_msg)
             raise Exception(error_msg) from e
         except NoCredentialsError as e:
-            error_msg = f"MinIO credentials not found: {str(e)}"
+            error_msg = f"AWS credentials not found: {str(e)}"
             logger.error(error_msg)
             raise Exception(error_msg) from e
         except Exception as e:
@@ -155,23 +149,23 @@ class StorageClient:
             raise Exception(error_msg) from e
 
     def test_connection(self) -> bool:
-        """ストレージサービスへの接続テスト
+        """AWS S3への接続テスト
 
         Returns:
             bool: 接続成功の場合True
         """
         try:
-            health_url = urljoin(self.base_url, "/minio/health/live")
-            response = requests.get(health_url, timeout=10)
+            # バケットへのアクセス確認
+            self.s3_client.head_bucket(Bucket=self.bucket_name)
+            logger.info("AWS S3 connection test successful")
+            return True
 
-            if response.status_code == 200:
-                logger.info("Storage service connection test successful")
-                return True
-            logger.warning(f"Storage service returned status: {response.status_code}")
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            logger.error(f"AWS S3 connection test failed ({error_code}): {str(e)}")
             return False
-
         except Exception as e:
-            logger.error(f"Storage service connection test failed: {str(e)}")
+            logger.error(f"AWS S3 connection test failed: {str(e)}")
             return False
 
     def get_storage_info(self) -> dict[str, Any]:
@@ -180,11 +174,11 @@ class StorageClient:
         Returns:
             Dict[str, Any]: ストレージ情報
         """
+        aws_region = os.getenv("AWS_REGION", "ap-northeast-1")
         return {
-            "host": self.storage_host,
-            "port": self.storage_port,
-            "base_url": self.base_url,
-            "auth_configured": bool(self.minio_user and self.minio_password),
+            "service": "AWS S3",
+            "bucket_name": self.bucket_name,
+            "region": aws_region,
             "connection_status": self.test_connection(),
         }
 
