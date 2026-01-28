@@ -129,6 +129,7 @@ include makefiles/backend-llm-response.mk
 include makefiles/ci.mk
 include makefiles/secrets.mk
 include makefiles/aws.mk
+include makefiles/lambda.mk
 
 # 便利なエイリアスと後方互換性
 s3-cp-samples: samples-copy ## Copy normal sample files to MinIO storage

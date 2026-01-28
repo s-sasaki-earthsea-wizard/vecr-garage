@@ -26,7 +26,8 @@ repos:
       - id: check-yaml
         name: YAML構文チェック
         description: YAMLファイルの構文エラーを検出
-        args: [--allow-multiple-documents]
+        args: [--allow-multiple-documents, --unsafe]
+        exclude: ^backend-db-registration/template\.yaml$  # SAMテンプレートはCloudFormation構文を使用
 
       - id: check-json
         name: JSON構文チェック
@@ -80,7 +81,9 @@ repos:
         # - makefiles/ci.mk: 秘密鍵検出テスト用のUUID文字列が含まれるため
         # - .gitleaks.toml: gitleaksルール定義内のキーワードによる誤検知を防止
         # - .secrets.baseline: baselineファイル自体は除外
-        exclude: (makefiles/ci\.mk|\.gitleaks\.toml|\.secrets\.baseline)
+        # - backend-db-registration/events/: SAM CLIテスト用イベントファイル（AWS例示値）
+        # - backend-db-registration/template.yaml: SAMテンプレート（Secrets Manager参照）
+        exclude: (makefiles/ci\.mk|\.gitleaks\.toml|\.secrets\.baseline|backend-db-registration/events/.*\.json|backend-db-registration/template\.yaml)
 
   # Secrets検知（gitleaks - 強力な検出）
   - repo: https://github.com/gitleaks/gitleaks
